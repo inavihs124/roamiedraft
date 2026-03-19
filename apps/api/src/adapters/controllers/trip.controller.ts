@@ -63,7 +63,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const trip = await prisma.trip.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       include: {
         flights: true,
         hotels: true,
@@ -109,7 +109,7 @@ router.post('/:id/flights', authMiddleware, async (req: AuthRequest, res: Respon
 
     const flight = await prisma.flightBooking.create({
       data: {
-        tripId: req.params.id,
+        tripId: req.params.id as string,
         ...parsed.data,
         departureTime: new Date(parsed.data.departureTime),
         arrivalTime: new Date(parsed.data.arrivalTime),
@@ -137,7 +137,7 @@ router.post('/:id/hotels', authMiddleware, async (req: AuthRequest, res: Respons
 
     const hotel = await prisma.hotelBooking.create({
       data: {
-        tripId: req.params.id,
+        tripId: req.params.id as string,
         hotelName: parsed.data.hotelName,
         checkIn: new Date(parsed.data.checkIn),
         checkOut: new Date(parsed.data.checkOut),

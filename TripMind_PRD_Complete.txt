@@ -1,0 +1,1553 @@
+=== PAGE 1 ===
+TripMind PRD v1.0  ·  Page 1 of 25 
+ 
+✈ 
+TripMind 
+Complete Product Requirements Document 
+Context · PRD · Full Build Spec · Feature Bible · API Stack 
+ 
+Domain: Travel — Intelligent & Personalized Experiences 
+Hackathon: Round 1 Submission  ·  19 March 2026 
+Version: 1.0  ·  Status: Approved  ·  Owner: TripMind Team 
+ 
+ 
+Section 1 — Executive Summary 
+ 
+1.1  Product Vision 
+One-line: An AI agent that builds your itinerary from your own saved content, speaks your 
+language from day one, and automatically fixes your entire trip — flight, hotel, cab, and 
+schedule — the moment anything breaks. All you get is a QR. Tap pay or cancel. 
+ 
+Why This Exists 
+TripMind is the first travel product that is proactive, personalised, and autonomous across the 
+complete travel lifecycle. 
+Every other travel app today is reactive and static. You tell it what you want, it gives you a list, 
+and the moment reality breaks from the plan — you are on your own. 
+TripMind acts before you ask, adapts before you notice, and fixes things before you panic. 
+ 
+ 
+
+
+=== PAGE 2 ===
+TripMind PRD v1.0  ·  Page 2 of 25 
+1.2  The Problem (Real & Researched) 
+This product was built from a real experience. Our founder was in Sri Lanka enjoying a trip 
+when they received a message: their return flight had been cancelled. They were lucky — they 
+had money to rebook manually. Most travellers are not. That 45-minute panic in a foreign 
+country, alone, fixing 6 things at once — that is the problem TripMind eliminates entirely. 
+ 
+Problem 
+What travellers face today 
+5–18 hours planning 
+Ends up with someone else's generic trip, not theirs. Saved content 
+ignored. 
+Disruptions cascade 
+Flight cancelled → hotel wrong → cab gone → restaurant missed. 
+No app fixes the chain. 
+Business dead time 
+63% of business travellers waste hours between meetings in 
+unfamiliar cities. 
+Return flight cancellation 
+Mid-trip, foreign country, panic, no help. Our founder's Sri Lanka 
+experience. 
+Language barrier 
+For 5.7B non-English speakers, most travel AI feels built for 
+someone else. 
+ 
+1.3  Success Metrics 
+Primary KPI 
+Disruption Shield activation rate > 80% when disruption occurs 
+Secondary KPI 
+Itinerary satisfaction score ≥ 4.2/5 in post-trip survey 
+Engagement 
+Calendar gap suggestion acceptance rate > 60% 
+Demo metric 
+Disruption Shield: trigger to QR card in < 90 seconds on stage 
+Hackathon metric 
+Judges can describe TripMind in one sentence after the 
+presentation 
+ 
+1.4  Resource Summary 
+Team 
+2 full-stack devs + 1 UI/UX designer (hackathon: 1–2 people) 
+Timeline 
+48–72 hours for hackathon demo · 4 weeks for full production MVP 
+Cost 
+₹0 / $0 — zero paid APIs. Entire stack free and offline-capable. 
+LLM 
+Ollama (local, offline) with Llama 3.2 8B or Mistral 7B 
+Stack 
+React + TypeScript + Vite + Tailwind + Node.js + Express + SQLite 
++ Prisma 
+ 
+ 
+
+
+=== PAGE 3 ===
+TripMind PRD v1.0  ·  Page 3 of 25 
+Section 2 — Problem Statement & Opportunity 
+ 
+2.1  The Planning Failure 
+The average traveller spends 5–18 hours planning a trip. They open 12 browser tabs, save 300 
+posts across 9 platforms (Instagram, TikTok, Google Maps, Reddit), and end up with a generic 
+itinerary built from someone else's top-10 list. The saved content they actually care about never 
+makes it into the actual plan. Every existing tool generates for the average traveller, not the 
+individual. 
+ 
+2.2  The Disruption Failure 
+When something breaks during travel, the modern traveller is completely alone. Airlines send a 
+cancellation SMS with no next steps. Hotel platforms have no awareness that the flight 
+changed. Cab apps don't know the user won't arrive on time. The traveller must manually fix 6 
+things while panicking in an airport. GBTA 2025: 55% of business trips involve at least one 
+disruption. 54% of travel managers list proactive disruption management as their #1 desired 
+innovation. 
+ 
+2.3  The Founder's Story → Feature #20 
+Real Experience That Built a Real Feature 
+Our founder was in Sri Lanka enjoying a trip when they received a message: return flight 
+cancelled. 
+They were lucky — they had money in their bank account and managed to rebook manually. 
+This directly inspired Feature #20: Instant Cancellation Guardian. 
+TripMind detects the cancellation before the user sees it, holds an alternative seat, 
+checks their payment balance, and presents a single QR confirm/cancel card. 
+That 45-minute panic moment — compressed into one tap. 
+ 
+ 
+2.4  Market Opportunity 
+Global travellers 
+300M+ international trips in Q1 2025 alone (UNWTO) 
+Corporate travel market 
+$1.4 trillion globally (GBTA 2025) 
+Unmet need 
+54% of travel buyers want proactive disruption management — 
+barely exists today 
+
+
+=== PAGE 4 ===
+TripMind PRD v1.0  ·  Page 4 of 25 
+Expense pain 
+63% of business travellers cite manual expense reports as most 
+hated task 
+Language gap 
+5.7B non-English primary speakers underserved by existing travel 
+AI 
+Reddit signal 
+r/travel: 12M members, 32% YoY growth. Top posts = planning 
+frustration + disruption horror stories 
+ 
+2.5  Competitive Gap 
+Google Trips / Travel 
+No personalisation from saved content. No disruption management. 
+TripAdvisor / 
+Booking.com 
+Booking platforms, not intelligence. Static. No autonomy. 
+AI itinerary generators 
+Generic lists. No real-time data. No disruption handling. 
+Corporate TMCs (Concur) 
+Business only. Expensive. No AI autonomy. No QR flow. 
+ 
+ 
+Section 3 — User Personas & Stories 
+ 
+3.1  Persona 1 — Priya: The Disrupted Business Traveller 
+Profile 
+Priya Sharma, 31, Senior Consultant, Mumbai. 8–12 trips/year, India 
++ SEA + Middle East. 
+Primary pain 
+Disruptions cascade into missed meetings. 45 minutes fixing 6 
+things in an airport alone. 
+Secondary pain 
+Dead time between client meetings in unfamiliar cities. No 
+contextual suggestions. 
+What she wants 
+Everything fixed before she knows it's broken. Suggestions that 
+understand she has 45 minutes, not 3 hours. 
+Her quote 
+"I just want to land and know everything is sorted. I don't have time 
+to be my own travel agent." 
+ 
+3.2  Persona 2 — Arjun: The Over-Planner 
+Profile 
+Arjun Menon, 26, Software Engineer, Bengaluru. 3–5 leisure 
+trips/year, solo and group. 
+
+
+=== PAGE 5 ===
+TripMind PRD v1.0  ·  Page 5 of 25 
+Primary pain 
+10+ hours planning. 300 saved posts. Zero organised itinerary. 
+Generic output ignores his taste. 
+Secondary pain 
+Over-packs days until he's exhausted by Day 2. Cannot pace 
+himself. 
+What he wants 
+His saved places become his trip automatically. A plan that knows 
+when to stop. 
+His quote 
+"I have 345 notes of things to do and zero idea what my actual day 
+should look like." 
+ 
+3.3  Persona 3 — Maria: The Non-English Speaker 
+Profile 
+Maria González, 34, Teacher, Guadalajara, Mexico. 2–3 
+international trips/year. 
+Primary pain 
+Travel AI feels built for English-speaking Westerners. Menus, signs, 
+customs — hard to navigate. 
+Secondary pain 
+Cultural missteps (wrong dress, unknown laws) discovered after the 
+fact. 
+What she wants 
+App that works fully in Spanish, explains customs proactively, 
+translates signs in real time. 
+Her quote 
+"I just want to feel like the app was made for me, not translated for 
+me." 
+ 
+3.4  Core User Stories with Acceptance Criteria 
+ 
+Epic 1 — Disruption Shield 
+User Story + Acceptance Criteria 
+As Priya (business traveller), I want TripMind to detect my flight cancellation and automatically 
+rebook 
+me, shift my hotel, and reschedule my cab, so that I focus on client work without 45 minutes of 
+manual fixing. 
+ 
+Acceptance Criteria: 
+  → Disruption detected within 2 minutes of confirmed cancellation 
+  → 3 alternatives scored and surfaced (arrival time + price + seat preference) 
+  → Best option auto-selected with visible scoring rationale 
+  → Hotel shifted to newArrival + 2h automatically 
+
+
+=== PAGE 6 ===
+TripMind PRD v1.0  ·  Page 6 of 25 
+  → Cab shifted to newArrival + 45min automatically 
+  → QR confirmation card generated and displayed within 90 seconds of trigger 
+  → User makes zero mandatory decisions — only confirmation or cancellation 
+ 
+ 
+Epic 2 — Social Save Ingestor 
+User Story + Acceptance Criteria 
+As Arjun (leisure traveller), I want to paste my saved Instagram/TikTok/Reddit content 
+and have TripMind build a real itinerary from it, so that my bookmarked places end up in my 
+actual trip. 
+ 
+Acceptance Criteria: 
+  → Accepts freeform text paste from any source 
+  → Extracts place names with > 85% accuracy 
+  → Geocodes and slots places into days by geography and time availability 
+  → Detects calendar gaps (30–90 min) and pushes local suggestions 
+  → Over-packed days automatically get a breathing room event inserted 
+  → Full 3-day itinerary generated in < 30 seconds 
+  → User can accept, reject, or swap any suggestion 
+ 
+ 
+Epic 3 — Multilingual Intelligence 
+User Story + Acceptance Criteria 
+As Maria (non-English speaker), I want the entire product to work in Spanish — AI responses, 
+descriptions, alerts — so that TripMind feels built for me, not translated as an afterthought. 
+ 
+Acceptance Criteria: 
+  → Full UI renders in chosen language (EN/HI/ES/FR/JP) with < 100ms switch 
+  → AI-generated content comes back in user's language from the LLM itself 
+  → Camera translate reads foreign text in real time 
+  → Voice input accepts speech in user's language and responds by voice 
+  → Cultural nudges appear on relevant event cards 
+  → Rights chatbot answers in user's language with appropriate caveats 
+ 
+
+
+=== PAGE 7 ===
+TripMind PRD v1.0  ·  Page 7 of 25 
+ 
+ 
+Section 4 — All 21 Features: Full Specification 
+ 
+Each feature card shows exactly what it does, how it impacts the user, and precise build 
+instructions for the engineering team (Antigravity). Stack is listed at the bottom of each card. 
+ 
+Module 1 — Smart Itinerary Agent  (8 Features) 
+ 
+#01  Live Itinerary Engine 
+WHAT IT DOES 
+USER IMPACT 
+HOW TO BUILD 
+Subscribes to real-time feeds: 
+weather (Open-Meteo every 3h), 
+venue hours (Overpass 
+once/day), flight status 
+(OpenSky every 30min). When 
+any condition changes, auto-
+patches affected events without 
+user action. 
+Eliminates arriving at a closed 
+venue or stepping into rain you 
+didn't plan for. The plan is 
+always current. Zero manual 
+updates ever required. 
+1. Register background polling 
+on itinerary load. 2. On any data 
+change, compare with 
+ItineraryDay objects. 3. If 
+mismatch → Ollama with 
+updated context → regenerate 
+affected events. 4. Push via 
+WebSocket to UI. 
+STACK → Open-Meteo (weather, free, no key)  ·  Overpass API (venue hours, free)  ·  OpenSky Network 
+(flight, free)  ·  Ollama LLM (local) 
+ 
+#02  Itinerary Auto-Healer 
+WHAT IT DOES 
+USER IMPACT 
+HOW TO BUILD 
+When disruption confirmed, 
+identifies every downstream 
+event that is now invalid (hotel 
+check-in, cab, restaurant, 
+activities) and replans the entire 
+affected timeline from scratch. 
+From 45 minutes of panic to a 
+10-second notification: 'We've 
+fixed everything. Here's your 
+new plan.' The emotional cost of 
+disruption drops to near zero. 
+1. Disruption triggers 
+TriggerDisruptionShield use-
+case. 2. Load all ItineraryDay 
+records for affected dates. 3. For 
+each downstream booking: 
+newTime = resolution_time + 
+buffer. 4. Ollama rebuilds 
+ItineraryDay JSON with new 
+constraints. 5. Save to DB + 
+push to UI. 
+STACK → Internal cascade logic  ·  Prisma DB  ·  Ollama LLM (local)  ·  MockFlightService JSON 
+ 
+#03  Calendar Gap Detector 
+WHAT IT DOES 
+USER IMPACT 
+HOW TO BUILD 
+
+
+=== PAGE 8 ===
+TripMind PRD v1.0  ·  Page 8 of 25 
+Reads calendar events, finds 
+every 30–90 min gap between 
+them. Queries nearby places 
+filtered by GPS + time of day + 
+trip purpose. Pushes 3 ranked 
+suggestions into the itinerary 
+timeline as amber-bordered 
+cards. 
+Business travellers stop wasting 
+lunch hours in hotel rooms. 
+Leisure travellers discover spots 
+they'd never have found. The 
+app becomes proactive, not 
+passive. 
+1. Parse calendarEvents[] sorted 
+by start time. 2. Find gaps 
+between event[n].end and 
+event[n+1].start that are 30–90 
+min. 3. Foursquare Places API: 
+lat/lng + 1km radius + category 
+filter. 4. Ollama ranks 3 options 
+by gap duration + trip purpose. 5. 
+Inject into ItineraryDay.freeGaps[] 
+with amber badge. 
+STACK → Google Calendar API (free)  ·  Foursquare Places (1000 free/day)  ·  Overpass (fallback)  ·  
+Ollama LLM 
+ 
+#04  Social Save Ingestor 
+WHAT IT DOES 
+USER IMPACT 
+HOW TO BUILD 
+User pastes text/links from 
+Instagram, TikTok, Google 
+Maps, Reddit. Ollama extracts 
+all place names, Nominatim 
+geocodes each one, then slots 
+them into itinerary days by 
+geography and time availability. 
+Your trip built from YOUR actual 
+taste — every bookmarked 
+place you've been saving for 
+months finally appears in your 
+actual schedule. Not a generic 
+top-10 list. 
+1. Textarea paste → Ollama: 
+'Extract all place names as 
+JSON array [{name, address, 
+city}]'. 2. Nominatim geocodes 
+each place → lat/lng. 3. Group 
+places by city + available dates. 
+4. Score each against existing 
+itinerary gaps. 5. Insert top-
+scored into ItineraryDay.events[]. 
+STACK → Ollama LLM (local, freeform extraction)  ·  Nominatim/OSM (geocoding, free, no key)  ·  Prisma 
+DB 
+ 
+#05  Breathing Room Optimizer 
+WHAT IT DOES 
+USER IMPACT 
+HOW TO BUILD 
+Calculates total scheduled 
+activity time per day. If day has 
+5+ activities in 8 hours, inserts a 
+recovery window — a café, 
+park, or quiet spot nearby — 
+between the most demanding 
+pair of activities. 
+Prevents the #1 cause of 
+disappointing trips: exhaustion. 
+Rest inserted by design. By Day 
+3, the difference is enormous — 
+you're still enjoying yourself 
+instead of sleep-walking. 
+1. After generation, iterate each 
+ItineraryDay. 2. Sum activity 
+durations. If > 480 mins OR > 5 
+events: find largest gap between 
+consecutive pair. 3. Overpass: 
+cafes/parks within 500m of that 
+gap's location. 4. Insert break 
+event (type:'break', 
+isBreathingRoom:true). 5. Render 
+with 'Breathing room' amber pill 
+badge. 
+STACK → Internal calculation (no API for detection)  ·  Overpass API (quiet spots, free)  ·  Ollama (natural 
+description) 
+ 
+#06  Context Engine (Time, Mood, Purpose) 
+WHAT IT DOES 
+USER IMPACT 
+HOW TO BUILD 
+
+
+=== PAGE 9 ===
+TripMind PRD v1.0  ·  Page 9 of 25 
+Three inputs feed every 
+recommendation: trip purpose 
+(business/leisure), time of day 
+(morning/afternoon/evening), 
+and mood tap 
+(energetic/moderate/need rest). 
+All prepended as constraints to 
+every LLM prompt. 
+Same city, same time — 
+completely different experience 
+for different travellers. Business 
+mode at 12:30 PM: 'Quick 
+hawker lunch, 45 min, back for 2 
+PM.' Leisure mode: 'Explore 
+Chinatown, try the Michelin 
+chicken rice, no rush.' 
+1. Store tripPurpose on User 
+model. 2. Derive timeOfDay from 
+system time. 3. Mood tap: 3-
+button UI → stores energyLevel 
+in localStorage. 4. Compose 
+context: 'Purpose: X. Time: Y. 
+Energy: Z.' 5. Prepend to every 
+Ollama prompt as hard 
+constraint block. 
+STACK → No external API — pure LLM prompt engineering  ·  Ollama LLM (local)  ·  localStorage + User 
+DB 
+ 
+#07  Smart Packing AI  ✦ NEW 
+WHAT IT DOES 
+USER IMPACT 
+HOW TO BUILD 
+Reads complete itinerary events 
+per day + 7-day weather 
+forecast. Generates specific 
+packing list: temple Day 2 → 
+modest clothing; beach Day 3 → 
+reef-safe sunscreen; rain Day 5 
+→ umbrella + waterproof bag. 
+Eliminates arriving at a temple in 
+shorts or a beach resort with no 
+sunscreen. Packs for your 
+specific schedule, not a generic 
+version of the destination. Every 
+item on the list has a reason. 
+1. After itinerary finalised: Open-
+Meteo for 7-day forecast at 
+destination. 2. Map weather to 
+scheduled events per day. 3. 
+Ollama: 'Given these events + 
+weather, generate packing list 
+grouped by category.' Returns 
+JSON. 4. Render as checkbox 
+list. 5. localStorage persists 
+checked state. 
+STACK → Open-Meteo (7-day forecast, free, no key)  ·  Ollama LLM (local)  ·  localStorage (checklist) 
+ 
+#08  Visa + Passport + Doc Checklist 
+WHAT IT DOES 
+USER IMPACT 
+HOW TO BUILD 
+Generates pre-travel checklist 
+using passport country + 
+destination: visa type, passport 
+validity needed, vaccines, 
+emergency numbers, entry 
+rules, currency to carry, current 
+advisories. 
+Catches catastrophic mistakes 
+before they happen. Arriving 
+without a visa, or with a passport 
+expiring in 3 months when 6 are 
+required, ruins the trip before it 
+starts. This makes pre-trip prep 
+foolproof. 
+1. User inputs passport country 
++ destination at trip creation. 2. 
+Travelbriefing.org API: 
+visa/health/safety info for the 
+pair. 3. REST Countries API: 
+capital, currency, emergency 
+numbers. 4. Ollama formats raw 
+data into clear categorised 
+checklist. 5. Render as: 
+Documents / Health / Money / 
+Safety sections. 
+STACK → Travelbriefing.org (visa info, free)  ·  REST Countries API (free, no key)  ·  Ollama LLM 
+ 
+Module 2 — Multilingual + Local Intelligence  (6 Features) 
+ 
+#09  Multilingual UI 
+
+
+=== PAGE 10 ===
+TripMind PRD v1.0  ·  Page 10 of 25 
+WHAT IT DOES 
+USER IMPACT 
+HOW TO BUILD 
+Entire product renders in 
+chosen language: EN, HI, ES, 
+FR, JP. Not just UI label 
+translation — AI-generated 
+responses, itinerary 
+descriptions, alerts, and nudges 
+are all produced in the user's 
+language directly from the LLM. 
+For non-English speakers (5.7B 
+people), changes TripMind from 
+'usable with effort' to 'built for 
+me.' Every alert, every 
+suggestion in their language — 
+automatically. 
+1. Install i18next + react-i18next. 
+2. Create translation JSON files: 
+en/hi/es/fr/ja for all static strings. 
+3. Detect from User.preferredLang 
+DB field or browser headers. 4. 
+Dynamic content: append 
+'Respond entirely in {language}' to 
+every Ollama prompt. 5. 
+Language switcher → 
+i18next.changeLanguage() → 
+instant re-render. 
+STACK → i18next + react-i18next (npm, free)  ·  Ollama LLM (prompted in target language)  ·  5 translation 
+JSON files 
+ 
+#10  Multilingual Voice + Live Translate  ✦ NEW 
+WHAT IT DOES 
+USER IMPACT 
+HOW TO BUILD 
+Three modes: (1) Voice input — 
+speak in your language, AI 
+responds by voice. (2) Camera 
+translate — point at foreign text, 
+real-time translation overlay on 
+screen. (3) Conversation 
+interpreter — you speak, app 
+speaks in local language for the 
+person in front of you. 
+Ordering food without knowing 
+the language. Understanding a 
+Japanese safety notice. Talking 
+to a local cab driver. These daily 
+frictions define travel for most 
+people. All eliminated. Works 
+offline. 
+1. Voice: Web Speech API 
+(browser built-in, STT + TTS). 2. 
+Translation: LibreTranslate in 
+Docker on localhost:5000 
+(offline). 3. Camera: device 
+camera → frame capture → 
+Ollama llava vision model → 
+translated overlay. 4. All modes 
+work offline after initial model 
+download. 
+STACK → Web Speech API (browser built-in, free)  ·  LibreTranslate (Docker, offline, free)  ·  Ollama llava 
+(vision, local) 
+ 
+#11  Expense AI 
+WHAT IT DOES 
+USER IMPACT 
+HOW TO BUILD 
+User pastes raw receipt text (future: 
+photograph it). AI extracts: amount, currency, 
+merchant, category 
+(food/transport/accommodation/activity/other), 
+date. All stored against trip. Full expense 
+report + currency conversion ready to submit 
+on landing. 
+63% of business 
+travellers cite manual 
+expense reporting as 
+their most hated task 
+(GBTA 2025). Turns a 
+45-minute post-trip chore 
+into something that 
+happens as you go. You 
+land home with a finished 
+report. 
+1. Textarea for receipt text 
+(future: Tesseract.js OCR). 
+2. Ollama: 'Extract amount, 
+currency, category, 
+description, date. Return 
+JSON only.' 3. Parse → 
+save to Expense DB table. 
+4. ExchangeRate-API for 
+home currency conversion. 
+5. Recharts doughnut for 
+category breakdown + 
+CSV export. 
+STACK → Ollama LLM (local)  ·  ExchangeRate-API (1500 free/month)  ·  Tesseract.js (future OCR)  ·  
+Recharts 
+ 
+
+
+=== PAGE 11 ===
+TripMind PRD v1.0  ·  Page 11 of 25 
+#12  Memory Lane — Past Trips + Google Photos  ✦ NEW 
+WHAT IT DOES 
+USER IMPACT 
+HOW TO BUILD 
+Connects to Google Photos (or 
+manual upload). Parses GPS 
+EXIF metadata from past trip 
+photos to identify visited places. 
+Builds a travel preference 
+profile: loves rooftop bars, 
+avoids museums, prefers street 
+food. Feeds all future itinerary 
+suggestions. 
+'You loved rooftop bars in Goa 
+— here's one in Singapore' vs 
+'popular bars in Singapore.' 
+Gets smarter with every trip. 
+After 3 trips, knows you better 
+than a travel agent. 
+1. Google Photos API (OAuth) or 
+photo folder upload. 2. exifr npm: 
+parse GPSLatitude + 
+GPSLongitude from each photo. 
+3. Nominatim: reverse geocode 
+each GPS cluster → identify 
+visited places. 4. Ollama: 'From 
+these visited places, extract 
+preferences and patterns. Return 
+JSON.' 5. Store in 
+User.travelProfile → inject into all 
+itinerary prompts. 
+STACK → Google Photos API (OAuth, free)  ·  exifr npm (EXIF parsing)  ·  Nominatim (reverse geocoding, 
+free)  ·  Ollama 
+ 
+#13  Local Law Nudges + Rights-Checker 
+WHAT IT DOES 
+USER IMPACT 
+HOW TO BUILD 
+Two modes: Passive — small 
+alerts directly on itinerary event 
+cards ('Photography restricted 
+here', 'Dress code applies'). 
+Active — chatbot where user 
+asks 'Is it legal to do X in this 
+country?' and gets a plain-
+language answer. 
+Prevents embarrassing 
+moments (turned away from 
+temple in shorts) and serious 
+ones (unknowingly breaking a 
+local law). Cultural awareness 
+delivered at exactly the right 
+moment — not as a lecture, as a 
+whisper. 
+1. Build JSON dataset: 200+ 
+venue-type + country rule pairs 
+(LLM-generated once, cached). 
+2. On event insert: match 
+event.category + destination 
+country against dataset. 3. If 
+match: attach nudge text → 
+small notice on event card. 4. 
+Chatbot: question + destination 
+→ Ollama plain-language 
+answer with 'informational only' 
+caveat. 5. Simple message 
+thread UI. 
+STACK → Static JSON dataset (rules, one-time generation)  ·  Ollama LLM (chatbot)  ·  REST Countries 
+API 
+ 
+#14  Heatmap  ✦ NEW 
+WHAT IT DOES 
+USER IMPACT 
+HOW TO BUILD 
+Interactive map with three 
+toggleable overlays: (1) Crowd 
+density by time of day from OSM 
+foot-traffic proxy. (2) Price 
+heatmap — cheap to expensive 
+by neighbourhood from 
+Foursquare price tiers. (3) 
+Safety overlay from public 
+incident data. 
+Answers 'Is this neighbourhood 
+too touristy at noon?', 'Are 
+restaurants near my hotel 
+expensive?', 'Safe to walk here 
+at 9PM?' — all in 5 seconds 
+instead of 30 minutes of 
+Googling. 
+1. Leaflet.js + OpenStreetMap 
+tiles (both free, no key). 2. 
+Crowd: Overpass API for POI 
+density per grid cell by time 
+category. 3. Price: Foursquare 
+Places price tier per 
+neighbourhood grid. 4. Render 
+with Leaflet.heat plugin (open 
+source). 5. Toggle buttons: 
+Crowd / Price / Safety in map UI. 
+
+
+=== PAGE 12 ===
+TripMind PRD v1.0  ·  Page 12 of 25 
+STACK → Leaflet.js (open source)  ·  OpenStreetMap (tiles, free)  ·  Overpass API (free)  ·  Foursquare 
+Places (1000/day free)  ·  Leaflet.heat 
+ 
+Module 3 — ✨ Disruption Shield  (7 Features) 
+This is the product's defining module. The Disruption Shield is what no competitor offers. 
+Feature #20 was directly inspired by our founder's real experience. 
+ 
+#15  Proactive Delay Predictor 
+WHAT IT DOES 
+USER IMPACT 
+HOW TO BUILD 
+Monitors weather at origin + 
+destination airports, historical 
+delay rate for the specific flight 
+number, and live flight position 
+via OpenSky. When all three 
+converge on likely disruption, 
+alerts user up to 3 hours before 
+departure. 
+Reactive vs predictive: you 
+rebook while seats are available, 
+not competing with 200 other 
+passengers for 12 remaining 
+seats. The head start alone is 
+worth the entire product. 
+1. Schedule cron job 24h before 
+each flight departure. 2. Open-
+Meteo: weather for origin + 
+destination for departure day. 3. 
+OpenSky Network: aircraft status 
++ recent delay history. 4. Risk 
+score: weather_risk (0-1) + 
+delay_rate (0-1) → weighted 
+average. 5. If score > 0.65: push 
+proactive alert with 'Pre-rebook 
+now' CTA. 
+STACK → Open-Meteo (free, no key)  ·  OpenSky Network (free, no key)  ·  node-cron  ·  WebSocket (alert 
+push) 
+ 
+#16  Auto Flight Alternative Holder 
+WHAT IT DOES 
+USER IMPACT 
+HOW TO BUILD 
+Disruption confirmed → 
+queries flight dataset → 
+returns 3 alternatives 
+scored: 40% earliest arrival 
++ 30% price delta + 30% 
+seat preference match. Best 
+option pre-selected. User 
+confirms or changes. 
+Compresses the most 
+stressful 45 minutes of any 
+trip into a 10-second 
+decision. Three pre-
+evaluated options. Tap the 
+one you want. Done. No 
+research. No comparison. 
+No panic. 
+1. On disruption: 
+MockFlightService.findAlternatives(origin, 
+dest, date, max:3). 2. Query static JSON 
+of 30 flights filtered by route + ±6h time 
+window. 3. Score: (0.4 × arrivalEarliness) 
++ (0.3 × (1 - priceDelta/origPrice)) + (0.3 
+× seatMatch). 4. Sort desc → return top 
+3. Pre-select index[0]. 5. Render 3 cards: 
+selected gets amber border + 'Best 
+match' pill. 
+STACK → MockFlightService (30 flights static JSON, works offline)  ·  AviationStack API (100 free/month, 
+optional) 
+ 
+#17  Hotel + Cab Auto Time-Shift 
+WHAT IT DOES 
+USER IMPACT 
+HOW TO BUILD 
+After new flight selected: hotel 
+check-in = newArrival + 2h, cab 
+pickup = newArrival + 45min. If 
+Eliminates the worst-case 
+scenario: landing at 8PM when 
+hotel closed at 4PM, room 
+1. After new flight confirmed: 
+retrieve HotelBooking + 
+CabBooking for trip. 2. 
+
+
+=== PAGE 13 ===
+TripMind PRD v1.0  ·  Page 13 of 25 
+hotel can't hold until new time, 
+nearby alternative is flagged. All 
+DB records updated 
+automatically. 
+released, 6 phone calls from an 
+airport. This scenario becomes 
+impossible with TripMind. 
+newCheckIn = 
+selectedFlight.arrivalTime + 
+120min → update HotelBooking. 
+3. newCabPickup = 
+selectedFlight.arrivalTime + 45min 
+→ update CabBooking. 4. If 
+newCheckIn > 
+hotel.latestCheckIn: Overpass 
+query nearby hotels. 5. Show old 
+vs new times side-by-side in UI. 
+STACK → Prisma DB (internal update)  ·  Overpass API (fallback hotel search, free)  ·  No external booking 
+API needed 
+ 
+#18  AI Agent Full Auto-Rebook 
+WHAT IT DOES 
+USER IMPACT 
+HOW TO BUILD 
+Complete autonomous loop: 
+cancellation detected → best 
+alternative found + booked → 
+hotel shifted → cab rescheduled 
+→ itinerary rebuilt → complete 
+new day plan pushed to user. 
+User receives one notification 
+when everything is done. 
+Today: cancellation = 45+ 
+minutes of stress. TripMind: one 
+tap to confirm what the agent 
+already fixed. This is the core 
+product promise in its most 
+complete form. 
+1. Chain use-cases: 
+TriggerShield → selectBest → 
+updateHotel → updateCab → 
+rebuildItinerary. 2. Run as async 
+pipeline with WebSocket status 
+events to UI. 3. UI: Flight ✓ → 
+Hotel ✓ → Cab ✓ → Itinerary ✓ 
+progress animation. 4. On 
+completion: push full 
+DisruptionResolution to UI. 
+STACK → Node.js async pipeline  ·  WebSocket (progress)  ·  Ollama LLM (rebuild itinerary)  ·  Prisma DB 
+ 
+#19  QR Confirm / Cancel  ← THIS IS THE DEMO MOMENT 
+WHAT IT DOES 
+USER 
+IMPACT 
+HOW TO BUILD 
+After disruption 
+resolution: 
+boarding-pass-
+styled QR card 
+slides up from 
+bottom. QR 
+encodes 
+confirmation 
+URL with UUID 
+token. Two 
+buttons: 
+'Confirm & Pay 
+₹4,200' (amber) 
+and 'Cancel 
+booking' (red). 
+Fully generated 
+on-device. Zero 
+internet 
+required. 
+Every 
+competitor 
+ends their 
+disruption flow 
+with a form or 
+a phone call. 
+TripMind ends 
+it with a QR 
+and two 
+buttons. The 
+simplicity is 
+the message. 
+Judges 
+remember this 
+moment. 
+1. Generate UUID: crypto.randomUUID(). 2. Build URL: 
+tripmind.app/confirm/{token}?amount={X}&currency={Y}&flight={id}. 
+3. qrcode npm → QRCode.toDataURL(url) → base64 PNG. 4. 
+Render: 180×180 white QR left, booking summary right, dashed 
+divider, two buttons. 5. Confirm → POST 
+/api/disruption/confirm/{token} → status = confirmed. 6. Cancel → 
+POST /api/disruption/cancel/{token} → revert. 
+
+
+=== PAGE 14 ===
+TripMind PRD v1.0  ·  Page 14 of 25 
+STACK → qrcode npm (local, zero internet, zero cost)  ·  crypto.randomUUID() (Node.js built-in)  ·  Internal 
+API endpoints 
+ 
+#20  Instant Cancellation Guardian  ✦ FOUNDER'S STORY 
+WHAT IT DOES 
+USER IMPACT 
+HOW TO BUILD 
+Monitors ALL bookings 
+during the entire trip, 
+especially return flights. On 
+cancellation detected, 
+immediately holds 
+alternative seat and checks 
+payment balance before 
+auto-confirming. Single 
+notification: 'Return flight 
+cancelled. SQ422 held at 
+₹8,200 — confirm or cancel.' 
+This is the Sri Lanka 
+experience made 
+impossible. The alternative 
+is held before you see the 
+message. Your balance is 
+checked before you're 
+committed. The 45-minute 
+panic compressed into one 
+tap. 
+1. Cron job: poll all future FlightBookings 
+every 30min. 2. Detection: AviationStack 
+poll OR simulated webhook (demo: UI 
+button). 3. On cancellation: 
+MockFlightService.findAlternatives() → 
+hold best result. 4. Check 
+User.paymentBalance >= 
+alternative.price. 5. If ok: push QR 
+confirm card. 6. If insufficient: 'Alternative 
+costs ₹X, your balance ₹Y — add funds 
+first.' 
+STACK → AviationStack API (100 free/month)  ·  MockFlightService (offline fallback, always works)  ·  node-
+cron  ·  User.paymentBalance 
+ 
+#21  Full Itinerary Resend After Disruption 
+WHAT IT DOES 
+USER IMPACT 
+HOW TO BUILD 
+After any disruption resolves, 
+affected itinerary days are 
+completely rebuilt from scratch 
+around the new timeline — not 
+patched. LLM called with new 
+time constraints to produce a 
+coherent full day. Previous 
+version saved for undo. 
+A patched schedule with wrong 
+times is almost as stressful as 
+no schedule. A fully rebuilt 
+coherent plan is genuinely 
+reassuring. Being in control 
+when things go wrong is the 
+product's deepest promise. 
+1. After DisruptionResolution 
+confirmed: delete all events for 
+affected dates. 2. Ollama: 'Rebuild 
+day plan for {date}. User arrives 
+{location} at {newTime}. 
+Preferences: {prefs}. Return full 
+day JSON.' 3. Save to ItineraryDay 
+DB → push to UI with 'Itinerary 
+updated' banner. 4. 
+previousVersion saved in 
+ItineraryDay.previousVersion for 
+undo. 
+STACK → Ollama LLM (local, full day rebuild)  ·  Prisma DB (save + preserve previous)  ·  WebSocket (real-
+time push) 
+ 
+ 
+Section 5 — Technical Specifications 
+ 
+5.1  Architecture 
+Clean Architecture: domain → use cases → adapters → infrastructure. Offline-first. All AI 
+inference via Ollama (local). Frontend and backend are separate apps in a monorepo. 
+
+
+=== PAGE 15 ===
+TripMind PRD v1.0  ·  Page 15 of 25 
+ 
+System Layers 
+DOMAIN:         User, Trip, ItineraryDay, FlightBooking, HotelBooking, Expense — core entities, 
+no framework deps 
+USE CASES:      BuildItinerary, DetectCalendarGaps, TriggerDisruptionShield, 
+GenerateQRConfirmation, ScanExpense 
+ADAPTERS:       Controllers (HTTP) · Repositories (Prisma) · Services (Ollama, MockFlight, 
+QRCode, LibreTranslate) 
+INFRASTRUCTURE: Express server, SQLite/Postgres, JWT auth, rate limiting, i18n middleware, 
+WebSocket 
+FRONTEND:       React 18 + TypeScript + Vite + Tailwind CSS + Zustand + React Query + 
+Framer Motion + Leaflet 
+ 
+ 
+5.2  Full Tech Stack 
+Frontend 
+React 18 + TypeScript + Vite + Tailwind CSS (dark-mode first, 
+custom design tokens) 
+State management 
+Zustand (global state) + React Query (server state + caching) 
+Maps 
+Leaflet.js + OpenStreetMap tiles + Leaflet.heat plugin (heatmap) 
+Charts 
+Recharts (expense doughnut chart) 
+Animations 
+Framer Motion (QR card reveal, flight card stagger, disruption 
+banner) 
+i18n 
+i18next + react-i18next (EN, HI, ES, FR, JP) 
+Backend 
+Node.js + Express + TypeScript 
+ORM 
+Prisma (SQLite for demo → Postgres for production) 
+AI — cloud 
+Anthropic claude-sonnet-4-20250514 (if internet available) 
+AI — offline 
+Ollama — Llama 3.2 8B or Mistral 7B (local inference, zero cost, 
+fully offline) 
+Authentication 
+JWT: 15-min access token + 7-day refresh with rotation on every 
+use 
+Security 
+Helmet.js + express-rate-limit + CORS locked to FRONTEND_URL 
++ Zod env validation 
+QR generation 
+qrcode npm package (local, zero internet, zero cost) 
+Background jobs 
+node-cron (delay predictor polling, cancellation guardian monitoring) 
+Real-time 
+WebSocket (ws npm) — disruption pipeline progress + live itinerary 
+updates 
+
+
+=== PAGE 16 ===
+TripMind PRD v1.0  ·  Page 16 of 25 
+Testing 
+Jest + Supertest integration tests (70%+ use-case coverage) 
+ 
+5.3  Free API Stack (Zero Cost) 
+Open-Meteo 
+7-day weather forecast by lat/lng  ·  FREE  ·  No key  ·  Unlimited 
+calls 
+OpenStreetMap / 
+Nominatim 
+Geocoding + reverse geocoding + place search  ·  FREE  ·  No key 
+Overpass API 
+POI queries by coordinates + radius  ·  FREE  ·  No key 
+OpenSky Network 
+Live flight positions + delay history  ·  FREE  ·  No key 
+REST Countries 
+Country info: currency, capital, emergency numbers  ·  FREE  ·  No 
+key 
+Travelbriefing.org 
+Visa + health requirements by country pair  ·  FREE  ·  No key 
+ExchangeRate-API 
+Live currency conversion  ·  1,500 req/month FREE  ·  Free key 
+signup 
+Foursquare Places 
+Structured venue data, price tier  ·  1,000 req/day FREE  ·  Free key 
+signup 
+LibreTranslate 
+Full translation engine 30+ languages  ·  FREE  ·  Self-hosted 
+Docker  ·  Offline 
+AviationStack 
+Real flight status  ·  100 req/month FREE  ·  Free key signup 
+Google Photos API 
+Past trip photos for Memory Lane  ·  FREE  ·  OAuth required 
+qrcode npm package 
+QR generation  ·  FREE  ·  Fully local  ·  Zero network calls 
+ 
+5.4  Database Schema (Key Tables) 
+Prisma Schema Summary 
+User:          id(uuid), email(unique), name, preferredLang, tripPurpose, dietaryPref, seatPref, 
+paymentBalance, travelProfile(JSON) 
+Trip:          id(uuid), userId→User, destination, startDate, endDate, 
+status(active|disrupted|completed) 
+ItineraryDay:  id(uuid), tripId→Trip, date, events(JSON), freeGaps(JSON), 
+previousVersion(JSON) 
+FlightBooking: id(uuid), tripId→Trip, flightNumber, origin, dest, departure, arrival, airline, status, 
+confirmCode 
+HotelBooking:  id(uuid), tripId→Trip, hotelName, checkIn, checkOut, confirmCode, status 
+Expense:       id(uuid), userId→User, tripId, amount, currency, category, description, receiptText, 
+date 
+
+
+=== PAGE 17 ===
+TripMind PRD v1.0  ·  Page 17 of 25 
+DisruptionLog: id(uuid), tripId→Trip, flightId, type, detectedAt, resolvedAt, resolution(JSON) 
+ 
+ALL tables: UUID primary keys · created_at + updated_at timestamps · explicit indexes on all FK 
+columns 
+ 
+ 
+5.5  API Endpoint Reference 
+POST /api/auth/register 
+Create account  ·  Public 
+POST /api/auth/login 
+Get JWT tokens  ·  Public 
+POST /api/auth/refresh 
+Rotate refresh token  ·  Refresh token header 
+POST /api/trips 
+Create new trip  ·  JWT required 
+GET  /api/trips/:id/itinerary 
+Fetch current itinerary  ·  JWT 
+POST /api/itinerary/build 
+Generate itinerary from saves + calendar  ·  JWT 
+POST /api/itinerary/gap-
+suggestions 
+Get suggestions for detected calendar gaps  ·  JWT 
+POST /api/disruption/trigger 
+Trigger Disruption Shield  ·  JWT 
+POST 
+/api/disruption/confirm/:token 
+Confirm rebooking via QR token  ·  Token only 
+POST 
+/api/disruption/cancel/:token 
+Cancel rebooking via QR token  ·  Token only 
+POST /api/expense/scan 
+Extract expense from receipt text  ·  JWT 
+GET  
+/api/expense/report/:tripId 
+Get full trip expense report  ·  JWT 
+GET  /api/checklist/:tripId 
+Visa + packing checklist  ·  JWT 
+POST /api/translate 
+Translate text to target language  ·  JWT 
+ 
+ 
+Section 6 — UX & Design Specifications 
+ 
+6.1  Design System 
+Background layers 
+#090C14 (page) · #0F1320 (card) · #161B2E (elevated card/input) 
+
+
+=== PAGE 18 ===
+TripMind PRD v1.0  ·  Page 18 of 25 
+Accent colour 
+#F59E0B (amber) — ONLY for primary buttons, active states, and 
+logo text. Sacred. 
+Text colours 
+#F0F2F8 (primary) · #8892A4 (secondary) · #4A5568 (muted) 
+Typography 
+Syne 700/800 for headings · DM Sans 400/500 for body. Load from 
+Google Fonts. 
+Borders 
+0.5px solid rgba(255,255,255,0.06) everywhere. Defines structure. 
+No box shadows. 
+Border radius 
+8px chips · 10px buttons/inputs · 12px cards · 16px large panels · 
+9999px pill badges 
+Motion 
+CSS 150–200ms ease-out. Hover: translateY(-1px). Framer Motion 
+for QR card slide-up reveal. 
+Icons 
+Lucide React exclusively. 16px body · 18px headers. No emoji in 
+components. 
+ 
+6.2  Page Specifications 
+/onboarding 
+• 
+Language selector: 5 pill buttons (🇬🇧 EN · 🇮🇳 HI · 🇪🇸 ES · 🇫🇷 FR · 🇯🇵 JP) 
+• 
+Trip purpose toggle: large Business / Leisure pill toggle 
+• 
+Preferences: dietary pref + seat preference inputs 
+• 
+Staggered entrance animation (Framer Motion) 
+• 
+Saves to localStorage + User.preferredLang + User.tripPurpose in DB 
+ 
+/dashboard — Main Trip View 
+• 
+Sticky topbar 56px: backdrop-blur + TripMind logo + nav tabs (Lucide icons) + language 
+switcher + user avatar 
+• 
+Left sidebar 200px: trip header + days remaining (Syne 700 32px amber) + day selector 
+• 
+Stats chips row: Flights / Hotels / Status as compact chips below page title 
+• 
+Itinerary timeline: vertical connector line between cards + left time column + type icon 
+circle + content 
+• 
+Event type colours: activity=purple · food=green · break=amber · meeting=blue · 
+transport=violet 
+• 
+Breathing room events: amber left-border + 'Breathing room' amber pill badge 
+• 
+Gap suggestion cards: amber left-border + 'Suggested for you' badge 
+ 
+/disruption — Disruption Shield Demo Page 
+• 
+Current flight card with status indicator dot 
+• 
+'Simulate Disruption' button — triggers the full choreographed sequence 
+• 
+Red disruption banner: AlertTriangle icon + pulse animation 
+
+
+=== PAGE 19 ===
+TripMind PRD v1.0  ·  Page 19 of 25 
+• 
+3 flight alternative cards: stagger-in from right with 80ms delay between each 
+• 
+Selected card: amber border glow + 'Best match' pill + subtle background gradient 
+• 
+Updated hotel check-in + cab time displayed below 
+• 
+QR card: slides up from bottom (Framer Motion translateY). Boarding-pass layout. 
+Dashed divider. 'Confirm & Pay' amber + 'Cancel' red ghost. 
+ 
+/expenses — Expense AI 
+• 
+Receipt textarea: monospace font (DM Mono) · dashed amber-focus border · 'Paste 
+receipt text here...' placeholder 
+• 
+Scan button: amber primary full width 
+• 
+Expense card list: category icon circle (colour-coded) + amount right-aligned (Syne 600) 
++ category pill 
+• 
+Summary donut: Recharts · no axis lines · legend 2-column grid below 
+• 
+Export CSV button: tertiary ghost 
+ 
+ 
+Section 7 — Non-Functional Requirements 
+ 
+7.1  Performance Targets 
+Disruption Shield 
+response 
+Full DisruptionResolution object in < 3 seconds (mocked LLM for 
+demo) 
+Itinerary generation 
+Complete 3-day itinerary in < 30 seconds 
+Language switch 
+Full UI re-render in < 100ms 
+QR card generation 
+Rendered in < 500ms (local generation, zero network) 
+Page load 
+< 3 seconds on standard laptop WiFi 
+Mobile 
+All pages fully functional at 375px minimum viewport width 
+ 
+7.2  Security Requirements 
+Secrets 
+All keys via .env. Zod validation at startup. Server exits with 
+readable error if any key missing. 
+Auth 
+JWT 15-min access + 7-day refresh. Refresh token rotated on every 
+use. Stored in DB. 
+Rate limiting 
+100 req/15min general · 10 req/min disruption · 5 req/15min auth 
+endpoints 
+
+
+=== PAGE 20 ===
+TripMind PRD v1.0  ·  Page 20 of 25 
+SQL injection 
+Parameterised queries only via Prisma ORM. Zero raw string 
+interpolation in SQL. 
+CORS 
+Locked to FRONTEND_URL env var. No wildcard origin. 
+Secrets in git 
+Zero tolerance. .env.example provided. .env in .gitignore. CI check 
+enforced. 
+ 
+7.3  Demo Resilience (Critical) 
+The Demo Must Never Fail 
+Every feature has an offline fallback: 
+  · LLM unavailable → fallback to pre-built itineraries (5 cities × 3 days static JSON) 
+  · Flights API unavailable → MockFlightService (30 flights, 6 routes, static JSON, always works) 
+  · Translation API down → MyMemory free fallback or cached translations 
+  · Weather API down → cached forecast or gracefully omitted from context 
+  · QR generation → local npm package, zero network dependency, cannot fail 
+ 
+The Disruption Shield 90-second demo sequence must work 100% offline on a laptop. 
+Test it with WiFi off before submitting. Test it again the morning of the presentation. 
+ 
+ 
+ 
+Section 8 — Implementation Plan 
+ 
+8.1  48-Hour Hackathon Build Sprint 
+Hours 0–4 
+Monorepo scaffold. Prisma schema + migrations. Express + JWT. 
+React + Tailwind + i18next bootstrap. 
+Hours 4–8 
+MockFlightService (30 flights JSON). OllamaItineraryService with 
+fallback JSON. Auth endpoints (register/login/refresh). 
+Hours 8–14 
+TriggerDisruptionShield use-case (the core). QR generation. Hotel + 
+cab time-shift logic. Disruption controller. 
+Hours 14–20 
+Itinerary controller. Calendar gap detector. Social save ingestor. 
+Expense AI endpoint. 
+
+
+=== PAGE 21 ===
+TripMind PRD v1.0  ·  Page 21 of 25 
+Hours 20–28 
+Dashboard UI. Itinerary timeline component. Event cards with type 
+icons and breathing room badges. 
+Hours 28–36 
+Disruption Shield UI page. Flight card stagger animation. QR card 
+slide-up reveal. Framer Motion choreography. 
+Hours 36–42 
+Onboarding, Expenses, Login pages. Language switcher. Heatmap 
+component (Leaflet). 
+Hours 42–46 
+Integration testing. Seed demo data (Singapore trip + SQ421 flight). 
+Run 90-second demo script 3 times. 
+Hours 46–48 
+UI polish. Console error fixes. Mobile responsive check. README + 
+demo script finalised. 
+ 
+8.2  Complete Folder Structure 
+Monorepo File Architecture 
+tripmind/ 
+├── apps/ 
+│   ├── web/src/ 
+│   │   ├── components/ui/           ← Design system (Button, Card, Badge, Input) 
+│   │   ├── components/itinerary/    ← Module 1 UI (Timeline, EventCard, GapSuggestion) 
+│   │   ├── components/disruption/  ← Module 3 UI (FlightCard, QRCard, DisruptionBanner) 
+│   │   ├── pages/Dashboard.tsx     ← Main trip view 
+│   │   ├── pages/Disruption.tsx    ← Disruption Shield demo page 
+│   │   ├── pages/Onboarding.tsx    ← Language + preferences setup 
+│   │   ├── pages/Expenses.tsx      ← Expense AI page 
+│   │   ├── stores/                 ← Zustand state stores 
+│   │   ├── i18n/                   ← en.json hi.json es.json fr.json ja.json 
+│   │   └── lib/api.ts              ← Typed Axios API client 
+│   └── api/src/ 
+│       ├── domain/entities/        ← Trip.ts, User.ts, FlightBooking.ts, etc. 
+│       ├── domain/interfaces/      ← IItineraryService.ts, IFlightService.ts, etc. 
+│       ├── use-cases/              ← BuildItinerary, TriggerDisruptionShield, etc. 
+│       ├── adapters/repositories/  ← PrismaTripRepository.ts, etc. 
+│       ├── adapters/services/      ← OllamaService, MockFlightService, QRCodeService 
+│       ├── adapters/controllers/   ← itinerary.controller, disruption.controller 
+│       ├── infrastructure/         ← server.ts, config.ts, middleware/ 
+│       ├── data/                   ← fallbackItineraries.json, mockFlights.json 
+
+
+=== PAGE 22 ===
+TripMind PRD v1.0  ·  Page 22 of 25 
+│       └── __tests__/              ← Jest integration tests 
+├── prisma/schema.prisma 
+├── .env.example 
+└── README.md 
+ 
+ 
+8.3  Environment Variables (.env.example) 
+Required + Optional Environment Variables 
+# LLM — choose one 
+ANTHROPIC_API_KEY=your_key_here              # Cloud Claude (faster responses) 
+OLLAMA_BASE_URL=http://localhost:11434        # Offline Ollama (zero cost) 
+OLLAMA_MODEL=llama3.2                        # or mistral, phi3, gemma3 
+ 
+# Database 
+DATABASE_URL=file:./dev.db                   # SQLite for demo 
+ 
+# Auth — MUST be 32+ characters each 
+JWT_SECRET=your_minimum_32_character_secret_here 
+JWT_REFRESH_SECRET=your_other_32_character_secret 
+ 
+# External APIs (all optional — mocks work without them) 
+FOURSQUARE_API_KEY=optional_free_signup 
+EXCHANGE_RATE_API_KEY=optional_free_signup 
+AVIATION_STACK_KEY=optional_100_free_per_month 
+ 
+# Server 
+FRONTEND_URL=http://localhost:5173 
+PORT=3001 
+ 
+ 
+ 
+Section 9 — The 90-Second Demo Script 
+
+
+=== PAGE 23 ===
+TripMind PRD v1.0  ·  Page 23 of 25 
+ 
+This is the exact sequence to follow on stage. Practice it 3 times minimum before presenting. 
+Every step builds toward the QR card reveal — the moment judges will remember. 
+ 
+Opening Line — Say This Before Showing Anything 
+"Last year, I was in Sri Lanka enjoying my trip when I got a message: my return flight was 
+cancelled. 
+ I was lucky — I had money to rebook. Most people aren't. 
+ That 45-minute panic of fixing 6 things alone in a foreign country — that's the problem TripMind 
+eliminates." 
+ 
+ 
+Step-by-Step Sequence 
+Step 1 — 10 sec 
+Open /onboarding. Select Hindi. Select Business. Pause — show all 
+text re-rendered in Hindi. Say: 'Five languages. Works for 5 billion 
+non-English speakers.' 
+Step 2 — 20 sec 
+Navigate to /dashboard. Show Singapore trip. Point at amber-
+bordered gap cards: 'This 45-minute gap between your 9 AM and 1 
+PM meeting — the assistant found a spot 12 minutes away.' 
+Step 3 — 10 sec 
+Point at the Breathing Room event at 17:30: 'The system detected 
+Day 1 was over-packed. It inserted this recovery window 
+automatically.' 
+Step 4 — 5 sec 
+Navigate to /disruption. Show flight card: SQ421 BOM→SIN, 06:00 
+departure. 
+Step 5 — 15 sec 
+Press 'Simulate Disruption'. Let the animation play. Red banner → 
+three flight cards stagger in → SQ423 auto-selected with amber 
+glow. Don't narrate. Let them watch. 
+Step 6 — 10 sec 
+Point: 'Hotel check-in automatically shifted from 14:00 to 20:30. Cab 
+rescheduled from 13:30 to 19:15. Zero phone calls made.' 
+Step 7 — 10 sec 
+THE MOMENT: QR card slides up. Say: 'This is what arrives on 
+your phone. One QR. Two buttons. Confirm and pay, or cancel. No 
+airline app. No hold music. One tap.' 
+Step 8 — 5 sec 
+Switch language to Japanese mid-demo. All text re-renders. 'This is 
+what 5 billion non-English speakers have needed.' 
+Step 9 — 5 sec 
+Navigate to /expenses. Paste sample receipt. Show auto-
+categorisation. '63% of business travellers say expense reports are 
+their most hated task. This eliminates it.' 
+ 
+Closing Line 
+
+
+=== PAGE 24 ===
+TripMind PRD v1.0  ·  Page 24 of 25 
+"TripMind is the first travel assistant that builds your trip from your own saved content, 
+ speaks your language from day one, and fixes everything when it breaks — before you even 
+panic. 
+ All you get is a QR. Tap pay or cancel." 
+ 
+ 
+ 
+Section 10 — Risk Assessment & Final Checklist 
+ 
+10.1  Technical Risks 
+Risk 
+Mitigation 
+Ollama LLM too slow for 
+90-second demo 
+Pre-generate demo itinerary + cache it. Disruption Shield uses 
+MockFlightService (instant). LLM called off-screen. 
+Flight API unavailable on 
+demo day 
+MockFlightService is primary for demo. 30 flights, 6 routes, 100% 
+offline. AviationStack optional. 
+Demo WiFi fails 
+completely 
+Entire product is offline-first. Ollama local, LibreTranslate Docker, 
+Open-Meteo cacheable, QR local. 
+Animation breaks 
+Framer Motion fallback to CSS transition only. QR is local and 
+cannot fail. 
+i18n switch performance 
+i18next language switch is synchronous in memory. < 100ms. Zero 
+network call. 
+ 
+10.2  Presentation Risks 
+Risk 
+Mitigation 
+Judges don't follow the 
+Disruption Shield flow 
+QR card is physically intuitive. Everyone understands 'pay or 
+cancel.' No explanation needed. 
+Too many features, 
+judges remember none 
+Lead with the Sri Lanka story. Story creates emotional context. 
+Features are evidence. 
+Live demo crashes 
+Screen-recorded backup video of the full 90-second flow. Narrate 
+over it. Never skip the demo. 
+ 
+10.3  Pre-Submission Quality Checklist 
+
+
+=== PAGE 25 ===
+TripMind PRD v1.0  ·  Page 25 of 25 
+Run every command. Read every output. Do not mark anything complete without evidence. 
+ 
+Final Build Verification — Complete Every Item 
+[ ] npm run dev starts both frontend + backend without any console errors 
+[ ] All 4 pages render at localhost:5173 (Onboarding, Dashboard, Disruption, Expenses) 
+[ ] POST /api/disruption/trigger returns valid DisruptionResolution in < 3 seconds 
+[ ] Language switch re-renders all UI text correctly in all 5 languages (EN/HI/ES/FR/JP) 
+[ ] QR card renders with a scannable QR code on disruption trigger 
+[ ] npm test shows 0 failures across all integration tests 
+[ ] Server refuses to start without required env vars (ANTHROPIC_API_KEY or 
+OLLAMA_BASE_URL) 
+[ ] 90-second demo script executed end-to-end without error or pause 
+[ ] Mobile view at 375px viewport renders without horizontal scroll 
+[ ] Zero hardcoded secrets in any source file (run: grep -r 'sk-' . --include='*.ts') 
+[ ] Zero console errors in browser dev tools during the full demo flow 
+[ ] All 21 features work in offline mode: WiFi off, Ollama running, LibreTranslate Docker up 
+[ ] README includes: setup instructions + .env.example + 90-second demo script 
+[ ] Seed data loaded: Singapore trip with SQ421 flight ready to be disrupted 
+ 
+ 
+Document Summary 
+Product 
+TripMind — AI Travel Companion 
+Domain 
+Domain 2: Travel — Intelligent & Personalized Experiences 
+Hackathon 
+Round 1: 19 March 2026  ·  Grand Finale: 25 March 2026 
+Total features 
+21 features across 3 modules 
+Newly added 
+4 new features including 1 from founder's Sri Lanka experience 
+Cost 
+₹0 / $0 — zero paid APIs, entire stack runs free and offline 
+Demo differentiator 
+Disruption Shield QR card — offline, one tap, judges remember it 
+Founder story 
+Sri Lanka return cancellation → Feature #20: Instant Cancellation 
+Guardian 
+Document version 
+v1.0  ·  Approved  ·  19 March 2026 
+ 
+TripMind  ·  Complete PRD + Context + Build Specification  ·  v1.0  ·  March 2026 
+
+

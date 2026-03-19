@@ -8,47 +8,53 @@ datasource db {
 }
 
 model User {
-  id             String    @id @default(uuid())
-  email          String    @unique
-  name           String
-  passwordHash   String
-  preferredLang  String    @default("en")
-  tripPurpose    String    @default("leisure")
-  dietaryPref    String?
-  seatPreference String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  trips          Trip[]
-  expenses       Expense[]
+  id              String    @id @default(uuid())
+  email           String    @unique
+  name            String
+  passwordHash    String
+  preferredLang   String    @default("en")
+  tripPurpose     String    @default("leisure")
+  dietaryPref     String?
+  seatPreference  String?
+  passportCountry String?
+  paymentBalance  Float     @default(10000)
+  travelProfile   String    @default("{}")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  trips           Trip[]
+  expenses        Expense[]
 }
 
 model Trip {
-  id          String         @id @default(uuid())
+  id          String          @id @default(uuid())
   userId      String
-  user        User           @relation(fields: [userId], references: [id])
+  user        User            @relation(fields: [userId], references: [id])
   destination String
   startDate   DateTime
   endDate     DateTime
-  status      String         @default("active")
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  status      String          @default("active")
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   itinerary   ItineraryDay[]
   flights     FlightBooking[]
   hotels      HotelBooking[]
+  cabs        CabBooking[]
+  disruptions DisruptionLog[]
 
   @@index([userId])
   @@index([status])
 }
 
 model ItineraryDay {
-  id        String   @id @default(uuid())
-  tripId    String
-  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  date      DateTime
-  events    String   @default("[]")
-  freeGaps  String   @default("[]")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(uuid())
+  tripId          String
+  trip            Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  date            DateTime
+  events          String   @default("[]")
+  freeGaps        String   @default("[]")
+  previousVersion String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@index([tripId])
   @@index([date])
@@ -66,6 +72,7 @@ model FlightBooking {
   airline          String
   status           String   @default("confirmed")
   price            Float    @default(0)
+  seatClass        String   @default("economy")
   confirmationCode String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -83,8 +90,23 @@ model HotelBooking {
   checkOut         DateTime
   confirmationCode String?
   status           String   @default("confirmed")
+  latestCheckIn    String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+
+  @@index([tripId])
+}
+
+model CabBooking {
+  id         String   @id @default(uuid())
+  tripId     String
+  trip       Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  pickup     String
+  dropoff    String
+  pickupTime DateTime
+  status     String   @default("confirmed")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([tripId])
 }
@@ -103,5 +125,19 @@ model Expense {
   createdAt   DateTime @default(now())
 
   @@index([userId])
+  @@index([tripId])
+}
+
+model DisruptionLog {
+  id          String   @id @default(uuid())
+  tripId      String
+  trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  flightId    String
+  type        String
+  detectedAt  DateTime @default(now())
+  resolvedAt  DateTime?
+  resolution  String   @default("{}")
+  createdAt   DateTime @default(now())
+
   @@index([tripId])
 }

@@ -1,84 +1,72 @@
-import { config } from '../infrastructure/config';
+import { IExpenseService } from '../domain/interfaces';
 
 export class ScanExpenseReceipt {
-  async execute(params: { receiptText: string; lang: string }): Promise<{
-    amount: number;
-    currency: string;
-    category: string;
-    description: string;
-  }> {
-    const prompt = `Extract expense details from this receipt text. Respond ONLY in valid JSON with no explanation.
+  constructor(private expenseService?: IExpenseService) {}
 
-Receipt text:
-${params.receiptText}
-
-Response schema:
-{
-  "amount": 0.00,
-  "currency": "USD",
-  "category": "food|transport|accommodation|activity|other",
-  "description": "Brief description of the expense"
-}`;
-
+  async execute(params: {
+    receiptText: string;
+    lang: string;
+  }): Promise<{ amount: number; currency: string; category: string; description: string; date?: string }> {
     try {
-      const response = await fetch(`${config.OLLAMA_BASE_URL}/v1/chat/completions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: config.OLLAMA_MODEL,
-          messages: [{ role: 'user', content: prompt }],
-          temperature: 0.3,
-          stream: false,
-        }),
-      });
-
-      if (!response.ok) {
-        return this.fallbackParse(params.receiptText);
+      if (this.expenseService) {
+        return await this.expenseService.scanReceipt(params.receiptText, params.lang);
       }
-
-      const data = await response.json();
-      const rawText = data.choices?.[0]?.message?.content || '';
-
-      try {
-        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) return this.fallbackParse(params.receiptText);
-        const parsed = JSON.parse(jsonMatch[0]);
-        return {
-          amount: typeof parsed.amount === 'number' ? parsed.amount : 0,
-          currency: parsed.currency || 'USD',
-          category: parsed.category || 'other',
-          description: parsed.description || 'Expense',
-        };
-      } catch {
-        return this.fallbackParse(params.receiptText);
-      }
-    } catch {
-      return this.fallbackParse(params.receiptText);
+      return this.regexFallback(params.receiptText);
+    } catch (error) {
+      // Regex fallback parsing
+      return this.regexFallback(params.receiptText);
     }
   }
 
-  private fallbackParse(text: string): { amount: number; currency: string; category: string; description: string } {
-    const amountMatch = text.match(/[\$€£¥₹]?\s*(\d+[.,]?\d{0,2})/);
-    const amount = amountMatch ? parseFloat(amountMatch[1].replace(',', '.')) : 0;
+  private regexFallback(text: string): { amount: number; currency: string; category: string; description: string; date?: string } {
+    // Try to extract amount
+    const amountPatterns = [
+      /(?:total|amount|grand\s*total|net|due)[:\s]*[₹$€£¥]?\s*([\d,]+\.?\d*)/i,
+      /[₹$€£¥]\s*([\d,]+\.?\d*)/,
+      /([\d,]+\.?\d*)\s*(?:USD|EUR|GBP|INR|JPY)/i,
+    ];
 
+    let amount = 0;
+    for (const pattern of amountPatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        amount = parseFloat(match[1].replace(/,/g, ''));
+        break;
+      }
+    }
+    if (!amount) {
+      const nums = text.match(/\d+\.?\d*/g);
+      if (nums) {
+        const sorted = nums.map(Number).sort((a, b) => b - a);
+        amount = sorted[0] || 0;
+      }
+    }
+
+    // Currency detection
     let currency = 'USD';
-    if (text.includes('€')) currency = 'EUR';
-    else if (text.includes('£')) currency = 'GBP';
-    else if (text.includes('¥')) currency = 'JPY';
-    else if (text.includes('₹')) currency = 'INR';
+    if (/₹|INR|rupee/i.test(text)) currency = 'INR';
+    else if (/€|EUR/i.test(text)) currency = 'EUR';
+    else if (/£|GBP/i.test(text)) currency = 'GBP';
+    else if (/¥|JPY|yen/i.test(text)) currency = 'JPY';
+    else if (/\$|USD/i.test(text)) currency = 'USD';
 
+    // Category detection
     let category = 'other';
-    const lowerText = text.toLowerCase();
-    if (lowerText.match(/restaurant|cafe|food|lunch|dinner|breakfast|coffee/)) category = 'food';
-    else if (lowerText.match(/taxi|uber|grab|bus|train|metro|flight/)) category = 'transport';
-    else if (lowerText.match(/hotel|hostel|airbnb|room|stay|booking/)) category = 'accommodation';
-    else if (lowerText.match(/ticket|museum|tour|entry|admission/)) category = 'activity';
+    const lower = text.toLowerCase();
+    if (/restaurant|food|café|cafe|coffee|lunch|dinner|breakfast|meal|pizza|burger|sushi|ramen/i.test(lower)) category = 'food';
+    else if (/taxi|cab|uber|grab|lyft|bus|train|metro|flight|airport|transport/i.test(lower)) category = 'transport';
+    else if (/hotel|hostel|airbnb|inn|resort|lodge|accommodation|check.?in/i.test(lower)) category = 'accommodation';
+    else if (/museum|tour|ticket|park|attraction|temple|show|concert|activity/i.test(lower)) category = 'activity';
 
-    return {
-      amount,
-      currency,
-      category,
-      description: text.substring(0, 100).trim(),
-    };
+    // Description
+    const firstLine = text.split('\n').filter(l => l.trim())[0] || 'Scanned receipt';
+    const description = firstLine.substring(0, 100).trim();
+
+    // Date detection
+    let date: string | undefined;
+    const dateMatch = text.match(/(\d{4}[-/]\d{2}[-/]\d{2})|(\d{2}[-/]\d{2}[-/]\d{4})/);
+    if (dateMatch) date = dateMatch[0];
+
+    return { amount, currency, category, description, date };
   }
 }

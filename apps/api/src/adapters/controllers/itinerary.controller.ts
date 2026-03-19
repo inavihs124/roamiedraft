@@ -48,7 +48,7 @@ router.post('/build', authMiddleware, async (req: AuthRequest, res: Response) =>
 
 router.get('/days/:tripId', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const days = await tripRepo.findItineraryDays(req.params.tripId);
+    const days = await tripRepo.findItineraryDays(req.params.tripId as string);
     res.json({ days });
   } catch {
     res.status(500).json({ error: 'Failed to fetch itinerary', code: 'SERVER_ERROR' });

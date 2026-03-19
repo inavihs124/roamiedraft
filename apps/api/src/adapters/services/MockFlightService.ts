@@ -1,96 +1,85 @@
 import { IFlightService } from '../../domain/interfaces';
 import { AlternativeFlight } from '../../domain/entities';
-import flightData from '../../data/flights.json';
-
-interface FlightRecord {
-  flightNumber: string;
-  airline: string;
-  origin: string;
-  destination: string;
-  departure: string;
-  arrival: string;
-  duration: string;
-  price: number;
-  seatsAvailable: number;
-  amenities: string[];
-}
+import flightsData from '../../data/flights.json';
 
 export class MockFlightService implements IFlightService {
-  private flights: FlightRecord[];
-
-  constructor() {
-    this.flights = flightData.flights;
-  }
-
   async findAlternatives(
     origin: string,
     destination: string,
     date: Date,
-    preferences?: { seatPreference?: string }
+    preferences?: { seatPreference?: string; originalPrice?: number }
   ): Promise<AlternativeFlight[]> {
-    const matchingFlights = this.flights.filter(
-      (f) =>
-        f.origin.toUpperCase() === origin.toUpperCase() &&
-        f.destination.toUpperCase() === destination.toUpperCase() &&
-        f.seatsAvailable > 0
-    );
+    const depDate = new Date(date);
+    const minTime = new Date(depDate.getTime() - 6 * 60 * 60 * 1000);
+    const maxTime = new Date(depDate.getTime() + 12 * 60 * 60 * 1000);
 
-    if (matchingFlights.length === 0) {
-      const anyFlights = this.flights
-        .filter((f) => f.seatsAvailable > 0)
-        .slice(0, 3);
-      return anyFlights.map((f) => this.toAlternativeFlight(f, date));
-    }
+    const candidates = (flightsData as any[])
+      .filter((f) => {
+        const dep = new Date(f.departureTime);
+        return (
+          f.origin === origin &&
+          f.destination === destination &&
+          dep >= minTime &&
+          dep <= maxTime &&
+          f.seatsAvailable > 0
+        );
+      })
+      .map((f) => {
+        const dep = new Date(f.departureTime);
+        const arr = new Date(f.arrivalTime);
+        const durationMs = arr.getTime() - dep.getTime();
+        const hours = Math.floor(durationMs / (1000 * 60 * 60));
+        const mins = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
 
-    const scored = matchingFlights.map((f) => {
-      const depTime = this.parseTime(f.departure);
-      const timeDiffScore = Math.abs(depTime - 12) / 24;
-      const priceScore = f.price / 2000;
-      const seatMatch =
-        preferences?.seatPreference && f.amenities.includes('wifi') ? 0 : 0.5;
+        return {
+          flightNumber: f.flightNumber,
+          airline: f.airline,
+          origin: f.origin,
+          destination: f.destination,
+          departureTime: dep,
+          arrivalTime: arr,
+          price: f.price,
+          duration: `${hours}h ${mins}m`,
+          seatsAvailable: f.seatsAvailable,
+          seatClass: f.seatClass || 'economy',
+          amenities: f.amenities || [],
+        } as AlternativeFlight;
+      });
 
-      const score =
-        0.4 * (1 - timeDiffScore) + 0.3 * (1 - priceScore) + 0.3 * (1 - seatMatch);
+    // Score each candidate: 40% arrival earliness + 30% price + 30% seat match
+    const origPrice = preferences?.originalPrice || candidates[0]?.price || 15000;
+    const seatPref = preferences?.seatPreference?.toLowerCase() || 'any';
 
-      return { flight: f, score };
+    const scored = candidates.map((f) => {
+      // Arrival earliness: earlier is better (normalize to 0–1)
+      const arrivalMs = f.arrivalTime.getTime();
+      const allArrivals = candidates.map((c) => c.arrivalTime.getTime());
+      const earliest = Math.min(...allArrivals);
+      const latest = Math.max(...allArrivals);
+      const arrivalRange = latest - earliest || 1;
+      const arrivalEarliness = 1 - (arrivalMs - earliest) / arrivalRange;
+
+      // Price delta: closer to original price is better
+      const priceDelta = Math.abs(f.price - origPrice) / origPrice;
+      const priceScore = Math.max(0, 1 - priceDelta);
+
+      // Seat match
+      const seatMatch = seatPref === 'any' || seatPref === f.seatClass ? 1 : 0.3;
+
+      const score = 0.4 * arrivalEarliness + 0.3 * priceScore + 0.3 * seatMatch;
+
+      return {
+        ...f,
+        score: Math.round(score * 100) / 100,
+        scoreBreakdown: {
+          arrivalEarliness: Math.round(arrivalEarliness * 100),
+          priceDelta: Math.round(priceScore * 100),
+          seatMatch: Math.round(seatMatch * 100),
+        },
+      };
     });
 
-    scored.sort((a, b) => b.score - a.score);
-
-    return scored.slice(0, 3).map((s) => ({
-      ...this.toAlternativeFlight(s.flight, date),
-      score: Math.round(s.score * 100),
-    }));
-  }
-
-  private toAlternativeFlight(f: FlightRecord, date: Date): AlternativeFlight {
-    const depDate = new Date(date);
-    const [depH, depM] = f.departure.split(':').map(Number);
-    depDate.setHours(depH, depM, 0, 0);
-
-    const arrDate = new Date(date);
-    const [arrH, arrM] = f.arrival.split(':').map(Number);
-    arrDate.setHours(arrH, arrM, 0, 0);
-    if (arrDate <= depDate) {
-      arrDate.setDate(arrDate.getDate() + 1);
-    }
-
-    return {
-      flightNumber: f.flightNumber,
-      airline: f.airline,
-      origin: f.origin,
-      destination: f.destination,
-      departureTime: depDate,
-      arrivalTime: arrDate,
-      price: f.price,
-      duration: f.duration,
-      seatsAvailable: f.seatsAvailable,
-      amenities: f.amenities,
-    };
-  }
-
-  private parseTime(time: string): number {
-    const [h, m] = time.split(':').map(Number);
-    return h + m / 60;
+    scored.sort((a, b) => (b.score || 0) - (a.score || 0));
+    return scored.slice(0, 3);
   }
 }

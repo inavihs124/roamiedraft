@@ -1,150 +1,218 @@
 import { IItineraryService } from '../../domain/interfaces';
-import { TripContext, ItineraryPlan } from '../../domain/entities';
-import { config } from '../../infrastructure/config';
-import * as fallbackData from '../../data/fallbackItineraries.json';
-
-const fallbackItineraries: Record<string, any> = fallbackData as any;
+import { TripContext, ItineraryPlan, ItineraryEvent, FreeGap } from '../../domain/entities';
+import fallbackData from '../../data/fallbackItineraries.json';
 
 export class OllamaItineraryService implements IItineraryService {
   private baseUrl: string;
   private model: string;
 
   constructor() {
-    this.baseUrl = config.OLLAMA_BASE_URL;
-    this.model = config.OLLAMA_MODEL;
+    this.baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
+    this.model = process.env.OLLAMA_MODEL || 'llama3.2';
+  }
+
+  private buildContextPrompt(ctx: TripContext): string {
+    const parts = [
+      `You are a travel itinerary planner. Create a detailed day-by-day itinerary.`,
+      `Destination: ${ctx.destination}`,
+      `Dates: ${ctx.startDate} to ${ctx.endDate}`,
+      `Trip purpose: ${ctx.tripPurpose}`,
+    ];
+    if (ctx.energyLevel) parts.push(`Energy level: ${ctx.energyLevel}`);
+    if (ctx.timeOfDay) parts.push(`Time of day preference: ${ctx.timeOfDay}`);
+    if (ctx.dietaryPref) parts.push(`Dietary preferences: ${ctx.dietaryPref}`);
+    if (ctx.savedPlaces?.length) parts.push(`Must-visit places: ${ctx.savedPlaces.join(', ')}`);
+    if (ctx.calendarEvents?.length) {
+      parts.push(`Fixed calendar events (do not overlap):`);
+      ctx.calendarEvents.forEach(e => parts.push(`  - ${e.title}: ${e.start} to ${e.end}`));
+    }
+    if (ctx.weather?.daily?.length) {
+      parts.push(`Weather forecast:`);
+      ctx.weather.daily.forEach(d => parts.push(`  ${d.date}: ${d.description}, ${d.tempMin}-${d.tempMax}°C, ${d.precipitationProbability}% rain`));
+    }
+    parts.push(`Language: Respond entirely in ${ctx.lang === 'en' ? 'English' : ctx.lang}. Do not use English if another language is selected.`);
+    parts.push(`Return a valid JSON object with this structure:
+{
+  "days": [{ "date": "YYYY-MM-DD", "events": [{ "time": "HH:MM", "duration_minutes": N, "type": "activity|food|transport|break|meeting|sightseeing|shopping", "title": "...", "description": "...", "location": "...", "isGapSuggestion": false, "isBreathingRoom": false }], "freeGaps": [{ "start": "HH:MM", "end": "HH:MM", "durationMinutes": N }] }],
+  "documentChecklist": ["..."],
+  "culturalNudges": ["..."]
+}
+Return ONLY valid JSON, no markdown, no explanation.`);
+    return parts.join('\n');
   }
 
   async generateItinerary(context: TripContext): Promise<ItineraryPlan> {
-    const prompt = this.buildPrompt(context);
-
     try {
-      const response = await fetch(`${this.baseUrl}/v1/chat/completions`, {
+      const prompt = this.buildContextPrompt(context);
+      const response = await fetch(`${this.baseUrl}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: this.model,
-          messages: [{ role: 'user', content: prompt }],
-          temperature: 0.7,
-          stream: false,
-        }),
+        body: JSON.stringify({ model: this.model, prompt, stream: false, format: 'json' }),
+        signal: AbortSignal.timeout(60000),
       });
 
-      if (!response.ok) {
-        console.warn(`Ollama API returned ${response.status}, using fallback itinerary`);
-        return this.getFallback(context.destination, context);
+      if (!response.ok) throw new Error(`Ollama returned ${response.status}`);
+      const data: any = await response.json();
+      const text = data.response || '';
+      const parsed = JSON.parse(text);
+
+      // Apply breathing room optimizer
+      if (parsed.days) {
+        parsed.days = parsed.days.map((day: any) => ({
+          ...day,
+          events: this.applyBreathingRoom(day.events || []),
+          freeGaps: this.detectGaps(day.events || []),
+        }));
       }
 
-      const data = await response.json();
-      const rawText = data.choices?.[0]?.message?.content || '';
-
-      try {
-        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-          return this.getFallback(context.destination, context);
-        }
-        const parsed = JSON.parse(jsonMatch[0]);
-        return this.validateAndNormalize(parsed, context);
-      } catch {
-        console.warn('Failed to parse LLM response, using fallback');
-        return this.getFallback(context.destination, context);
-      }
+      return parsed as ItineraryPlan;
     } catch (error) {
-      console.warn('Ollama connection failed, using fallback itinerary:', (error as Error).message);
-      return this.getFallback(context.destination, context);
+      console.warn('Ollama unavailable, using fallback itinerary:', (error as Error).message);
+      return this.getFallbackItinerary(context);
     }
   }
 
-  private buildPrompt(context: TripContext): string {
-    return `You are TripMind, an expert AI travel companion. Respond ONLY in valid JSON.
-No preamble, no markdown fences, no explanation. Pure JSON.
+  private applyBreathingRoom(events: ItineraryEvent[]): ItineraryEvent[] {
+    const activityEvents = events.filter(e => e.type !== 'break' && e.type !== 'transport');
+    const totalMins = activityEvents.reduce((sum, e) => sum + (e.duration_minutes || 0), 0);
 
-User context:
-- Destination: ${context.destination}
-- Trip dates: ${context.startDate} to ${context.endDate}
-- Trip purpose: ${context.tripPurpose}
-- Saved places: ${JSON.stringify(context.savedPlaces)}
-- Calendar events: ${JSON.stringify(context.calendarEvents)}
-- Dietary preference: ${context.dietaryPref || 'none'}
-- Language: ${context.lang}
+    if (totalMins > 480 || activityEvents.length > 5) {
+      // Find the pair with the largest gap and insert a break
+      let maxGapIdx = 0;
+      let maxGap = 0;
+      for (let i = 0; i < events.length - 1; i++) {
+        const endMins = this.timeToMinutes(events[i].time) + (events[i].duration_minutes || 0);
+        const nextStart = this.timeToMinutes(events[i + 1].time);
+        const gap = nextStart - endMins;
+        if (gap > maxGap) { maxGap = gap; maxGapIdx = i + 1; }
+      }
 
-Build a complete day-by-day itinerary. Detect calendar gaps between existing events and suggest activities for those gaps. Insert breathing room on over-packed days (more than 5 activities in 8 hours). Generate a document checklist for the destination. Return the response in ${context.lang}.
-
-${context.tripPurpose === 'business' ? 'Bias suggestions toward co-working spaces, quick lunch spots, and gyms.' : 'Bias suggestions toward experiences, local food, and hidden gems.'}
-
-Response schema:
-{
-  "days": [
-    {
-      "date": "YYYY-MM-DD",
-      "events": [
-        {
-          "time": "HH:MM",
-          "duration_minutes": 60,
-          "type": "activity|food|transport|break|meeting",
-          "title": "...",
-          "description": "...",
-          "location": "...",
-          "isGapSuggestion": false,
-          "isBreathingRoom": false
-        }
-      ],
-      "freeGaps": [{"start": "HH:MM", "end": "HH:MM", "durationMinutes": 45}]
+      const hasBreak = events.some(e => e.isBreathingRoom);
+      if (!hasBreak && maxGapIdx > 0) {
+        const breakTime = this.minutesToTime(
+          this.timeToMinutes(events[maxGapIdx - 1].time) + (events[maxGapIdx - 1].duration_minutes || 0) + 5
+        );
+        const breakEvent: ItineraryEvent = {
+          time: breakTime,
+          duration_minutes: 30,
+          type: 'break',
+          title: 'Breathing Room',
+          description: 'Take a moment to relax. Grab a coffee, sit in a park, or just breathe.',
+          location: events[maxGapIdx - 1]?.location || 'Nearby',
+          isGapSuggestion: false,
+          isBreathingRoom: true,
+        };
+        events.splice(maxGapIdx, 0, breakEvent);
+      }
     }
-  ],
-  "documentChecklist": ["Passport (valid 6+ months)", "..."],
-  "culturalNudges": ["..."]
-}`;
+    return events;
   }
 
-  private validateAndNormalize(parsed: any, context: TripContext): ItineraryPlan {
-    if (!parsed.days || !Array.isArray(parsed.days)) {
-      return this.getFallback(context.destination, context);
+  private detectGaps(events: ItineraryEvent[]): FreeGap[] {
+    const gaps: FreeGap[] = [];
+    for (let i = 0; i < events.length - 1; i++) {
+      const endMins = this.timeToMinutes(events[i].time) + (events[i].duration_minutes || 0);
+      const nextStart = this.timeToMinutes(events[i + 1].time);
+      const gapMins = nextStart - endMins;
+      if (gapMins >= 30 && gapMins <= 90) {
+        gaps.push({
+          start: this.minutesToTime(endMins),
+          end: this.minutesToTime(nextStart),
+          durationMinutes: gapMins,
+        });
+      }
     }
-
-    return {
-      days: parsed.days.map((day: any) => ({
-        date: day.date || 'unknown',
-        events: Array.isArray(day.events) ? day.events.map((e: any) => ({
-          time: e.time || '09:00',
-          duration_minutes: e.duration_minutes || 60,
-          type: e.type || 'activity',
-          title: e.title || 'Activity',
-          description: e.description || '',
-          location: e.location || context.destination,
-          isGapSuggestion: e.isGapSuggestion || false,
-          isBreathingRoom: e.isBreathingRoom || false,
-        })) : [],
-        freeGaps: Array.isArray(day.freeGaps) ? day.freeGaps : [],
-      })),
-      documentChecklist: parsed.documentChecklist || [],
-      culturalNudges: parsed.culturalNudges || [],
-    };
+    return gaps;
   }
 
-  private getFallback(destination: string, context: TripContext): ItineraryPlan {
-    const cityKeys = Object.keys(fallbackItineraries);
-    const matchedCity = cityKeys.find(
-      (city) => destination.toLowerCase().includes(city.toLowerCase())
-    );
+  private timeToMinutes(t: string): number {
+    const [h, m] = (t || '09:00').split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
+  }
 
-    const fallback = matchedCity
-      ? (fallbackItineraries as any)[matchedCity]
-      : (fallbackItineraries as any)['Singapore'];
+  private minutesToTime(m: number): string {
+    const h = Math.floor(m / 60) % 24;
+    const min = m % 60;
+    return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+  }
 
-    const startDate = new Date(context.startDate);
-    const days = fallback.days.map((day: any, index: number) => {
-      const date = new Date(startDate);
-      date.setDate(date.getDate() + index);
-      return {
-        ...day,
-        date: date.toISOString().split('T')[0],
-      };
-    });
+  private getFallbackItinerary(ctx: TripContext): ItineraryPlan {
+    const dest = ctx.destination.toLowerCase();
+    const fallbacks = fallbackData as Record<string, any>;
+    const cityData = fallbacks[dest] || fallbacks['singapore'] || fallbacks[Object.keys(fallbacks)[0]];
+
+    if (!cityData) {
+      return this.generateGenericItinerary(ctx);
+    }
+
+    const start = new Date(ctx.startDate);
+    const end = new Date(ctx.endDate);
+    const numDays = Math.max(1, Math.min(7, Math.ceil((end.getTime() - start.getTime()) / 86400000)));
+
+    const days = [];
+    for (let i = 0; i < numDays; i++) {
+      const dayDate = new Date(start);
+      dayDate.setDate(dayDate.getDate() + i);
+      const dayKey = `day${i + 1}`;
+      const dayData = cityData.days?.[dayKey] || cityData.days?.day1;
+
+      if (dayData) {
+        const events = this.applyBreathingRoom(dayData.events || []);
+        days.push({
+          date: dayDate.toISOString().split('T')[0],
+          events,
+          freeGaps: this.detectGaps(events),
+        });
+      }
+    }
 
     return {
       days,
-      documentChecklist: fallback.documentChecklist || [],
-      culturalNudges: fallback.culturalNudges || [],
+      documentChecklist: cityData.documentChecklist || ['Passport', 'Visa (if required)', 'Travel insurance', 'Hotel confirmations'],
+      culturalNudges: cityData.culturalNudges || ['Respect local customs', 'Learn a few phrases in the local language'],
+    };
+  }
+
+  private generateGenericItinerary(ctx: TripContext): ItineraryPlan {
+    const start = new Date(ctx.startDate);
+    const end = new Date(ctx.endDate);
+    const numDays = Math.max(1, Math.min(7, Math.ceil((end.getTime() - start.getTime()) / 86400000)));
+    const isBusiness = ctx.tripPurpose === 'business';
+
+    const days = [];
+    for (let i = 0; i < numDays; i++) {
+      const dayDate = new Date(start);
+      dayDate.setDate(dayDate.getDate() + i);
+
+      const events: ItineraryEvent[] = isBusiness ? [
+        { time: '08:00', duration_minutes: 60, type: 'food', title: 'Hotel Breakfast', description: 'Start the day with a full breakfast at the hotel restaurant.', location: 'Hotel Restaurant', isGapSuggestion: false, isBreathingRoom: false },
+        { time: '09:30', duration_minutes: 180, type: 'meeting', title: 'Client Meeting', description: 'Scheduled meeting with the local team.', location: 'Business Center', isGapSuggestion: false, isBreathingRoom: false },
+        { time: '12:30', duration_minutes: 60, type: 'food', title: 'Working Lunch', description: 'Quick lunch nearby before the afternoon session.', location: 'Local Restaurant', isGapSuggestion: false, isBreathingRoom: false },
+        { time: '14:00', duration_minutes: 120, type: 'meeting', title: 'Afternoon Session', description: 'Follow-up meeting and planning session.', location: 'Business Center', isGapSuggestion: false, isBreathingRoom: false },
+        { time: '16:30', duration_minutes: 30, type: 'break', title: 'Breathing Room', description: 'Take a moment to decompress. Find a quiet café or take a short walk.', location: 'Nearby Café', isGapSuggestion: false, isBreathingRoom: true },
+        { time: '17:30', duration_minutes: 90, type: 'activity', title: `Explore ${ctx.destination}`, description: `Free time to explore the local area around your hotel in ${ctx.destination}.`, location: ctx.destination, isGapSuggestion: true, isBreathingRoom: false },
+        { time: '19:30', duration_minutes: 90, type: 'food', title: 'Dinner', description: 'Enjoy local cuisine at a recommended restaurant.', location: 'Local Restaurant', isGapSuggestion: false, isBreathingRoom: false },
+      ] : [
+        { time: '08:30', duration_minutes: 60, type: 'food', title: 'Breakfast', description: 'Start with a local breakfast experience.', location: 'Local Café', isGapSuggestion: false, isBreathingRoom: false },
+        { time: '10:00', duration_minutes: 150, type: 'sightseeing', title: `Morning Exploration`, description: `Visit the top sights of ${ctx.destination}. Take your time and enjoy the atmosphere.`, location: ctx.destination, isGapSuggestion: false, isBreathingRoom: false },
+        { time: '12:30', duration_minutes: 90, type: 'food', title: 'Local Lunch', description: 'Try the local cuisine at a popular spot.', location: 'Local Eatery', isGapSuggestion: false, isBreathingRoom: false },
+        { time: '14:30', duration_minutes: 120, type: 'activity', title: 'Afternoon Activity', description: 'Museums, markets, or local attractions.', location: ctx.destination, isGapSuggestion: false, isBreathingRoom: false },
+        { time: '17:00', duration_minutes: 30, type: 'break', title: 'Breathing Room', description: 'Rest and recharge. Find a scenic spot or a quiet park bench.', location: 'Nearby Park', isGapSuggestion: false, isBreathingRoom: true },
+        { time: '18:00', duration_minutes: 90, type: 'sightseeing', title: 'Golden Hour Walk', description: `Watch the sunset and explore the evening vibe of ${ctx.destination}.`, location: ctx.destination, isGapSuggestion: false, isBreathingRoom: false },
+        { time: '20:00', duration_minutes: 90, type: 'food', title: 'Dinner', description: 'End the day with a memorable dining experience.', location: 'Restaurant', isGapSuggestion: false, isBreathingRoom: false },
+      ];
+
+      days.push({
+        date: dayDate.toISOString().split('T')[0],
+        events,
+        freeGaps: this.detectGaps(events),
+      });
+    }
+
+    return {
+      days,
+      documentChecklist: ['Valid passport (6+ months validity)', 'Visa if required', 'Travel insurance documents', 'Hotel booking confirmations', 'Return flight tickets', 'Local currency or travel card'],
+      culturalNudges: ['Research local tipping customs', 'Learn basic greetings in the local language', 'Check dress code requirements for religious sites'],
     };
   }
 }

@@ -1,3 +1,7 @@
+// ========================================
+// Domain Entities — TripMind
+// ========================================
+
 export interface UserEntity {
   id: string;
   email: string;
@@ -7,6 +11,9 @@ export interface UserEntity {
   tripPurpose: string;
   dietaryPref: string | null;
   seatPreference: string | null;
+  passportCountry: string | null;
+  paymentBalance: number;
+  travelProfile: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,18 +32,27 @@ export interface TripEntity {
 export interface ItineraryEvent {
   time: string;
   duration_minutes: number;
-  type: 'activity' | 'food' | 'transport' | 'break' | 'meeting';
+  type: 'activity' | 'food' | 'transport' | 'break' | 'meeting' | 'sightseeing' | 'shopping';
   title: string;
   description: string;
   location: string;
   isGapSuggestion: boolean;
   isBreathingRoom: boolean;
+  culturalNudge?: string;
 }
 
 export interface FreeGap {
   start: string;
   end: string;
   durationMinutes: number;
+  suggestions?: GapSuggestion[];
+}
+
+export interface GapSuggestion {
+  name: string;
+  category: string;
+  distance: string;
+  duration_minutes: number;
 }
 
 export interface ItineraryDayEntity {
@@ -45,6 +61,7 @@ export interface ItineraryDayEntity {
   date: Date;
   events: ItineraryEvent[];
   freeGaps: FreeGap[];
+  previousVersion: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -60,6 +77,7 @@ export interface FlightBookingEntity {
   airline: string;
   status: string;
   price: number;
+  seatClass: string;
   confirmationCode: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -72,6 +90,18 @@ export interface HotelBookingEntity {
   checkIn: Date;
   checkOut: Date;
   confirmationCode: string | null;
+  status: string;
+  latestCheckIn: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CabBookingEntity {
+  id: string;
+  tripId: string;
+  pickup: string;
+  dropoff: string;
+  pickupTime: Date;
   status: string;
   createdAt: Date;
   updatedAt: Date;
@@ -90,6 +120,17 @@ export interface ExpenseEntity {
   createdAt: Date;
 }
 
+export interface DisruptionLogEntity {
+  id: string;
+  tripId: string;
+  flightId: string;
+  type: string;
+  detectedAt: Date;
+  resolvedAt: Date | null;
+  resolution: string;
+  createdAt: Date;
+}
+
 export interface AlternativeFlight {
   flightNumber: string;
   airline: string;
@@ -100,18 +141,34 @@ export interface AlternativeFlight {
   price: number;
   duration: string;
   seatsAvailable: number;
+  seatClass: string;
   amenities: string[];
   score?: number;
+  scoreBreakdown?: {
+    arrivalEarliness: number;
+    priceDelta: number;
+    seatMatch: number;
+  };
 }
 
 export interface DisruptionResolution {
+  steps: DisruptionStep[];
   alternativeFlights: AlternativeFlight[];
   selectedFlight: AlternativeFlight;
   updatedHotelCheckIn: Date;
-  updatedCabBooking: { pickup: string; dropoff: string; time: Date; };
+  originalHotelCheckIn: Date;
+  updatedCabBooking: { pickup: string; dropoff: string; time: Date; originalTime: Date };
   updatedItinerary: ItineraryDayEntity[];
   qrCodeData: string;
   confirmationToken: string;
+  totalResolutionTimeMs: number;
+}
+
+export interface DisruptionStep {
+  step: number;
+  label: string;
+  status: 'pending' | 'in-progress' | 'completed';
+  detail?: string;
 }
 
 export interface TripContext {
@@ -123,7 +180,9 @@ export interface TripContext {
   calendarEvents: CalendarEvent[];
   dietaryPref: string | null;
   lang: string;
-  weather?: any;
+  weather?: WeatherForecast;
+  energyLevel?: 'high' | 'medium' | 'low';
+  timeOfDay?: 'morning' | 'afternoon' | 'evening';
 }
 
 export interface CalendarEvent {
@@ -141,4 +200,45 @@ export interface ItineraryPlan {
   }[];
   documentChecklist: string[];
   culturalNudges: string[];
+  packingTips?: string[];
+}
+
+export interface WeatherForecast {
+  daily: {
+    date: string;
+    tempMax: number;
+    tempMin: number;
+    precipitationProbability: number;
+    weatherCode: number;
+    description: string;
+  }[];
+}
+
+export interface PackingItem {
+  category: 'clothing' | 'toiletries' | 'documents' | 'tech' | 'misc';
+  item: string;
+  reason: string;
+  essential: boolean;
+}
+
+export interface DocChecklistItem {
+  category: 'documents' | 'health' | 'money' | 'safety';
+  item: string;
+  details: string;
+  urgent: boolean;
+}
+
+export interface LawNudge {
+  country: string;
+  venueType: string;
+  rule: string;
+  severity: 'info' | 'warning' | 'critical';
+}
+
+export interface ExpenseReport {
+  expenses: ExpenseEntity[];
+  totalByCategory: Record<string, number>;
+  totalByCurrency: Record<string, number>;
+  grandTotal: number;
+  homeCurrency: string;
 }

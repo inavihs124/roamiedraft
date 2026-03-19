@@ -1,210 +1,243 @@
 import { useState, useEffect } from 'react';
+import { Routes, Route, NavLink, Navigate, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plane, LayoutDashboard, Zap, Receipt } from 'lucide-react';
+import {
+  Plane, LayoutDashboard, AlertTriangle, Receipt, Package,
+  LogOut, Menu, X
+} from 'lucide-react';
 import { useStore } from './stores/useStore';
-import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import Disruption from './pages/Disruption';
 import Expenses from './pages/Expenses';
-import './i18n/i18n';
-
-type Page = 'dashboard' | 'disruption' | 'expenses';
+import PackingChecklist from './pages/PackingChecklist';
+import Onboarding from './pages/Onboarding';
 
 const LANGUAGES = [
-  { code: 'en', flag: '🇬🇧', label: 'EN' },
-  { code: 'hi', flag: '🇮🇳', label: 'HI' },
-  { code: 'es', flag: '🇪🇸', label: 'ES' },
-  { code: 'fr', flag: '🇫🇷', label: 'FR' },
-  { code: 'ja', flag: '🇯🇵', label: 'JP' },
+  { code: 'en', label: '🇬🇧' },
+  { code: 'hi', label: '🇮🇳' },
+  { code: 'es', label: '🇪🇸' },
+  { code: 'fr', label: '🇫🇷' },
+  { code: 'ja', label: '🇯🇵' },
 ];
 
-const NAV_ITEMS: { key: Page; icon: typeof LayoutDashboard; label: string }[] = [
-  { key: 'dashboard', icon: LayoutDashboard, label: 'nav.dashboard' },
-  { key: 'disruption', icon: Zap, label: 'nav.disruption' },
-  { key: 'expenses', icon: Receipt, label: 'nav.expenses' },
+const NAV_ITEMS = [
+  { path: '/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
+  { path: '/disruption', icon: AlertTriangle, labelKey: 'nav.disruption' },
+  { path: '/expenses', icon: Receipt, labelKey: 'nav.expenses' },
+  { path: '/checklist', icon: Package, labelKey: 'nav.checklist' },
 ];
 
 export default function App() {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const { user, fetchMe, logout } = useStore();
-  const [page, setPage] = useState<Page>('dashboard');
-  const [onboarded, setOnboarded] = useState(false);
-  const [checking, setChecking] = useState(true);
+  const [initialized, setInitialized] = useState(false);
+  const [mobileNav, setMobileNav] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('tripmind-token');
     if (token) {
-      fetchMe().then(() => { setOnboarded(true); setChecking(false); }).catch(() => setChecking(false));
+      fetchMe().finally(() => setInitialized(true));
     } else {
-      setChecking(false);
+      setInitialized(true);
     }
   }, []);
 
-  const handleLang = (code: string) => {
+  const handleLanguageChange = (code: string) => {
     i18n.changeLanguage(code);
     localStorage.setItem('tripmind-lang', code);
   };
 
-  if (checking) {
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  if (!initialized) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#090C14' }}>
-        <div className="flex flex-col items-center gap-3">
-          <Plane size={24} strokeWidth={1.5} style={{ color: '#F59E0B' }} />
-          <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 20, color: '#F59E0B' }}>TripMind</p>
-          <p style={{ fontSize: 13, color: '#4A5568' }}>Loading…</p>
+      <div style={{ minHeight: '100vh', background: '#090C14', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}>
+            <Plane size={32} style={{ color: '#F59E0B' }} />
+          </motion.div>
+          <p style={{ color: '#4A5568', marginTop: 16, fontFamily: 'DM Sans, sans-serif' }}>Loading TripMind...</p>
         </div>
       </div>
     );
   }
 
-  if (!user || !onboarded) {
-    return <Onboarding onComplete={() => setOnboarded(true)} />;
+  if (!user) {
+    return (
+      <Onboarding onComplete={async () => {
+        await fetchMe();
+        navigate('/dashboard');
+      }} />
+    );
   }
 
+  const navLinkStyle = (isActive: boolean): React.CSSProperties => ({
+    display: 'flex', alignItems: 'center', gap: 10,
+    padding: '10px 14px', borderRadius: 10, fontSize: 13, fontWeight: 500,
+    color: isActive ? '#F59E0B' : '#4A5568',
+    background: isActive ? 'rgba(245,158,11,0.08)' : 'transparent',
+    textDecoration: 'none', fontFamily: 'DM Sans, sans-serif',
+    transition: 'all 150ms ease-out', width: '100%',
+    border: isActive ? '1px solid rgba(245,158,11,0.15)' : '1px solid transparent',
+  });
+
   return (
-    <div className="min-h-screen" style={{ background: '#090C14' }}>
-      {/* Topbar */}
-      <nav
-        style={{
-          height: 56, background: 'rgba(9,12,20,0.85)', backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-          position: 'sticky', top: 0, zIndex: 50,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0 24px',
-        }}
-      >
-        {/* Left: Logo + Nav */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Plane size={18} strokeWidth={1.5} style={{ color: '#F59E0B' }} />
-            <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 16, color: '#F59E0B' }}>TripMind</span>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#090C14' }}>
+      {/* Sidebar — Desktop */}
+      <aside style={{
+        width: 240, flexShrink: 0, background: '#0A0F1E',
+        borderRight: '1px solid rgba(255,255,255,0.04)',
+        display: 'flex', flexDirection: 'column', padding: '20px 14px',
+        position: 'sticky', top: 0, height: '100vh',
+      }} className="sidebar-desktop">
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 8px', marginBottom: 28 }}>
+          <div style={{
+            width: 34, height: 34, borderRadius: 9,
+            background: 'linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(245,158,11,0.05) 100%)',
+            border: '1px solid rgba(245,158,11,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Plane size={16} strokeWidth={1.5} style={{ color: '#F59E0B' }} />
           </div>
-
-          {/* Separator */}
-          <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.08)' }} />
-
-          {/* Nav Tabs */}
-          <div style={{ display: 'flex', gap: 4 }}>
-            {NAV_ITEMS.map((item) => {
-              const Icon = item.icon;
-              const isActive = page === item.key;
-              return (
-                <button
-                  key={item.key}
-                  onClick={() => setPage(item.key)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    padding: '4px 12px', borderRadius: 8, border: 'none',
-                    fontFamily: 'DM Sans, sans-serif', fontSize: 14, fontWeight: 500,
-                    color: isActive ? '#F0F2F8' : '#8892A4',
-                    background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent',
-                    cursor: 'pointer', transition: 'all 150ms ease-out',
-                  }}
-                  onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = '#F0F2F8'; }}
-                  onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = '#8892A4'; }}
-                >
-                  <Icon size={16} strokeWidth={1.5} />
-                  <span className="hidden md:inline">{t(item.label)}</span>
-                </button>
-              );
-            })}
-          </div>
+          <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 20, color: '#F59E0B' }}>TripMind</span>
         </div>
 
-        {/* Right: Lang + User */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          {/* Language pills */}
-          <div style={{ display: 'flex', gap: 2 }}>
-            {LANGUAGES.map((l) => (
-              <button
-                key={l.code}
-                onClick={() => handleLang(l.code)}
+        {/* Nav Items */}
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+          {NAV_ITEMS.map(item => {
+            const Icon = item.icon;
+            return (
+              <NavLink key={item.path} to={item.path} style={({ isActive }) => navLinkStyle(isActive)}>
+                {() => (
+                  <>
+                    <Icon size={18} strokeWidth={1.5} />
+                    <span>{t(item.labelKey)}</span>
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
+        </nav>
+
+        {/* Bottom Section */}
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: 14 }}>
+          {/* Language Selector */}
+          <div style={{ display: 'flex', gap: 4, marginBottom: 12, justifyContent: 'center' }}>
+            {LANGUAGES.map(l => (
+              <button key={l.code} onClick={() => handleLanguageChange(l.code)}
                 style={{
+                  width: 32, height: 28, border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 14,
                   background: i18n.language === l.code ? 'rgba(245,158,11,0.12)' : 'transparent',
-                  border: 'none', padding: '3px 6px', fontSize: 11, borderRadius: 4,
-                  color: i18n.language === l.code ? '#F59E0B' : '#4A5568',
-                  fontWeight: i18n.language === l.code ? 500 : 400,
-                  cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
+                  opacity: i18n.language === l.code ? 1 : 0.5,
                   transition: 'all 150ms ease-out',
                 }}
-                onMouseEnter={(e) => { if (i18n.language !== l.code) e.currentTarget.style.color = '#8892A4'; }}
-                onMouseLeave={(e) => { if (i18n.language !== l.code) e.currentTarget.style.color = '#4A5568'; }}
               >
-                {l.flag}
+                {l.label}
               </button>
             ))}
           </div>
 
           {/* User */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10, padding: '10px 8px',
+            borderRadius: 10, background: 'rgba(255,255,255,0.02)',
+          }}>
             <div style={{
               width: 32, height: 32, borderRadius: '50%',
-              background: 'rgba(245,158,11,0.15)',
+              background: 'linear-gradient(135deg, #F59E0B, #EF4444)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: 'DM Sans, sans-serif', fontSize: 12, fontWeight: 500, color: '#F59E0B',
+              fontSize: 13, fontWeight: 700, color: '#FFF',
             }}>
-              {user.name.charAt(0).toUpperCase()}
+              {user.name?.charAt(0)?.toUpperCase() || '?'}
             </div>
-            <span className="hidden lg:inline" style={{ fontSize: 13, color: '#8892A4' }}>{user.name}</span>
-            <button
-              onClick={logout}
-              style={{
-                background: 'none', border: 'none', fontSize: 13, color: '#4A5568',
-                cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
-                transition: 'color 150ms ease-out',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = '#8892A4'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = '#4A5568'; }}
-            >
-              {t('nav.logout')}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 13, fontWeight: 500, color: '#F0F2F8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</p>
+              <p style={{ fontSize: 11, color: '#4A5568', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</p>
+            </div>
+            <button onClick={handleLogout} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+              <LogOut size={16} style={{ color: '#4A5568' }} />
             </button>
           </div>
         </div>
-      </nav>
+      </aside>
 
-      {/* Mobile bottom tab bar */}
-      <div
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50"
-        style={{
-          height: 48, background: '#0F1320',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-around',
-        }}
-      >
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
-          const isActive = page === item.key;
-          return (
-            <button
-              key={item.key}
-              onClick={() => setPage(item.key)}
-              style={{
-                background: 'none', border: 'none', color: isActive ? '#F59E0B' : '#4A5568',
-                cursor: 'pointer', padding: 8, transition: 'color 150ms ease-out',
-              }}
-            >
-              <Icon size={20} strokeWidth={1.5} />
-            </button>
-          );
-        })}
+      {/* Mobile Header */}
+      <div className="mobile-header" style={{
+        position: 'fixed', top: 0, left: 0, right: 0, height: 56, zIndex: 100,
+        background: '#0A0F1E', borderBottom: '1px solid rgba(255,255,255,0.04)',
+        display: 'none', alignItems: 'center', padding: '0 16px', justifyContent: 'space-between',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Plane size={18} style={{ color: '#F59E0B' }} />
+          <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 18, color: '#F59E0B' }}>TripMind</span>
+        </div>
+        <button onClick={() => setMobileNav(!mobileNav)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+          {mobileNav ? <X size={22} style={{ color: '#F0F2F8' }} /> : <Menu size={22} style={{ color: '#F0F2F8' }} />}
+        </button>
       </div>
 
-      {/* Page Content */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={page}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-          className="pb-16 md:pb-0"
-        >
-          {page === 'dashboard' && <Dashboard />}
-          {page === 'disruption' && <Disruption />}
-          {page === 'expenses' && <Expenses />}
-        </motion.div>
+      {/* Mobile Nav Drawer */}
+      <AnimatePresence>
+        {mobileNav && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 99, background: 'rgba(0,0,0,0.6)', display: 'none',
+            }}
+            className="mobile-overlay"
+            onClick={() => setMobileNav(false)}
+          >
+            <motion.div
+              initial={{ x: -240 }} animate={{ x: 0 }} exit={{ x: -240 }}
+              onClick={e => e.stopPropagation()}
+              style={{
+                width: 240, height: '100%', background: '#0A0F1E',
+                padding: '72px 14px 20px', display: 'flex', flexDirection: 'column', gap: 4,
+              }}
+            >
+              {NAV_ITEMS.map(item => {
+                const Icon = item.icon;
+                return (
+                  <NavLink key={item.path} to={item.path}
+                    onClick={() => setMobileNav(false)}
+                    style={({ isActive }) => navLinkStyle(isActive)}>
+                    {() => (<>
+                      <Icon size={18} strokeWidth={1.5} />
+                      <span>{t(item.labelKey)}</span>
+                    </>)}
+                  </NavLink>
+                );
+              })}
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
+
+      {/* Main Content */}
+      <main style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
+        <Routes>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/disruption" element={<Disruption />} />
+          <Route path="/expenses" element={<Expenses />} />
+          <Route path="/checklist" element={<PackingChecklist />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </main>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .sidebar-desktop { display: none !important; }
+          .mobile-header { display: flex !important; }
+          .mobile-overlay { display: block !important; }
+          main { padding-top: 56px; }
+        }
+      `}</style>
     </div>
   );
 }

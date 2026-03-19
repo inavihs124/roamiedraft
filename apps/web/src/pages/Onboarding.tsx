@@ -1,329 +1,304 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plane } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Plane, Globe, Briefcase, Palmtree, UtensilsCrossed, Armchair } from 'lucide-react';
 import { useStore } from '../stores/useStore';
 
 const LANGUAGES = [
-  { code: 'en', flag: '🇬🇧', label: 'EN' },
-  { code: 'hi', flag: '🇮🇳', label: 'HI' },
-  { code: 'es', flag: '🇪🇸', label: 'ES' },
-  { code: 'fr', flag: '🇫🇷', label: 'FR' },
-  { code: 'ja', flag: '🇯🇵', label: 'JP' },
+  { code: 'en', flag: '🇬🇧', label: 'English' },
+  { code: 'hi', flag: '🇮🇳', label: 'हिन्दी' },
+  { code: 'es', flag: '🇪🇸', label: 'Español' },
+  { code: 'fr', flag: '🇫🇷', label: 'Français' },
+  { code: 'ja', flag: '🇯🇵', label: '日本語' },
 ];
 
 export default function Onboarding({ onComplete }: { onComplete: () => void }) {
   const { t, i18n } = useTranslation();
-  const { updateProfile, register, login } = useStore();
-  const [step, setStep] = useState(0);
-  const [lang, setLang] = useState(localStorage.getItem('tripmind-lang') || 'en');
-  const [purpose, setPurpose] = useState<'business' | 'leisure'>('leisure');
-  const [dietary, setDietary] = useState('');
-  const [seat, setSeat] = useState('');
+  const { login, register, error, setError } = useStore();
+  const [step, setStep] = useState<'auth' | 'prefs'>('auth');
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('demo@tripmind.app');
   const [password, setPassword] = useState('password123');
   const [name, setName] = useState('');
-  const [error, setError] = useState('');
-
-  const handleLangSelect = (code: string) => {
-    setLang(code);
-    i18n.changeLanguage(code);
-    localStorage.setItem('tripmind-lang', code);
-  };
+  const [lang, setLang] = useState('en');
+  const [purpose, setPurpose] = useState<'leisure' | 'business'>('leisure');
+  const [dietaryPref, setDietaryPref] = useState('');
+  const [seatPref, setSeatPref] = useState('window');
+  const [loading, setLoading] = useState(false);
 
   const handleAuth = async () => {
-    setError('');
+    setLoading(true);
+    setError(null);
     try {
       if (isLogin) {
         await login(email, password);
+        onComplete();
       } else {
-        await register({ email, password, name, preferredLang: lang, tripPurpose: purpose, dietaryPref: dietary, seatPreference: seat });
+        setStep('prefs');
       }
-      setStep(1);
-    } catch (e: any) {
-      setError(e.response?.data?.error || 'Authentication failed');
+    } catch {
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSave = async () => {
-    await updateProfile({ preferredLang: lang, tripPurpose: purpose, dietaryPref: dietary || undefined, seatPreference: seat || undefined });
-    onComplete();
+  const handleComplete = async () => {
+    setLoading(true);
+    try {
+      await register({
+        email, password, name,
+        preferredLang: lang,
+        tripPurpose: purpose,
+        dietaryPref: dietaryPref || undefined,
+        seatPreference: seatPref,
+      });
+      i18n.changeLanguage(lang);
+      localStorage.setItem('tripmind-lang', lang);
+      onComplete();
+    } catch {
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const containerAnim: any = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } };
+  const itemAnim: any = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.4, 0, 0.2, 1] } } };
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', height: 52, padding: '0 18px', fontSize: 15, color: '#F0F2F8',
+    background: '#161B2E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10,
+    outline: 'none', fontFamily: 'DM Sans, sans-serif', transition: 'border-color 200ms ease-out, box-shadow 200ms ease-out',
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-6"
-      style={{
-        background: `radial-gradient(ellipse 80% 60% at 50% -10%, rgba(245,158,11,0.08) 0%, transparent 60%),
-                     radial-gradient(ellipse 60% 40% at 80% 80%, rgba(99,102,241,0.05) 0%, transparent 50%),
-                     #090C14`,
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='30' height='30' viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='0.8' fill='rgba(255,255,255,0.04)'/%3E%3C/svg%3E"), 
-                          radial-gradient(ellipse 80% 60% at 50% -10%, rgba(245,158,11,0.08) 0%, transparent 60%),
-                          radial-gradient(ellipse 60% 40% at 80% 80%, rgba(99,102,241,0.05) 0%, transparent 50%)`,
-        backgroundColor: '#090C14',
-      }}
-    >
-      <AnimatePresence mode="wait">
-        {step === 0 ? (
-          <motion.div
-            key="auth"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-            className="w-full flex flex-col items-center"
-            style={{ maxWidth: 420 }}
-          >
-            {/* Logo Block */}
-            <div className="text-center mb-8">
-              <Plane size={24} strokeWidth={1.5} className="mx-auto mb-3" style={{ color: '#F59E0B' }} />
-              <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 32, letterSpacing: '-0.5px', color: '#F59E0B', lineHeight: 1.2 }}>
-                TripMind
-              </h1>
-              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 14, color: '#8892A4', letterSpacing: '0.04em', textTransform: 'uppercase', marginTop: 8 }}>
-                {t('app.tagline')}
-              </p>
+    <div style={{ minHeight: '100vh', background: '#090C14', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'radial-gradient(ellipse at 50% 0%, rgba(245,158,11,0.06) 0%, transparent 60%)', pointerEvents: 'none' }} />
+
+      <motion.div
+        variants={containerAnim}
+        initial="hidden"
+        animate="show"
+        style={{ width: '100%', maxWidth: 440, position: 'relative', zIndex: 1 }}
+      >
+        {/* Logo */}
+        <motion.div variants={itemAnim} style={{ textAlign: 'center', marginBottom: 36 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 10,
+              background: 'linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(245,158,11,0.05) 100%)',
+              border: '1px solid rgba(245,158,11,0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Plane size={20} strokeWidth={1.5} style={{ color: '#F59E0B' }} />
             </div>
+            <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 26, color: '#F59E0B' }}>TripMind</span>
+          </div>
+          <p style={{ fontSize: 14, color: '#4A5568', fontFamily: 'DM Sans, sans-serif' }}>
+            {t('onboarding.subtitle')}
+          </p>
+        </motion.div>
 
-            {/* Auth Card */}
-            <div
-              className="w-full"
-              style={{
-                background: '#0F1320',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 16,
-                padding: 36,
-              }}
-            >
-              {/* Top rule */}
-              <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', marginBottom: 28 }} />
+        {step === 'auth' ? (
+          <motion.div
+            variants={containerAnim}
+            initial="hidden"
+            animate="show"
+            style={{
+              background: '#0F1320', border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: 16, padding: 32,
+            }}
+          >
+            <motion.h2 variants={itemAnim} style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 22, color: '#F0F2F8', marginBottom: 24, textAlign: 'center' }}>
+              {isLogin ? t('onboarding.login') : t('onboarding.createAccount')}
+            </motion.h2>
 
-              <AnimatePresence>
-                {!isLogin && (
-                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden" style={{ marginBottom: 16 }}>
-                    <label style={{ display: 'block', fontFamily: 'DM Sans, sans-serif', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8892A4', marginBottom: 8 }}>
-                      {t('auth.name')}
-                    </label>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      style={{
-                        width: '100%', height: 48, padding: '0 16px', fontSize: 15, color: '#F0F2F8',
-                        background: '#161B2E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10,
-                        outline: 'none', fontFamily: 'DM Sans, sans-serif',
-                        transition: 'all 150ms ease-out',
-                      }}
-                      onFocus={(e) => { e.target.style.borderColor = 'rgba(245,158,11,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.08)'; }}
-                      onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none'; }}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+            {error && (
+              <motion.div variants={itemAnim} style={{
+                padding: '10px 14px', borderRadius: 8, marginBottom: 16,
+                background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+                fontSize: 13, color: '#F87171',
+              }}>
+                {error}
+              </motion.div>
+            )}
 
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontFamily: 'DM Sans, sans-serif', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8892A4', marginBottom: 8 }}>
-                  {t('auth.email')}
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  style={{
-                    width: '100%', height: 48, padding: '0 16px', fontSize: 15, color: '#F0F2F8',
-                    background: '#161B2E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10,
-                    outline: 'none', fontFamily: 'DM Sans, sans-serif',
-                    transition: 'all 150ms ease-out',
-                  }}
-                  onFocus={(e) => { e.target.style.borderColor = 'rgba(245,158,11,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.08)'; }}
-                  onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none'; }}
-                />
-              </div>
-
-              <div style={{ marginBottom: 8 }}>
-                <label style={{ display: 'block', fontFamily: 'DM Sans, sans-serif', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8892A4', marginBottom: 8 }}>
-                  {t('auth.password')}
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  style={{
-                    width: '100%', height: 48, padding: '0 16px', fontSize: 15, color: '#F0F2F8',
-                    background: '#161B2E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10,
-                    outline: 'none', fontFamily: 'DM Sans, sans-serif',
-                    transition: 'all 150ms ease-out',
-                  }}
-                  onFocus={(e) => { e.target.style.borderColor = 'rgba(245,158,11,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.08)'; }}
-                  onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none'; }}
-                />
-              </div>
-
-              {error && (
-                <p style={{ fontSize: 13, color: '#F87171', marginTop: 12, marginBottom: 4 }}>
-                  {error}
-                </p>
+            <motion.div variants={itemAnim} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {!isLogin && (
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892A4', marginBottom: 8 }}>
+                    {t('onboarding.name')}
+                  </label>
+                  <input value={name} onChange={e => setName(e.target.value)} placeholder="Your name" style={inputStyle}
+                    onFocus={e => { e.target.style.borderColor = 'rgba(245,158,11,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.08)'; }}
+                    onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none'; }}
+                  />
+                </div>
               )}
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892A4', marginBottom: 8 }}>
+                  {t('onboarding.email')}
+                </label>
+                <input value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" style={inputStyle}
+                  onFocus={e => { e.target.style.borderColor = 'rgba(245,158,11,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.08)'; }}
+                  onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none'; }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892A4', marginBottom: 8 }}>
+                  {t('onboarding.password')}
+                </label>
+                <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" style={inputStyle}
+                  onFocus={e => { e.target.style.borderColor = 'rgba(245,158,11,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.08)'; }}
+                  onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none'; }}
+                />
+              </div>
+            </motion.div>
 
-              <button
-                onClick={handleAuth}
-                style={{
-                  width: '100%', height: 48, background: '#F59E0B', borderRadius: 10, border: 'none',
-                  fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: 15, color: '#000',
-                  letterSpacing: '0.01em', cursor: 'pointer', marginTop: 8,
-                  transition: 'all 150ms ease-out',
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = '#FBBF24'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = '#F59E0B'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                onMouseDown={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
-              >
-                {isLogin ? t('auth.loginBtn') : t('auth.registerBtn')}
+            <motion.button
+              variants={itemAnim}
+              onClick={handleAuth}
+              disabled={loading || !email || !password}
+              style={{
+                width: '100%', height: 52, marginTop: 24, borderRadius: 10, border: 'none',
+                background: loading ? 'rgba(245,158,11,0.5)' : '#F59E0B',
+                color: '#000', fontWeight: 600, fontSize: 15, cursor: 'pointer',
+                fontFamily: 'DM Sans, sans-serif', transition: 'all 200ms ease-out',
+              }}
+              onMouseEnter={e => { if (!loading) { e.currentTarget.style.background = '#FBBF24'; e.currentTarget.style.transform = 'translateY(-1px)'; } }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#F59E0B'; e.currentTarget.style.transform = 'translateY(0)'; }}
+            >
+              {loading ? '⏳' : isLogin ? t('onboarding.login') : t('common.next')}
+            </motion.button>
+
+            <motion.p variants={itemAnim} style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: '#4A5568' }}>
+              {isLogin ? t('onboarding.noAccount') : t('onboarding.hasAccount')}{' '}
+              <button onClick={() => { setIsLogin(!isLogin); setError(null); }} style={{ background: 'none', border: 'none', color: '#F59E0B', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>
+                {isLogin ? t('onboarding.createAccount') : t('onboarding.login')}
               </button>
+            </motion.p>
+          </motion.div>
+        ) : (
+          <motion.div
+            variants={containerAnim}
+            initial="hidden"
+            animate="show"
+            style={{
+              background: '#0F1320', border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: 16, padding: 32,
+            }}
+          >
+            <motion.h2 variants={itemAnim} style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 22, color: '#F0F2F8', marginBottom: 8 }}>
+              {t('onboarding.preferences')}
+            </motion.h2>
+            <motion.p variants={itemAnim} style={{ fontSize: 13, color: '#4A5568', marginBottom: 24 }}>
+              {t('onboarding.preferencesSubtitle')}
+            </motion.p>
 
-              <p style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: '#8892A4', fontFamily: 'DM Sans, sans-serif' }}>
-                {isLogin ? t('auth.switchToRegister').replace('Register', '') : t('auth.switchToLogin').replace('Login', '')}
-                <span
-                  onClick={() => { setIsLogin(!isLogin); setError(''); }}
-                  style={{ color: '#F59E0B', cursor: 'pointer', textDecoration: 'none' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.textDecoration = 'underline'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.textDecoration = 'none'; }}
-                >
-                  {isLogin ? 'Register' : 'Login'}
-                </span>
-              </p>
-
-              {/* Language switcher inside card */}
-              <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', marginTop: 20, marginBottom: 16 }} />
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 4 }}>
-                {LANGUAGES.map((l) => (
+            {/* Language Selection */}
+            <motion.div variants={itemAnim} style={{ marginBottom: 24 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892A4', marginBottom: 10 }}>
+                <Globe size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
+                {t('onboarding.language')}
+              </label>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {LANGUAGES.map(l => (
                   <button
                     key={l.code}
-                    onClick={() => handleLangSelect(l.code)}
+                    onClick={() => setLang(l.code)}
                     style={{
-                      background: lang === l.code ? 'rgba(245,158,11,0.12)' : 'transparent',
-                      border: 'none', padding: '4px 8px', fontSize: 12, borderRadius: 6,
-                      color: lang === l.code ? '#F59E0B' : '#4A5568',
-                      fontWeight: lang === l.code ? 500 : 400,
-                      cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
+                      padding: '8px 14px', borderRadius: 8, fontSize: 13, fontWeight: 500,
+                      fontFamily: 'DM Sans, sans-serif', cursor: 'pointer', whiteSpace: 'nowrap' as const,
+                      background: lang === l.code ? 'rgba(245,158,11,0.12)' : '#161B2E',
+                      color: lang === l.code ? '#F59E0B' : '#8892A4',
+                      border: lang === l.code ? '1px solid rgba(245,158,11,0.3)' : '1px solid rgba(255,255,255,0.06)',
                       transition: 'all 150ms ease-out',
                     }}
-                    onMouseEnter={(e) => { if (lang !== l.code) e.currentTarget.style.color = '#8892A4'; }}
-                    onMouseLeave={(e) => { if (lang !== l.code) e.currentTarget.style.color = '#4A5568'; }}
                   >
                     {l.flag} {l.label}
                   </button>
                 ))}
               </div>
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="prefs"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-            className="w-full"
-            style={{ maxWidth: 480 }}
-          >
-            <div style={{ background: '#0F1320', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 36 }}>
-              <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 22, color: '#F0F2F8', marginBottom: 4 }}>
-                {t('onboarding.subtitle')}
-              </h2>
-              <p style={{ fontSize: 14, color: '#8892A4', marginBottom: 28 }}>Configure your travel preferences</p>
+            </motion.div>
 
-              {/* Purpose */}
-              <div style={{ marginBottom: 24 }}>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892A4', marginBottom: 10 }}>
-                  {t('onboarding.purpose')}
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  {(['business', 'leisure'] as const).map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => setPurpose(p)}
+            {/* Trip Purpose */}
+            <motion.div variants={itemAnim} style={{ marginBottom: 24 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892A4', marginBottom: 10 }}>
+                {t('onboarding.tripPurpose')}
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                {[
+                  { key: 'business' as const, icon: Briefcase, label: t('onboarding.business') },
+                  { key: 'leisure' as const, icon: Palmtree, label: t('onboarding.leisure') },
+                ].map(opt => {
+                  const Icon = opt.icon;
+                  const sel = purpose === opt.key;
+                  return (
+                    <button key={opt.key} onClick={() => setPurpose(opt.key)}
                       style={{
-                        padding: '14px 16px', borderRadius: 10, cursor: 'pointer',
-                        fontFamily: 'DM Sans, sans-serif', fontSize: 14, fontWeight: 500,
-                        background: purpose === p ? '#F59E0B' : '#161B2E',
-                        color: purpose === p ? '#000' : '#F0F2F8',
-                        border: purpose === p ? 'none' : '1px solid rgba(255,255,255,0.08)',
+                        padding: '16px', borderRadius: 12, cursor: 'pointer',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                        background: sel ? 'rgba(245,158,11,0.08)' : '#161B2E',
+                        border: sel ? '1px solid rgba(245,158,11,0.3)' : '1px solid rgba(255,255,255,0.06)',
+                        color: sel ? '#F59E0B' : '#8892A4', fontFamily: 'DM Sans, sans-serif',
                         transition: 'all 150ms ease-out',
                       }}
                     >
-                      {p === 'business' ? '💼 ' : '🏖️ '}{t(`onboarding.${p}`)}
+                      <Icon size={24} strokeWidth={1.5} />
+                      <span style={{ fontSize: 14, fontWeight: 500 }}>{opt.label}</span>
                     </button>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
+            </motion.div>
 
-              {/* Dietary */}
-              <div style={{ marginBottom: 24 }}>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892A4', marginBottom: 10 }}>
+            {/* Preferences */}
+            <motion.div variants={itemAnim} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892A4', marginBottom: 8 }}>
+                  <UtensilsCrossed size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
                   {t('onboarding.dietary')}
                 </label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {['vegetarian', 'vegan', 'halal', 'kosher', 'noRestriction'].map((d) => (
-                    <button
-                      key={d}
-                      onClick={() => setDietary(d)}
-                      style={{
-                        padding: '8px 14px', borderRadius: 8, cursor: 'pointer',
-                        fontSize: 13, fontWeight: 500, fontFamily: 'DM Sans, sans-serif',
-                        background: dietary === d ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.04)',
-                        color: dietary === d ? '#F59E0B' : '#8892A4',
-                        border: dietary === d ? '1px solid rgba(245,158,11,0.25)' : '1px solid rgba(255,255,255,0.08)',
-                        transition: 'all 150ms ease-out',
-                      }}
-                    >
-                      {t(`onboarding.${d}`)}
-                    </button>
-                  ))}
-                </div>
+                <select value={dietaryPref} onChange={e => setDietaryPref(e.target.value)}
+                  style={{ ...inputStyle, height: 44, appearance: 'none' as const, cursor: 'pointer' }}>
+                  <option value="">None</option>
+                  <option value="vegetarian">Vegetarian</option>
+                  <option value="vegan">Vegan</option>
+                  <option value="halal">Halal</option>
+                  <option value="kosher">Kosher</option>
+                  <option value="gluten-free">Gluten-free</option>
+                </select>
               </div>
-
-              {/* Seat */}
-              <div style={{ marginBottom: 28 }}>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892A4', marginBottom: 10 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892A4', marginBottom: 8 }}>
+                  <Armchair size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
                   {t('onboarding.seat')}
                 </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                  {[{ key: 'aisle', icon: '🚶' }, { key: 'window', icon: '🪟' }, { key: 'middle', icon: '💺' }].map(({ key, icon }) => (
-                    <button
-                      key={key}
-                      onClick={() => setSeat(key)}
-                      style={{
-                        padding: '12px', borderRadius: 10, cursor: 'pointer',
-                        fontSize: 13, fontWeight: 500, fontFamily: 'DM Sans, sans-serif',
-                        background: seat === key ? 'rgba(245,158,11,0.12)' : '#161B2E',
-                        color: seat === key ? '#F59E0B' : '#F0F2F8',
-                        border: seat === key ? '1px solid rgba(245,158,11,0.25)' : '1px solid rgba(255,255,255,0.08)',
-                        transition: 'all 150ms ease-out',
-                      }}
-                    >
-                      {icon} {t(`onboarding.${key}`)}
-                    </button>
-                  ))}
-                </div>
+                <select value={seatPref} onChange={e => setSeatPref(e.target.value)}
+                  style={{ ...inputStyle, height: 44, appearance: 'none' as const, cursor: 'pointer' }}>
+                  <option value="window">Window</option>
+                  <option value="aisle">Aisle</option>
+                  <option value="middle">Middle</option>
+                </select>
               </div>
+            </motion.div>
 
-              <button
-                onClick={handleSave}
-                style={{
-                  width: '100%', height: 48, background: '#F59E0B', borderRadius: 10, border: 'none',
-                  fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: 15, color: '#000',
-                  cursor: 'pointer', transition: 'all 150ms ease-out',
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = '#FBBF24'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = '#F59E0B'; e.currentTarget.style.transform = 'translateY(0)'; }}
-              >
-                {t('onboarding.save')} →
-              </button>
-            </div>
+            <motion.button
+              variants={itemAnim}
+              onClick={handleComplete}
+              disabled={loading}
+              style={{
+                width: '100%', height: 52, borderRadius: 10, border: 'none',
+                background: '#F59E0B', color: '#000', fontWeight: 600, fontSize: 15,
+                cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', transition: 'all 200ms ease-out',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#FBBF24'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#F59E0B'; e.currentTarget.style.transform = 'translateY(0)'; }}
+            >
+              {loading ? '⏳ Setting up...' : t('onboarding.getStarted')}
+            </motion.button>
           </motion.div>
         )}
-      </AnimatePresence>
+      </motion.div>
     </div>
   );
 }

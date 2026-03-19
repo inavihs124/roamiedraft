@@ -1,6 +1,29 @@
-import prisma from '../../infrastructure/database';
-import { ITripRepository } from '../../domain/interfaces';
-import { TripEntity, ItineraryDayEntity, FlightBookingEntity, HotelBookingEntity, UserEntity } from '../../domain/entities';
+import { PrismaClient } from '@prisma/client';
+import {
+  ITripRepository
+} from '../../domain/interfaces';
+import {
+  TripEntity, ItineraryDayEntity, FlightBookingEntity,
+  HotelBookingEntity, CabBookingEntity, UserEntity,
+  DisruptionLogEntity
+} from '../../domain/entities';
+
+const prisma = new PrismaClient();
+
+function parseEvents(raw: any): any[] {
+  if (typeof raw === 'string') {
+    try { return JSON.parse(raw); } catch { return []; }
+  }
+  return Array.isArray(raw) ? raw : [];
+}
+
+function mapItineraryDay(row: any): ItineraryDayEntity {
+  return {
+    ...row,
+    events: parseEvents(row.events),
+    freeGaps: parseEvents(row.freeGaps),
+  };
+}
 
 export class PrismaTripRepository implements ITripRepository {
   async findTripById(id: string): Promise<TripEntity | null> {
@@ -16,42 +39,38 @@ export class PrismaTripRepository implements ITripRepository {
   }
 
   async updateTrip(id: string, data: Partial<TripEntity>): Promise<TripEntity> {
-    const { id: _, createdAt, updatedAt, ...updateData } = data as any;
+    const { id: _id, createdAt, updatedAt, ...updateData } = data as any;
     return prisma.trip.update({ where: { id }, data: updateData });
   }
 
   async findItineraryDays(tripId: string): Promise<ItineraryDayEntity[]> {
-    const days = await prisma.itineraryDay.findMany({
+    const rows = await prisma.itineraryDay.findMany({
       where: { tripId },
       orderBy: { date: 'asc' },
     });
-    return days.map((d) => ({
-      ...d,
-      events: JSON.parse(d.events),
-      freeGaps: JSON.parse(d.freeGaps),
-    }));
+    return rows.map(mapItineraryDay);
   }
 
-  async upsertItineraryDay(data: { tripId: string; date: Date; events: string; freeGaps: string }): Promise<ItineraryDayEntity> {
+  async upsertItineraryDay(data: {
+    tripId: string; date: Date; events: string; freeGaps: string; previousVersion?: string;
+  }): Promise<ItineraryDayEntity> {
     const existing = await prisma.itineraryDay.findFirst({
       where: { tripId: data.tripId, date: data.date },
     });
-
-    let day;
+    let row;
     if (existing) {
-      day = await prisma.itineraryDay.update({
+      row = await prisma.itineraryDay.update({
         where: { id: existing.id },
-        data: { events: data.events, freeGaps: data.freeGaps },
+        data: {
+          events: data.events,
+          freeGaps: data.freeGaps,
+          previousVersion: data.previousVersion || existing.events,
+        },
       });
     } else {
-      day = await prisma.itineraryDay.create({ data });
+      row = await prisma.itineraryDay.create({ data });
     }
-
-    return {
-      ...day,
-      events: JSON.parse(day.events),
-      freeGaps: JSON.parse(day.freeGaps),
-    };
+    return mapItineraryDay(row);
   }
 
   async findFlightsByTripId(tripId: string): Promise<FlightBookingEntity[]> {
@@ -63,7 +82,7 @@ export class PrismaTripRepository implements ITripRepository {
   }
 
   async updateFlight(id: string, data: Partial<FlightBookingEntity>): Promise<FlightBookingEntity> {
-    const { id: _, createdAt, updatedAt, ...updateData } = data as any;
+    const { id: _id, createdAt, updatedAt, ...updateData } = data as any;
     return prisma.flightBooking.update({ where: { id }, data: updateData });
   }
 
@@ -72,11 +91,24 @@ export class PrismaTripRepository implements ITripRepository {
   }
 
   async updateHotel(id: string, data: Partial<HotelBookingEntity>): Promise<HotelBookingEntity> {
-    const { id: _, createdAt, updatedAt, ...updateData } = data as any;
+    const { id: _id, createdAt, updatedAt, ...updateData } = data as any;
     return prisma.hotelBooking.update({ where: { id }, data: updateData });
+  }
+
+  async findCabsByTripId(tripId: string): Promise<CabBookingEntity[]> {
+    return prisma.cabBooking.findMany({ where: { tripId } });
+  }
+
+  async updateCab(id: string, data: Partial<CabBookingEntity>): Promise<CabBookingEntity> {
+    const { id: _id, createdAt, updatedAt, ...updateData } = data as any;
+    return prisma.cabBooking.update({ where: { id }, data: updateData });
   }
 
   async findUserById(id: string): Promise<UserEntity | null> {
     return prisma.user.findUnique({ where: { id } });
+  }
+
+  async createDisruptionLog(data: Omit<DisruptionLogEntity, 'id' | 'createdAt'>): Promise<DisruptionLogEntity> {
+    return prisma.disruptionLog.create({ data }) as any;
   }
 }

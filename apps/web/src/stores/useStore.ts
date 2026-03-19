@@ -9,6 +9,8 @@ interface User {
   tripPurpose: string;
   dietaryPref?: string;
   seatPreference?: string;
+  passportCountry?: string;
+  paymentBalance?: number;
 }
 
 interface Trip {
@@ -19,6 +21,7 @@ interface Trip {
   status: string;
   flights: any[];
   hotels: any[];
+  cabs?: any[];
   itinerary: any[];
 }
 
@@ -30,7 +33,7 @@ interface AppStore {
   error: string | null;
 
   login: (email: string, password: string) => Promise<void>;
-  register: (data: { email: string; password: string; name: string; preferredLang: string; tripPurpose: string; dietaryPref?: string; seatPreference?: string }) => Promise<void>;
+  register: (data: { email: string; password: string; name: string; preferredLang: string; tripPurpose: string; dietaryPref?: string; seatPreference?: string; passportCountry?: string }) => Promise<void>;
   logout: () => void;
   fetchMe: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<void>;
@@ -39,10 +42,13 @@ interface AppStore {
   createTrip: (data: { destination: string; startDate: string; endDate: string }) => Promise<string>;
   addFlight: (tripId: string, data: any) => Promise<void>;
   addHotel: (tripId: string, data: any) => Promise<void>;
-  buildItinerary: (tripId: string, calendarEvents?: any[], savedPlaces?: string[]) => Promise<any>;
+  buildItinerary: (tripId: string, calendarEvents?: any[], savedPlaces?: string[], energyLevel?: string) => Promise<any>;
   triggerDisruption: (tripId: string, flightId: string, type: string) => Promise<any>;
   scanExpense: (receiptText: string, tripId?: string) => Promise<any>;
   fetchExpenses: (tripId?: string) => Promise<any>;
+  fetchChecklist: (tripId: string) => Promise<any>;
+  confirmDisruption: (token: string) => Promise<any>;
+  cancelDisruption: (token: string) => Promise<any>;
   setError: (error: string | null) => void;
 }
 
@@ -139,10 +145,10 @@ export const useStore = create<AppStore>((set, get) => ({
     await get().fetchTrip(tripId);
   },
 
-  buildItinerary: async (tripId, calendarEvents = [], savedPlaces = []) => {
+  buildItinerary: async (tripId, calendarEvents = [], savedPlaces = [], energyLevel) => {
     set({ loading: true });
     try {
-      const { data } = await api.post('/itinerary/build', { tripId, calendarEvents, savedPlaces });
+      const { data } = await api.post('/itinerary/build', { tripId, calendarEvents, savedPlaces, energyLevel });
       await get().fetchTrip(tripId);
       set({ loading: false });
       return data;
@@ -179,6 +185,21 @@ export const useStore = create<AppStore>((set, get) => ({
   fetchExpenses: async (tripId) => {
     const params = tripId ? `?tripId=${tripId}` : '';
     const { data } = await api.get(`/expense/list${params}`);
+    return data;
+  },
+
+  fetchChecklist: async (tripId) => {
+    const { data } = await api.get(`/checklist/${tripId}`);
+    return data;
+  },
+
+  confirmDisruption: async (token) => {
+    const { data } = await api.post(`/disruption/confirm/${token}`);
+    return data;
+  },
+
+  cancelDisruption: async (token) => {
+    const { data } = await api.post(`/disruption/cancel/${token}`);
     return data;
   },
 

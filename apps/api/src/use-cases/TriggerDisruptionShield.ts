@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
-import { ITripRepository, IItineraryService, IFlightService } from '../../domain/interfaces';
-import { DisruptionResolution, ItineraryDayEntity, TripContext } from '../../domain/entities';
-import { QRCodeService } from '../services/QRCodeService';
+import { ITripRepository, IItineraryService, IFlightService } from '../domain/interfaces';
+import { DisruptionResolution, ItineraryDayEntity, TripContext, DisruptionStep } from '../domain/entities';
+import { QRCodeService } from '../adapters/services/QRCodeService';
 
 export class TriggerDisruptionShield {
   constructor(
@@ -16,8 +16,25 @@ export class TriggerDisruptionShield {
     flightId: string;
     disruptionType: 'cancelled' | 'delayed' | 'missed';
     lang?: string;
+    onProgress?: (step: DisruptionStep) => void;
   }): Promise<DisruptionResolution> {
-    // Step 1: Load trip, flight, hotel, and user
+    const startTime = Date.now();
+    const emit = (step: DisruptionStep) => params.onProgress?.(step);
+
+    const steps: DisruptionStep[] = [
+      { step: 1, label: 'Detecting disruption', status: 'pending' },
+      { step: 2, label: 'Finding alternative flights', status: 'pending' },
+      { step: 3, label: 'Scoring & selecting best option', status: 'pending' },
+      { step: 4, label: 'Shifting hotel check-in', status: 'pending' },
+      { step: 5, label: 'Rescheduling cab pickup', status: 'pending' },
+      { step: 6, label: 'Rebuilding itinerary', status: 'pending' },
+      { step: 7, label: 'Generating QR confirmation', status: 'pending' },
+    ];
+
+    // Step 1: Detect and load context
+    steps[0].status = 'in-progress';
+    emit(steps[0]);
+
     const trip = await this.tripRepo.findTripById(params.tripId);
     if (!trip) throw new Error('Trip not found');
 
@@ -29,32 +46,83 @@ export class TriggerDisruptionShield {
 
     const hotels = await this.tripRepo.findHotelsByTripId(params.tripId);
     const hotel = hotels[0];
+    const cabs = await this.tripRepo.findCabsByTripId(params.tripId);
+    const cab = cabs[0];
 
-    // Step 2: Find alternative flights
+    steps[0].status = 'completed';
+    steps[0].detail = `${params.disruptionType.toUpperCase()}: ${flight.flightNumber} ${flight.origin}→${flight.destination}`;
+    emit(steps[0]);
+
+    // Step 2: Find alternatives
+    steps[1].status = 'in-progress';
+    emit(steps[1]);
+
     let alternativeFlights;
     try {
       alternativeFlights = await this.flightService.findAlternatives(
         flight.origin,
         flight.destination,
         flight.departureTime,
-        { seatPreference: user.seatPreference || undefined }
+        { seatPreference: user.seatPreference || undefined, originalPrice: flight.price }
       );
-    } catch (error) {
+    } catch {
       throw new Error('Failed to find alternative flights');
     }
+    if (alternativeFlights.length === 0) throw new Error('No alternative flights available');
 
-    if (alternativeFlights.length === 0) {
-      throw new Error('No alternative flights available');
-    }
+    steps[1].status = 'completed';
+    steps[1].detail = `${alternativeFlights.length} alternatives found`;
+    emit(steps[1]);
 
-    // Step 3: Score and select best alternative
-    const selectedFlight = alternativeFlights[0]; // Already sorted by score from service
+    // Step 3: Score and select
+    steps[2].status = 'in-progress';
+    emit(steps[2]);
 
-    // Step 4: Calculate new hotel check-in
+    const selectedFlight = alternativeFlights[0]; // Already sorted by score
+    steps[2].status = 'completed';
+    steps[2].detail = `${selectedFlight.flightNumber} selected (score: ${selectedFlight.score})`;
+    emit(steps[2]);
+
+    // Step 4: Shift hotel
+    steps[3].status = 'in-progress';
+    emit(steps[3]);
+
+    const originalHotelCheckIn = hotel ? new Date(hotel.checkIn) : new Date();
     const updatedHotelCheckIn = new Date(selectedFlight.arrivalTime);
     updatedHotelCheckIn.setHours(updatedHotelCheckIn.getHours() + 2);
 
-    // Step 5: Re-generate itinerary for affected day
+    if (hotel) {
+      try {
+        await this.tripRepo.updateHotel(hotel.id, { checkIn: updatedHotelCheckIn });
+      } catch (e) { console.warn('Hotel update failed:', e); }
+    }
+
+    steps[3].status = 'completed';
+    steps[3].detail = `Check-in shifted to ${updatedHotelCheckIn.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    emit(steps[3]);
+
+    // Step 5: Reschedule cab
+    steps[4].status = 'in-progress';
+    emit(steps[4]);
+
+    const originalCabTime = cab ? new Date(cab.pickupTime) : new Date();
+    const updatedCabTime = new Date(selectedFlight.arrivalTime);
+    updatedCabTime.setMinutes(updatedCabTime.getMinutes() + 45);
+
+    if (cab) {
+      try {
+        await this.tripRepo.updateCab(cab.id, { pickupTime: updatedCabTime });
+      } catch (e) { console.warn('Cab update failed:', e); }
+    }
+
+    steps[4].status = 'completed';
+    steps[4].detail = `Pickup rescheduled to ${updatedCabTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    emit(steps[4]);
+
+    // Step 6: Rebuild itinerary
+    steps[5].status = 'in-progress';
+    emit(steps[5]);
+
     let updatedItinerary: ItineraryDayEntity[];
     try {
       const context: TripContext = {
@@ -80,11 +148,11 @@ export class TriggerDisruptionShield {
         date: new Date(day.date),
         events: day.events,
         freeGaps: day.freeGaps,
+        previousVersion: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       }));
     } catch {
-      // Fallback: simple time-shifted original itinerary
       const existingDays = await this.tripRepo.findItineraryDays(params.tripId);
       updatedItinerary = existingDays.map((day) => ({
         ...day,
@@ -95,40 +163,63 @@ export class TriggerDisruptionShield {
       }));
     }
 
-    // Step 6: Generate QR code
+    steps[5].status = 'completed';
+    steps[5].detail = `${updatedItinerary.length} days rebuilt`;
+    emit(steps[5]);
+
+    // Step 7: Generate QR
+    steps[6].status = 'in-progress';
+    emit(steps[6]);
+
     const confirmationToken = uuidv4().substring(0, 8);
-    const qrUrl = `https://tripmind.app/confirm/${confirmationToken}?action=pay&amount=${selectedFlight.price}&flight=${selectedFlight.flightNumber}`;
+    const qrUrl = `https://tripmind.app/confirm/${confirmationToken}?action=pay&amount=${selectedFlight.price}&currency=INR&flight=${selectedFlight.flightNumber}`;
     let qrCodeData = '';
     try {
       qrCodeData = await this.qrService.generateQR(qrUrl);
-    } catch {
-      qrCodeData = '';
-    }
+    } catch { qrCodeData = ''; }
 
-    // Update the disrupted flight status
+    // Update records
     try {
       await this.tripRepo.updateFlight(params.flightId, { status: params.disruptionType });
       await this.tripRepo.updateTrip(params.tripId, { status: 'disrupted' });
-      if (hotel) {
-        await this.tripRepo.updateHotel(hotel.id, { checkIn: updatedHotelCheckIn });
-      }
+      await this.tripRepo.createDisruptionLog({
+        tripId: params.tripId,
+        flightId: params.flightId,
+        type: params.disruptionType,
+        detectedAt: new Date(),
+        resolvedAt: new Date(),
+        resolution: JSON.stringify({
+          selectedFlight: selectedFlight.flightNumber,
+          hotelShifted: !!hotel,
+          cabShifted: !!cab,
+        }),
+      });
     } catch (error) {
       console.warn('Failed to update records:', error);
     }
 
-    // Step 7: Return full resolution
+    steps[6].status = 'completed';
+    steps[6].detail = 'QR card ready';
+    emit(steps[6]);
+
+    const totalResolutionTimeMs = Date.now() - startTime;
+
     return {
+      steps,
       alternativeFlights: alternativeFlights.slice(0, 3),
       selectedFlight,
       updatedHotelCheckIn,
+      originalHotelCheckIn,
       updatedCabBooking: {
-        pickup: `${flight.destination} Airport`,
-        dropoff: hotel ? hotel.hotelName : `Hotel in ${trip.destination}`,
-        time: new Date(updatedHotelCheckIn.getTime() - 30 * 60 * 1000),
+        pickup: cab?.pickup || `${flight.destination} Airport`,
+        dropoff: cab?.dropoff || (hotel ? hotel.hotelName : `Hotel in ${trip.destination}`),
+        time: updatedCabTime,
+        originalTime: originalCabTime,
       },
       updatedItinerary,
       qrCodeData,
       confirmationToken,
+      totalResolutionTimeMs,
     };
   }
 }

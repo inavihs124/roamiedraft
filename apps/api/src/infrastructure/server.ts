@@ -9,6 +9,7 @@ import tripController from '../adapters/controllers/trip.controller';
 import itineraryController from '../adapters/controllers/itinerary.controller';
 import disruptionController from '../adapters/controllers/disruption.controller';
 import expenseController from '../adapters/controllers/expense.controller';
+import checklistController from '../adapters/controllers/checklist.controller';
 
 export function createApp() {
   const app = express();
@@ -28,7 +29,7 @@ export function createApp() {
   app.use(i18nMiddleware);
 
   app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.json({ status: 'ok', timestamp: new Date().toISOString(), version: '2.0.0' });
   });
 
   app.use('/api/auth', authController);
@@ -36,6 +37,7 @@ export function createApp() {
   app.use('/api/itinerary', itineraryController);
   app.use('/api/disruption', disruptionController);
   app.use('/api/expense', expenseController);
+  app.use('/api/checklist', checklistController);
 
   app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
     console.error('Unhandled error:', err);
