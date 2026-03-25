@@ -83,7 +83,13 @@ const persistCart = (cart: CartItem[]) => {
 };
 
 export const useStore = create<AppStore>((set, get) => ({
-  user: null,
+  user: {
+    id: 'demo-user',
+    email: 'demo@roamie.app',
+    name: 'Alex Chen',
+    preferredLang: 'en',
+    tripPurpose: 'leisure'
+  },
   trips: [],
   currentTrip: null,
   cart: loadCart(),

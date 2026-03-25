@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, NavLink, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -11,7 +11,7 @@ import Dashboard from './pages/Dashboard';
 import Disruption from './pages/Disruption';
 import Expenses from './pages/Expenses';
 import PackingChecklist from './pages/PackingChecklist';
-import Onboarding from './pages/Onboarding';
+
 import Payment from './pages/Payment';
 import VoiceTranslateWidget from './components/VoiceTranslateWidget';
 import OpenClawCart from './components/OpenClawCart';
@@ -35,19 +35,13 @@ const NAV_ITEMS = [
 
 export default function App() {
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
-  const { user, fetchMe, login } = useStore();
+  const { user, fetchMe } = useStore();
   const [initialized, setInitialized] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('roamie-token');
-    if (token) {
-      fetchMe().finally(() => setInitialized(true));
-    } else {
-      login('demo@roamie.app', 'password123').finally(() => setInitialized(true));
-    }
-  }, [fetchMe, login]);
+    fetchMe().finally(() => setInitialized(true));
+  }, [fetchMe]);
 
   const handleLanguageChange = (code: string) => {
     i18n.changeLanguage(code);
@@ -67,14 +61,7 @@ export default function App() {
     );
   }
 
-  if (!user) {
-    return (
-      <Onboarding onComplete={async () => {
-        await fetchMe();
-        navigate('/dashboard');
-      }} />
-    );
-  }
+
 
   return (
     <div className="flex bg-[#0b1120] text-slate-100 min-h-screen overflow-hidden">
@@ -158,9 +145,9 @@ export default function App() {
             
             <div className="flex items-center gap-3 cursor-pointer hover:bg-slate-800/40 p-1.5 pr-4 rounded-full transition-colors border border-transparent hover:border-slate-700">
               <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center text-sm font-bold text-slate-900 shadow-md">
-                {user.name?.charAt(0)?.toUpperCase() || '?'}
+                {user?.name?.charAt(0)?.toUpperCase() || '?'}
               </div>
-              <span className="hidden sm:block text-sm font-medium text-slate-200">{user.name}</span>
+              <span className="hidden sm:block text-sm font-medium text-slate-200">{user?.name}</span>
             </div>
           </div>
         </header>
