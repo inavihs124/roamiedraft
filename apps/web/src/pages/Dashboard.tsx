@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../stores/useStore';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet/dist/leaflet.css';
 
 function CountdownTimer({ targetDate }: { targetDate: string }) {
   const [days, setDays] = useState(0);
@@ -229,7 +230,7 @@ export default function Dashboard() {
                     value={origin}
                     onChange={e => handleOriginChange(e.target.value)}
                     onFocus={() => { if (originSuggestions.length > 0) setShowOriginSuggestions(true); }}
-                    className="bg-slate-900/50 border border-slate-700 text-slate-100 text-base rounded-xl focus:ring-amber-500 focus:border-amber-500 block w-full pl-12 pr-4 h-14 outline-none transition-colors placeholder:text-slate-500"
+                    className="bg-slate-800/80 border border-slate-600/50 text-slate-100 text-sm rounded-xl focus:ring-amber-500 focus:border-amber-500 block w-full pl-12 pr-4 h-12 outline-none transition-colors placeholder:text-slate-400 shadow-inner"
                     placeholder="Enter city or airport"
                     style={{ paddingLeft: '3.5rem' }}
                   />
@@ -270,7 +271,7 @@ export default function Dashboard() {
                     onChange={e => handleDestChange(e.target.value)}
                     onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
                     required
-                    className="bg-slate-900/50 border border-slate-700 text-slate-100 text-base rounded-xl focus:ring-amber-500 focus:border-amber-500 block w-full pl-12 pr-4 h-14 outline-none transition-colors placeholder:text-slate-500"
+                    className="bg-slate-800/80 border border-slate-600/50 text-slate-100 text-sm rounded-xl focus:ring-amber-500 focus:border-amber-500 block w-full pl-12 pr-4 h-12 outline-none transition-colors placeholder:text-slate-400 shadow-inner"
                     placeholder="Enter destination"
                     style={{ paddingLeft: '3.5rem' }}
                   />
@@ -306,7 +307,7 @@ export default function Dashboard() {
                     <Calendar size={18} className="text-slate-500" />
                   </div>
                   <input type="date" value={startDate} required onChange={e => setStartDate(e.target.value)}
-                    className="bg-slate-900/50 border border-slate-700 text-slate-100 text-base rounded-xl focus:ring-amber-500 focus:border-amber-500 block w-full pl-12 pr-4 h-14 outline-none transition-colors [color-scheme:dark]"
+                    className="bg-slate-800/80 border border-slate-600/50 text-slate-100 text-sm rounded-xl focus:ring-amber-500 focus:border-amber-500 block w-full pl-12 pr-4 h-12 outline-none transition-colors [color-scheme:dark] shadow-inner"
                     style={{ paddingLeft: '3.5rem' }}
                   />
                 </div>
@@ -319,7 +320,7 @@ export default function Dashboard() {
                     <Calendar size={18} className="text-slate-500" />
                   </div>
                   <input type="date" value={endDate} required onChange={e => setEndDate(e.target.value)}
-                    className="bg-slate-900/50 border border-slate-700 text-slate-100 text-base rounded-xl focus:ring-amber-500 focus:border-amber-500 block w-full pl-12 pr-4 h-14 outline-none transition-colors [color-scheme:dark]"
+                    className="bg-slate-900/50 border border-slate-700 text-slate-100 text-base rounded-xl focus:ring-amber-500 focus:border-amber-500 block w-full pl-12 pr-4 h-12 outline-none transition-colors [color-scheme:dark]"
                     style={{ paddingLeft: '3.5rem' }}
                   />
                 </div>

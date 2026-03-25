@@ -114,7 +114,7 @@ export default function VoiceTranslateWidget() {
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
         className={`fixed bottom-8 right-8 z-[1000] px-5 py-3 rounded-full flex items-center gap-3 backdrop-blur-md transition-all shadow-2xl border ${
-          isOpen ? 'bg-slate-800/80 text-white border-slate-700/50' : 'bg-gradient-to-r from-emerald-500 to-blue-500 text-white border-emerald-400/30'
+          isOpen ? 'bg-slate-800/80 text-white border-slate-700/50' : 'bg-gradient-to-r from-amber-500 to-rose-500 text-white border-amber-400/30'
         }`}
       >
         <Languages size={20} className={isOpen ? 'opacity-50' : ''} />
