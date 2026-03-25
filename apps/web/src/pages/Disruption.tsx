@@ -165,51 +165,51 @@ export default function Disruption() {
     <div className="max-w-4xl mx-auto p-4 lg:p-8 pb-32">
       {/* Header */}
       <div className="mb-12">
-        <h1 className="font-display font-bold text-4xl text-white mb-2 flex items-center gap-3">
-          <ShieldAlert size={36} className="text-amber-500" /> Disruption Shield
+        <h1 className="font-display font-bold text-4xl text-slate-900 mb-2 flex items-center gap-3">
+          <ShieldAlert size={36} className="text-rose-500" /> Disruption Shield
         </h1>
-        <p className="text-slate-400 font-medium text-lg">
+        <p className="text-slate-500 font-medium text-lg">
           Simulate a disruption and watch autonomous agents resolve it in real-time.
         </p>
       </div>
 
       {/* Current Flight Card */}
       {flight && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 rounded-3xl border border-slate-700/50 mb-10 relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-900/20 to-transparent z-0 pointer-events-none"></div>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 rounded-3xl border border-slate-200 mb-10 relative overflow-hidden group shadow-sm">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-transparent z-0 pointer-events-none"></div>
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-                  <Plane size={24} className="text-blue-400" />
+                <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center">
+                  <Plane size={24} className="text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-2xl text-white">{flight.flightNumber}</h3>
-                  <p className="text-slate-400 font-medium">{flight.airline}</p>
+                  <h3 className="font-display font-bold text-2xl text-slate-900">{flight.flightNumber}</h3>
+                  <p className="text-slate-600 font-medium">{flight.airline}</p>
                 </div>
               </div>
-              <div className="px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-bold tracking-wide uppercase flex items-center gap-2 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
-                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <div className="px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-bold tracking-wide uppercase flex items-center gap-2 shadow-sm">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 {flight.status}
               </div>
             </div>
             <div className="flex items-center justify-between px-4 lg:px-12">
               <div className="text-center">
-                <p className="font-display font-extrabold text-5xl text-white mb-2">{flight.origin}</p>
-                <p className="text-slate-400 font-medium">{formatTime(flight.departureTime)}</p>
+                <p className="font-display font-extrabold text-5xl text-slate-900 mb-2">{flight.origin}</p>
+                <p className="text-slate-500 font-medium">{formatTime(flight.departureTime)}</p>
               </div>
               <div className="flex-1 flex items-center mx-8">
-                <div className="h-px bg-slate-700 flex-1 relative">
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-800 border border-slate-700 px-3 py-1 rounded-full text-xs font-bold text-slate-400">
+                <div className="h-px bg-slate-200 flex-1 relative">
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white border border-slate-200 px-3 py-1 rounded-full text-xs font-bold text-slate-500 shadow-sm">
                     DIRECT
                   </div>
                 </div>
-                <Plane size={20} className="text-slate-600 mx-2" />
-                <div className="h-px bg-slate-700 flex-1" />
+                <Plane size={20} className="text-slate-400 mx-2" />
+                <div className="h-px bg-slate-200 flex-1" />
               </div>
               <div className="text-center">
-                <p className="font-display font-extrabold text-5xl text-white mb-2">{flight.destination}</p>
-                <p className="text-slate-400 font-medium">{formatTime(flight.arrivalTime)}</p>
+                <p className="font-display font-extrabold text-5xl text-slate-900 mb-2">{flight.destination}</p>
+                <p className="text-slate-500 font-medium">{formatTime(flight.arrivalTime)}</p>
               </div>
             </div>
           </div>
@@ -221,7 +221,7 @@ export default function Disruption() {
         <motion.button
           onClick={() => handleDisrupt(false)} disabled={disrupting || !flight}
           whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-          className="relative h-16 rounded-2xl bg-gradient-to-r from-amber-600 to-amber-500 text-slate-900 font-bold text-lg border-none shadow-[0_0_30px_rgba(245,158,11,0.2)] hover:shadow-[0_0_40px_rgba(245,158,11,0.4)] transition-all overflow-hidden"
+          className="relative h-16 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg border-none shadow-md shadow-blue-500/20 transition-all overflow-hidden"
         >
           {disrupting ? (
              <div className="flex items-center justify-center gap-2">
@@ -238,7 +238,7 @@ export default function Disruption() {
         <motion.button
           onClick={() => handleDisrupt(true)} disabled={disrupting || !flight}
           whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-          className="h-16 rounded-2xl glass-panel border-rose-500/30 text-rose-400 font-bold text-lg hover:bg-rose-500/10 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+          className="h-16 rounded-2xl bg-white border border-rose-200 text-rose-600 font-bold text-lg hover:bg-rose-50 shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
         >
           <ShieldAlert size={20} /> Force Zero Flights
         </motion.button>
@@ -248,9 +248,9 @@ export default function Disruption() {
       <AnimatePresence>
         {currentStep >= 0 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-12">
-            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Agentic Data Kit Pipeline</h3>
-            <div className="glass-panel rounded-3xl p-8 border border-slate-700/50 relative overflow-hidden">
-              <div className="absolute top-1/2 left-10 right-10 h-1 bg-slate-800 -translate-y-1/2 z-0 rounded-full overflow-hidden">
+            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-6">Agentic Data Kit Pipeline</h3>
+            <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm relative overflow-hidden">
+              <div className="absolute top-1/2 left-10 right-10 h-1 bg-slate-100 -translate-y-1/2 z-0 rounded-full overflow-hidden">
                 <motion.div 
                    className="h-full bg-gradient-to-r from-blue-500 via-emerald-500 to-amber-500"
                    initial={{ width: '0%' }}
@@ -268,20 +268,20 @@ export default function Disruption() {
                   return (
                     <div key={i} className="flex flex-col items-center group relative cursor-pointer">
                       <motion.div
-                        initial={{ scale: 0.8, backgroundColor: 'rgba(30,41,59,1)' }}
+                        initial={{ scale: 0.8, backgroundColor: 'rgba(255,255,255,1)' }}
                         animate={{ 
                           scale: active ? 1.2 : done ? 1 : 0.8,
-                          backgroundColor: done ? 'rgba(16,185,129,0.2)' : active ? 'rgba(245,158,11,0.2)' : 'rgba(30,41,59,1)',
-                          borderColor: done ? 'rgba(52,211,153,0.5)' : active ? 'rgba(251,191,36,0.5)' : 'rgba(51,65,85,1)',
-                          color: done ? '#34d399' : active ? '#fbbf24' : '#64748b'
+                          backgroundColor: done ? 'rgba(236,253,245,1)' : active ? 'rgba(239,246,255,1)' : 'rgba(255,255,255,1)',
+                          borderColor: done ? 'rgba(167,243,208,1)' : active ? 'rgba(191,219,254,1)' : 'rgba(226,232,240,1)',
+                          color: done ? '#047857' : active ? '#2563eb' : '#94a3b8'
                         }}
-                        className={`w-14 h-14 rounded-2xl border-2 flex items-center justify-center transition-colors shadow-lg backdrop-blur-md ${active ? 'shadow-[0_0_20px_rgba(245,158,11,0.4)] ring-4 ring-amber-500/20' : done ? 'shadow-[0_0_15px_rgba(16,185,129,0.2)]' : ''}`}
+                        className={`w-14 h-14 rounded-2xl border-2 flex items-center justify-center transition-colors shadow-sm backdrop-blur-md ${active ? 'ring-4 ring-blue-100' : ''}`}
                       >
                         {done ? <Check size={24} strokeWidth={3} /> : <Icon size={24} />}
                       </motion.div>
                       
                       {/* Tooltip style label */}
-                      <span className={`absolute -bottom-10 whitespace-nowrap text-xs font-bold transition-all ${done ? 'text-emerald-400' : active ? 'text-amber-400' : 'text-slate-500 opacity-0 group-hover:opacity-100'}`}>
+                      <span className={`absolute -bottom-10 whitespace-nowrap text-xs font-bold transition-all ${done ? 'text-emerald-600' : active ? 'text-blue-600' : 'text-slate-500 opacity-0 group-hover:opacity-100'}`}>
                         {step.label}
                       </span>
                     </div>
@@ -298,20 +298,20 @@ export default function Disruption() {
         {showBanner && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-            className={`mb-12 p-6 rounded-3xl border backdrop-blur-md flex items-start gap-4 shadow-xl ${
+            className={`mb-12 p-6 rounded-3xl border flex items-start gap-4 shadow-sm ${
               resolution?.status === 'failed' 
-                ? 'bg-rose-500/10 border-rose-500/30 shadow-[0_0_30px_rgba(244,63,94,0.1)]' 
-                : 'bg-emerald-500/10 border-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.1)]'
+                ? 'bg-rose-50 border-rose-200' 
+                : 'bg-emerald-50 border-emerald-200'
             }`}
           >
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${resolution?.status === 'failed' ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${resolution?.status === 'failed' ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}>
               <ShieldAlert size={24} />
             </div>
             <div>
-              <h4 className={`font-display font-bold text-xl mb-1 ${resolution?.status === 'failed' ? 'text-rose-400' : 'text-emerald-400'}`}>
+              <h4 className={`font-display font-bold text-xl mb-1 ${resolution?.status === 'failed' ? 'text-rose-700' : 'text-emerald-700'}`}>
                 OpenClaw Agent Report
               </h4>
-              <p className="text-slate-300 font-medium leading-relaxed italic">
+              <p className="text-slate-600 font-medium leading-relaxed italic">
                 "{resolution?.clawbotMessage}"
               </p>
             </div>
@@ -323,7 +323,7 @@ export default function Disruption() {
       <AnimatePresence>
         {showFlights && resolution?.alternativeFlights && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-12">
-            <h3 className="font-display font-bold text-2xl text-white mb-6">Secured Alternatives</h3>
+            <h3 className="font-display font-bold text-2xl text-slate-900 mb-6">Secured Alternatives</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {resolution.alternativeFlights.map((alt: any, i: number) => {
                 const isSelected = alt.flightNumber === resolution.selectedFlight?.flightNumber;
@@ -331,42 +331,42 @@ export default function Disruption() {
                   <motion.div
                     key={i}
                     whileHover={{ y: -4 }}
-                    className={`relative p-6 rounded-3xl glass-panel transition-all overflow-hidden group ${
-                      isSelected ? 'border-amber-500/50 ring-1 ring-amber-500/30' : 'border-slate-700/50'
+                    className={`relative p-6 rounded-3xl transition-all overflow-hidden group ${
+                      isSelected ? 'bg-blue-50 border border-blue-200 ring-1 ring-blue-100 shadow-md' : 'bg-white border border-slate-200 shadow-sm hover:shadow'
                     }`}
                   >
                     {isSelected && (
-                      <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent pointer-events-none" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-100/50 to-transparent pointer-events-none" />
                     )}
                     
                     <div className="relative z-10">
                       <div className="flex justify-between items-start mb-6">
                         <div className="flex gap-4 items-center">
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center border ${isSelected ? 'bg-amber-500/20 border-amber-500/30 text-amber-500' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center border ${isSelected ? 'bg-white border-blue-200 text-blue-600 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
                             <Plane size={24} />
                           </div>
                           <div>
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="font-display font-bold text-xl text-white">{alt.flightNumber}</span>
-                              {isSelected && <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider bg-amber-500 text-slate-900 uppercase">Best Match</span>}
+                              <span className="font-display font-bold text-xl text-slate-900">{alt.flightNumber}</span>
+                              {isSelected && <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider bg-blue-600 text-white uppercase">Best Match</span>}
                             </div>
-                            <span className="text-sm font-medium text-slate-400">{alt.airline}</span>
+                            <span className="text-sm font-medium text-slate-500">{alt.airline}</span>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-display font-bold text-2xl text-white">₹{alt.price?.toLocaleString()}</p>
-                          {alt.score && <p className="text-xs font-bold text-emerald-400">{Math.round(alt.score * 100)}% Match</p>}
+                          <p className="font-display font-bold text-2xl text-slate-900">₹{alt.price?.toLocaleString()}</p>
+                          {alt.score && <p className="text-xs font-bold text-emerald-600">{Math.round(alt.score * 100)}% Match</p>}
                         </div>
                       </div>
                       
-                      <div className="flex items-center justify-between text-sm font-medium text-slate-300">
+                      <div className="flex items-center justify-between text-sm font-medium text-slate-600">
                         <div className="flex flex-col">
                           <span className="text-xs text-slate-500 mb-1">Route</span>
                           <span>{formatTime(alt.departureTime)} → {formatTime(alt.arrivalTime)}</span>
                         </div>
                         <div className="flex flex-col text-right">
                           <span className="text-xs text-slate-500 mb-1">Availability</span>
-                          <span className={`${alt.seatsAvailable < 5 ? 'text-rose-400' : 'text-emerald-400'}`}>{alt.seatsAvailable} seats left</span>
+                          <span className={`${alt.seatsAvailable < 5 ? 'text-rose-600' : 'text-emerald-600'}`}>{alt.seatsAvailable} seats left</span>
                         </div>
                       </div>
                     </div>
@@ -386,30 +386,27 @@ export default function Disruption() {
             {/* Countdown Hold Tab */}
             {holdActive && holdTimeRemaining > 0 && (
               <div className="flex justify-center -mb-4 relative z-20">
-                <div className="bg-amber-500 text-slate-900 px-6 py-2 rounded-t-xl font-bold text-sm tracking-wide shadow-[0_-10px_20px_rgba(245,158,11,0.3)] flex items-center gap-2 border border-amber-400 border-b-0">
+                <div className="bg-blue-100 text-blue-800 px-6 py-2 rounded-t-xl font-bold text-sm tracking-wide shadow-sm flex items-center gap-2 border border-blue-200 border-b-0">
                   <Timer size={16} className="animate-pulse" />
                   HELD FOR {formatCountdown(holdTimeRemaining)}
                 </div>
               </div>
             )}
 
-            <div className="relative rounded-3xl p-1 overflow-hidden z-10 group bg-gradient-to-br from-blue-500/30 via-slate-800 to-emerald-500/30 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
-               {/* Animated glow background */}
-               <div className="absolute inset-[-100%] bg-[conic-gradient(from_90deg_at_50%_50%,#00000000_50%,#3b82f6_100%)] animate-[spin_4s_linear_infinite] opacity-50"></div>
-               
-               <div className="relative bg-[#0b1120] rounded-[22px] overflow-hidden backdrop-blur-2xl">
-                 <div className="bg-blue-600/20 border-b border-blue-500/30 px-8 py-4 flex justify-between items-center relative overflow-hidden">
-                   <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none"></div>
-                   <span className="font-display font-bold text-xl text-blue-400 flex items-center gap-2"><Plane size={20} /> OpenClaw Verified</span>
-                   <span className="text-xs font-bold tracking-widest text-slate-300">e-TICKET PENDING</span>
+            <div className="relative rounded-3xl p-px overflow-hidden z-10 group bg-slate-200 shadow-lg">
+               <div className="relative bg-white rounded-[22px] overflow-hidden backdrop-blur-md">
+                 <div className="bg-blue-50 border-b border-blue-100 px-8 py-4 flex justify-between items-center relative overflow-hidden">
+                   <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none"></div>
+                   <span className="font-display font-bold text-xl text-blue-700 flex items-center gap-2"><Plane size={20} /> OpenClaw Verified</span>
+                   <span className="text-xs font-bold tracking-widest text-slate-500">e-TICKET PENDING</span>
                  </div>
                  
-                 <div className="flex flex-col md:flex-row p-8 gap-8 items-center bg-gradient-to-br from-slate-900/80 to-slate-950/80">
+                 <div className="flex flex-col md:flex-row p-8 gap-8 items-center bg-slate-50">
                    
                    {/* QR Code Container */}
                    <div className="shrink-0 relative">
-                     <div className="absolute -inset-2 bg-blue-500/20 rounded-2xl blur-xl filter group-hover:bg-blue-500/30 transition-colors"></div>
-                     <div className="relative w-48 h-48 bg-white rounded-xl p-2 shadow-2xl flex items-center justify-center">
+                     <div className="absolute -inset-2 bg-blue-100 rounded-2xl blur-xl filter group-hover:bg-blue-200 transition-colors"></div>
+                     <div className="relative w-48 h-48 bg-white border border-slate-200 rounded-xl p-2 shadow-sm flex items-center justify-center">
                        {resolution.qrCodeData ? (
                          <img src={resolution.qrCodeData} alt="QR Code" className="w-full h-full rounded-lg" />
                        ) : (
@@ -421,18 +418,18 @@ export default function Disruption() {
                    <div className="flex-1 w-full text-center md:text-left">
                      <div className="mb-6">
                        <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1">New Itinerary</p>
-                       <h2 className="font-display font-extrabold text-4xl text-white mb-2">{resolution.selectedFlight?.flightNumber}</h2>
-                       <p className="text-xl text-blue-400 font-medium">{resolution.selectedFlight?.airline}</p>
+                       <h2 className="font-display font-extrabold text-4xl text-slate-900 mb-2">{resolution.selectedFlight?.flightNumber}</h2>
+                       <p className="text-xl text-blue-600 font-medium">{resolution.selectedFlight?.airline}</p>
                      </div>
                      
-                     <div className="grid grid-cols-2 gap-4 bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 mb-6">
+                     <div className="grid grid-cols-2 gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-6">
                        <div>
                          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Departure</p>
-                         <p className="text-xl font-bold text-slate-200">{formatTime(resolution.selectedFlight?.departureTime)}</p>
+                         <p className="text-xl font-bold text-slate-800">{formatTime(resolution.selectedFlight?.departureTime)}</p>
                        </div>
                        <div>
                          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Arrival</p>
-                         <p className="text-xl font-bold text-slate-200">{formatTime(resolution.selectedFlight?.arrivalTime)}</p>
+                         <p className="text-xl font-bold text-slate-800">{formatTime(resolution.selectedFlight?.arrivalTime)}</p>
                        </div>
                      </div>
                    </div>
@@ -440,15 +437,15 @@ export default function Disruption() {
 
                  {/* Action Bar */}
                  {confirmed ? (
-                   <div className={`p-6 text-center font-bold text-xl tracking-wide uppercase ${confirmed === 'confirmed' ? 'bg-emerald-500/20 text-emerald-400 border-t border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border-t border-rose-500/30'}`}>
+                   <div className={`p-6 text-center font-bold text-xl tracking-wide uppercase ${confirmed === 'confirmed' ? 'bg-emerald-50 text-emerald-700 border-t border-emerald-200' : 'bg-rose-50 text-rose-700 border-t border-rose-200'}`}>
                      {confirmed === 'confirmed' ? 'Authorization Verified' : 'Transaction Voided'}
                    </div>
                  ) : (
-                   <div className="flex flex-col sm:flex-row p-6 gap-4 bg-slate-900 border-t border-slate-700/50 relative overflow-hidden">
-                     <motion.button onClick={handleConfirm} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-[2] py-4 rounded-xl font-bold text-white text-lg bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all">
+                   <div className="flex flex-col sm:flex-row p-6 gap-4 bg-slate-50 border-t border-slate-200 relative overflow-hidden">
+                     <motion.button onClick={handleConfirm} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-[2] py-4 rounded-xl font-bold text-white text-lg bg-blue-600 hover:bg-blue-700 shadow-md transition-all">
                        Confirm & Pay ₹{resolution.selectedFlight?.price?.toLocaleString()}
                      </motion.button>
-                     <motion.button onClick={handleCancel} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1 py-4 rounded-xl font-bold text-slate-300 bg-slate-800 hover:bg-slate-700 hover:text-white border border-slate-600 transition-all">
+                     <motion.button onClick={handleCancel} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1 py-4 rounded-xl font-bold text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 border border-slate-200 shadow-sm transition-all">
                        Release Booking
                      </motion.button>
                    </div>

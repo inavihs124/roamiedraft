@@ -50,12 +50,12 @@ export default function App() {
 
   if (!initialized) {
     return (
-      <div className="min-h-screen bg-[#0b1120] flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }} className="inline-block">
-            <Plane size={32} className="text-amber-500" />
+            <Plane size={32} className="text-blue-600" />
           </motion.div>
-          <p className="text-slate-400 mt-4 font-sans tracking-wide">Initializing Space...</p>
+          <p className="text-slate-500 mt-4 font-sans tracking-wide">Initializing Space...</p>
         </div>
       </div>
     );
@@ -64,14 +64,14 @@ export default function App() {
 
 
   return (
-    <div className="flex bg-[#0b1120] text-slate-100 min-h-screen overflow-hidden">
+    <div className="flex bg-slate-50 text-slate-900 min-h-screen overflow-hidden">
       
       {/* Mobile Nav Overlay */}
       <AnimatePresence>
         {mobileNav && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 lg:hidden"
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden"
             onClick={() => setMobileNav(false)}
           />
         )}
@@ -79,18 +79,18 @@ export default function App() {
 
       {/* Persistent Sidebar */}
       <aside 
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 glass-panel border-r border-slate-700/50 flex flex-col pt-6 pb-4 px-4 outline-none transition-transform duration-300 shadow-2xl ${
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 glass-panel border-r border-slate-200 flex flex-col pt-6 pb-4 px-4 outline-none transition-transform duration-300 shadow-sm ${
           mobileNav ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
         <div className="flex items-center justify-between mb-10 px-2">
           <div className="flex items-center gap-3">
             <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}>
-              <Plane size={24} className="text-amber-500" />
+              <Plane size={24} className="text-blue-600" />
             </motion.div>
-            <span className="font-display font-bold text-xl tracking-tight text-white">Roamie</span>
+            <span className="font-display font-bold text-xl tracking-tight text-slate-900">Roamie</span>
           </div>
-          <button className="lg:hidden text-slate-400 hover:text-white" onClick={() => setMobileNav(false)}>
+          <button className="lg:hidden text-slate-400 hover:text-slate-900" onClick={() => setMobileNav(false)}>
             <X size={20} />
           </button>
         </div>
@@ -104,7 +104,7 @@ export default function App() {
                 to={item.path} 
                 className={({ isActive }) => `
                   flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
-                  ${isActive ? 'bg-amber-500/10 text-amber-500 shadow-inner border border-amber-500/20' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}
+                  ${isActive ? 'bg-slate-100 text-blue-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}
                 `}
                 onClick={() => setMobileNav(false)}
               >
@@ -115,12 +115,12 @@ export default function App() {
           })}
         </nav>
 
-        <div className="mt-auto space-y-2 border-t border-slate-700/50 pt-4 pb-2">
-          <div className="flex gap-1 justify-center bg-slate-800/30 p-1.5 rounded-lg">
+        <div className="mt-auto space-y-2 border-t border-slate-200 pt-4 pb-2">
+          <div className="flex gap-1 justify-center bg-slate-100 p-1.5 rounded-lg">
             {LANGUAGES.map(l => (
               <button key={l.code} onClick={() => handleLanguageChange(l.code)}
                 className={`w-8 h-8 rounded-md flex items-center justify-center text-sm transition-all ${
-                  i18n.language === l.code ? 'bg-slate-700/80 shadow-md transform scale-105' : 'opacity-60 hover:opacity-100 hover:bg-slate-800'
+                  i18n.language === l.code ? 'bg-white shadow-sm border border-slate-200 text-slate-900 transform scale-105' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200'
                 }`}
               >
                 {l.label}
@@ -134,20 +134,20 @@ export default function App() {
       <div className="flex-1 flex flex-col relative min-w-0 max-h-screen">
         
         {/* Top Header */}
-        <header className="h-16 shrink-0 glass-panel border-b border-slate-700/50 flex items-center justify-between px-4 lg:px-8 z-30 sticky top-0">
-          <button className="lg:hidden text-slate-300 hover:text-white p-2" onClick={() => setMobileNav(true)}>
+        <header className="h-16 shrink-0 glass-panel border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 z-30 sticky top-0">
+          <button className="lg:hidden text-slate-500 hover:text-slate-900 p-2" onClick={() => setMobileNav(true)}>
             <Menu size={24} />
           </button>
 
           <div className="flex items-center ml-auto gap-4">
             <OpenClawCart />
-            <div className="w-px h-6 bg-slate-700" />
+            <div className="w-px h-6 bg-slate-200" />
             
-            <div className="flex items-center gap-3 cursor-pointer hover:bg-slate-800/40 p-1.5 pr-4 rounded-full transition-colors border border-transparent hover:border-slate-700">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center text-sm font-bold text-slate-900 shadow-md">
+            <div className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-1.5 pr-4 rounded-full transition-colors border border-transparent hover:border-slate-200">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-sm font-bold text-blue-700 border border-blue-200">
                 {user?.name?.charAt(0)?.toUpperCase() || '?'}
               </div>
-              <span className="hidden sm:block text-sm font-medium text-slate-200">{user?.name}</span>
+              <span className="hidden sm:block text-sm font-medium text-slate-700">{user?.name}</span>
             </div>
           </div>
         </header>

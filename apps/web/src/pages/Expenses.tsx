@@ -5,12 +5,12 @@ import { Receipt, Utensils, Car, Building2, Ticket, Tag, Download, Sparkles, Plu
 import { useStore } from '../stores/useStore';
 
 const CATEGORY_STYLES: Record<string, { bg: string; border: string; color: string; Icon: typeof Utensils }> = {
-  food:          { bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', color: 'text-emerald-400', Icon: Utensils },
-  transport:     { bg: 'bg-purple-500/10',  border: 'border-purple-500/20',  color: 'text-purple-400',  Icon: Car },
-  accommodation: { bg: 'bg-blue-500/10',    border: 'border-blue-500/20',    color: 'text-blue-400',    Icon: Building2 },
-  activity:      { bg: 'bg-indigo-500/10',  border: 'border-indigo-500/20',  color: 'text-indigo-400',  Icon: Ticket },
-  shopping:      { bg: 'bg-pink-500/10',    border: 'border-pink-500/20',    color: 'text-pink-400',    Icon: Tag },
-  other:         { bg: 'bg-amber-500/10',   border: 'border-amber-500/20',   color: 'text-amber-400',   Icon: Receipt },
+  food:          { bg: 'bg-emerald-50', border: 'border-emerald-200', color: 'text-emerald-700', Icon: Utensils },
+  transport:     { bg: 'bg-purple-50',  border: 'border-purple-200',  color: 'text-purple-700',  Icon: Car },
+  accommodation: { bg: 'bg-blue-50',    border: 'border-blue-200',    color: 'text-blue-700',    Icon: Building2 },
+  activity:      { bg: 'bg-indigo-50',  border: 'border-indigo-200',  color: 'text-indigo-700',  Icon: Ticket },
+  shopping:      { bg: 'bg-pink-50',    border: 'border-pink-200',    color: 'text-pink-700',    Icon: Tag },
+  other:         { bg: 'bg-amber-50',   border: 'border-amber-200',   color: 'text-amber-700',   Icon: Receipt },
 };
 
 const DONUT_COLORS = ['#34D399', '#C084FC', '#60A5FA', '#818CF8', '#F472B6', '#FBBF24', '#22D3EE'];
@@ -91,14 +91,14 @@ export default function Expenses() {
     <div className="max-w-6xl mx-auto p-4 lg:p-8 pb-32">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
         <div>
-          <h1 className="font-display font-bold text-4xl text-white mb-2 flex items-center gap-3">
+          <h1 className="font-display font-bold text-4xl text-slate-900 mb-2 flex items-center gap-3">
             <CreditCard size={36} className="text-emerald-500" /> {t('expenses.title')}
           </h1>
-          <p className="text-slate-400 font-medium text-lg">{t('expenses.subtitle')}</p>
+          <p className="text-slate-500 font-medium text-lg">{t('expenses.subtitle')}</p>
         </div>
         
         {expenses.length > 0 && (
-          <button onClick={exportCSV} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-300 font-bold hover:bg-slate-700 hover:text-white transition-colors backdrop-blur-md shadow-lg">
+          <button onClick={exportCSV} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm">
             <Download size={18} /> Export CSV
           </button>
         )}
@@ -110,21 +110,21 @@ export default function Expenses() {
         <div className="space-y-8">
           
           {/* AI Scanner */}
-          <div className="glass-panel p-6 rounded-3xl border border-emerald-500/20 shadow-[0_4px_30px_rgba(16,185,129,0.05)] relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
+          <div className="bg-white p-6 rounded-3xl border border-emerald-200 shadow-sm relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-transparent pointer-events-none" />
             <div className="relative z-10">
-              <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-400 mb-4">
+              <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-700 mb-4">
                 <Sparkles size={14} /> AI Receipt Scanner
               </label>
               <textarea
                 value={receiptText} onChange={e => setReceiptText(e.target.value)}
                 placeholder="Paste receipt text here and let AI extract the details..."
                 rows={4}
-                className="w-full bg-slate-900/60 border border-slate-700 text-slate-200 p-4 rounded-2xl font-mono text-sm resize-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all outline-none placeholder:text-slate-600 mb-4"
+                className="w-full bg-white border border-slate-200 text-slate-900 p-4 rounded-2xl font-mono text-sm resize-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition-all outline-none placeholder:text-slate-400 shadow-sm mb-4"
               />
               <motion.button onClick={handleScan} disabled={scanning || !receiptText.trim()}
                 whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
-                className="w-full h-14 rounded-xl font-bold text-slate-900 bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 transition-colors flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.2)] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full h-14 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 shadow-md shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {scanning ? (
                   <><motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}><Sparkles size={18} /></motion.div> Analyzing receipt...</>
@@ -136,8 +136,8 @@ export default function Expenses() {
           </div>
 
           {/* Quick Manual Entry */}
-          <div className="glass-panel p-6 rounded-3xl border border-slate-700/50">
-            <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 mb-6">
+          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+            <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500 mb-6">
               <CreditCard size={14} /> Quick Add Expense
             </label>
             
@@ -148,7 +148,7 @@ export default function Expenses() {
                 return (
                   <button key={cat} onClick={() => setManualCategory(cat)}
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold capitalize transition-all border ${
-                      isActive ? `${s.bg} ${s.border} ${s.color} shadow-lg ring-1 ring-${s.color.split('-')[1]}-500/30` : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+                      isActive ? `${s.bg} ${s.border} ${s.color} shadow-sm ring-1 ring-${s.color.split('-')[1]}-200` : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                     }`}
                   >
                     <CatIcon size={14} /> {cat}
@@ -159,13 +159,13 @@ export default function Expenses() {
 
             <div className="flex flex-col sm:flex-row gap-3 mb-4">
               <input value={manualDesc} onChange={e => setManualDesc(e.target.value)} placeholder="What did you buy?"
-                className="flex-[2] bg-slate-900/50 border border-slate-700 text-slate-200 rounded-xl px-4 h-12 outline-none focus:border-blue-500 transition-colors placeholder:text-slate-500"
+                className="flex-[2] bg-white border border-slate-200 text-slate-900 rounded-xl px-4 h-12 outline-none focus:border-blue-500 transition-colors placeholder:text-slate-400 shadow-sm"
               />
               <input value={manualAmount} onChange={e => setManualAmount(e.target.value)} placeholder="0.00" type="number"
-                className="flex-1 bg-slate-900/50 border border-slate-700 text-slate-200 rounded-xl px-4 h-12 outline-none focus:border-blue-500 transition-colors placeholder:text-slate-500"
+                className="flex-1 bg-white border border-slate-200 text-slate-900 rounded-xl px-4 h-12 outline-none focus:border-blue-500 transition-colors placeholder:text-slate-400 shadow-sm"
               />
               <select value={manualCurrency} onChange={e => setManualCurrency(e.target.value)}
-                className="w-28 bg-slate-900/50 border border-slate-700 text-slate-300 rounded-xl px-3 h-12 outline-none focus:border-blue-500 transition-colors cursor-pointer"
+                className="w-28 bg-white border border-slate-200 text-slate-900 rounded-xl px-3 h-12 outline-none focus:border-blue-500 transition-colors cursor-pointer shadow-sm"
               >
                 <option value="INR">₹ INR</option>
                 <option value="USD">$ USD</option>
@@ -192,7 +192,7 @@ export default function Expenses() {
                   }
                 } catch {}
               }}
-              className="w-full h-12 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-500 transition-colors flex items-center justify-center gap-2 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed"
+              className="w-full h-12 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-500 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed border disabled:border-slate-200 border-transparent"
             >
               <Plus size={18} /> Add Record
             </motion.button>
@@ -202,22 +202,22 @@ export default function Expenses() {
           <AnimatePresence>
             {lastResult && (
               <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
-                className="glass-panel p-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 relative overflow-hidden"
+                className="bg-emerald-50 p-5 rounded-2xl border border-emerald-200 relative overflow-hidden shadow-sm"
               >
                 <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                  <div className="flex items-center gap-2 text-emerald-700 font-bold text-sm">
                     <Sparkles size={16} /> Data Extracted Successfully
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 mt-4 pl-2">
                   <div>
                     <span className="text-xs font-bold tracking-widest uppercase text-slate-500 block mb-1">Amount</span>
-                    <span className="font-display font-bold text-2xl text-white">{lastResult.currency} {lastResult.amount}</span>
+                    <span className="font-display font-bold text-2xl text-slate-900">{lastResult.currency} {lastResult.amount}</span>
                   </div>
                   <div>
                     <span className="text-xs font-bold tracking-widest uppercase text-slate-500 block mb-1">Category</span>
-                    <span className="font-medium text-lg text-emerald-300 capitalize">{lastResult.category}</span>
+                    <span className="font-medium text-lg text-emerald-600 capitalize">{lastResult.category}</span>
                   </div>
                 </div>
               </motion.div>
@@ -226,30 +226,30 @@ export default function Expenses() {
 
           {/* Ledger List */}
           <div className="space-y-3">
-            <h3 className="font-display font-bold text-xl text-white mb-4 flex items-center justify-between">
-              Ledger <span className="text-sm font-medium text-slate-400 bg-slate-800 px-3 py-1 rounded-full">{expenses.length} Records</span>
+            <h3 className="font-display font-bold text-xl text-slate-900 mb-4 flex items-center justify-between">
+              Ledger <span className="text-sm font-medium text-slate-500 bg-slate-100 border border-slate-200 px-3 py-1 rounded-full shadow-sm">{expenses.length} Records</span>
             </h3>
             {expenses.map((exp, i) => {
               const style = CATEGORY_STYLES[exp.category] || CATEGORY_STYLES.other;
               const CatIcon = style.Icon;
               return (
                 <motion.div key={exp.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
-                  className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl glass-panel border border-slate-700/50 hover:bg-slate-800/60 transition-colors"
+                  className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm hover:shadow"
                 >
                   <div className="flex items-center gap-4">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center border shrink-0 ${style.bg} ${style.border} ${style.color}`}>
                       <CatIcon size={20} />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-bold text-slate-200 truncate">{exp.description}</p>
+                      <p className="font-bold text-slate-900 truncate">{exp.description}</p>
                       <p className="text-xs text-slate-500 mt-1">{new Date(exp.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between sm:justify-end gap-6 sm:pl-4 sm:border-l border-slate-700">
+                  <div className="flex items-center justify-between sm:justify-end gap-6 sm:pl-4 sm:border-l border-slate-200">
                     <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider ${style.bg} ${style.color}`}>
                       {exp.category}
                     </span>
-                    <p className="font-display font-bold text-xl text-white whitespace-nowrap">
+                    <p className="font-display font-bold text-xl text-slate-900 whitespace-nowrap">
                       {exp.currency} {exp.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
                   </div>
@@ -257,7 +257,7 @@ export default function Expenses() {
               );
             })}
             {expenses.length === 0 && (
-              <div className="text-center py-16 border border-dashed border-slate-700 rounded-3xl bg-slate-900/30 text-slate-500">
+              <div className="text-center py-16 border border-dashed border-slate-200 rounded-3xl bg-slate-50 text-slate-500">
                 No expenses recorded yet. Scan a receipt or add one manually.
               </div>
             )}
@@ -268,34 +268,34 @@ export default function Expenses() {
         <div className="space-y-8">
           
           {/* Total Card */}
-          <div className="glass-panel p-8 rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-slate-900 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
-            <p className="text-sm font-bold tracking-widest uppercase text-amber-500 mb-2 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]">
+          <div className="bg-gradient-to-br from-amber-50 to-white p-8 rounded-3xl border border-amber-200 relative overflow-hidden shadow-sm">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-100/50 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
+            <p className="text-sm font-bold tracking-widest uppercase text-amber-700 mb-2">
               Total Spent
             </p>
-            <p className="font-display font-extrabold text-5xl text-white mb-4">
-              <span className="text-amber-500/80 mr-2">{expenses[0]?.currency || 'SGD'}</span>
+            <p className="font-display font-extrabold text-5xl text-slate-900 mb-4 z-10 relative">
+              <span className="text-amber-600 mr-2">{expenses[0]?.currency || 'SGD'}</span>
               {total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
-            <div className="h-px w-full bg-slate-700/50 mb-4" />
-            <p className="text-sm text-slate-400 font-medium">
+            <div className="h-px w-full bg-slate-200 mb-4 relative z-10" />
+            <p className="text-sm text-slate-500 font-medium relative z-10">
               Based on {expenses.length} tracked transactions mapped to {categories.length} categories.
             </p>
           </div>
 
           {/* Metrics Chart */}
           {categories.length > 0 && (
-            <div className="glass-panel p-8 rounded-3xl border border-slate-700/50">
-              <h3 className="font-display font-bold text-xl text-white mb-8">Category Breakdown</h3>
+            <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+              <h3 className="font-display font-bold text-xl text-slate-900 mb-8">Category Breakdown</h3>
               
               <div className="flex justify-center mb-10 relative">
                 <div className="relative w-[240px] h-[240px]">
                   {/* Outer Glow */}
-                  <div className="absolute inset-4 bg-slate-800 rounded-full blur-2xl opacity-50 pointer-events-none" />
+                  <div className="absolute inset-4 bg-slate-100 rounded-full blur-2xl opacity-50 pointer-events-none" />
                   
                   {/* SVG Chart */}
-                  <svg width="240" height="240" viewBox="0 0 200 200" className="transform -rotate-90 relative z-10 drop-shadow-2xl">
-                    <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(30,41,59,0.5)" strokeWidth="24" />
+                  <svg width="240" height="240" viewBox="0 0 200 200" className="transform -rotate-90 relative z-10 drop-shadow-md">
+                    <circle cx="100" cy="100" r="80" fill="none" stroke="#f1f5f9" strokeWidth="24" />
                     {donutSegments.map((seg, i) => (
                       <path key={i} d={describeArc(100, 100, 80, seg.startAngle, seg.endAngle - 1)} stroke={seg.color} strokeWidth="24" fill="none" strokeLinecap="round" className="transition-all duration-500 hover:stroke-[28px] cursor-pointer" />
                     ))}
@@ -304,7 +304,7 @@ export default function Expenses() {
                   {/* Chart Center */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20">
                     <span className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1">Total</span>
-                    <span className="font-display font-bold text-2xl text-white">{total.toFixed(0)}</span>
+                    <span className="font-display font-bold text-2xl text-slate-900">{total.toFixed(0)}</span>
                   </div>
                 </div>
               </div>
@@ -314,12 +314,12 @@ export default function Expenses() {
                 {categories.map(([cat, amt], i) => (
                   <div key={cat} className="flex items-center justify-between group">
                     <div className="flex items-center gap-3">
-                      <div className="w-4 h-4 rounded-md shadow-inner" style={{ background: DONUT_COLORS[i % DONUT_COLORS.length] }} />
-                      <span className="text-slate-300 font-medium capitalize group-hover:text-white transition-colors">{cat}</span>
+                      <div className="w-4 h-4 rounded-md shadow-sm" style={{ background: DONUT_COLORS[i % DONUT_COLORS.length] }} />
+                      <span className="text-slate-700 font-medium capitalize group-hover:text-slate-900 transition-colors">{cat}</span>
                     </div>
                     <div className="flex items-center gap-4">
                       <span className="text-sm text-slate-500">{((amt / total) * 100).toFixed(0)}%</span>
-                      <span className="font-bold text-white w-20 text-right">{amt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                      <span className="font-bold text-slate-900 w-20 text-right">{amt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                     </div>
                   </div>
                 ))}

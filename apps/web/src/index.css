@@ -1,27 +1,23 @@
 @import "tailwindcss";
 
 @theme {
-  --color-surface-0: #0f172a;
-  --color-surface-1: #1e293b;
-  --color-surface-2: #334155;
-  --color-surface-3: #475569;
-  --color-border-dim: rgba(255,255,255,0.06);
-  --color-border-mid: rgba(255,255,255,0.12);
-  --color-border-bright: rgba(255,255,255,0.20);
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #cbd5e1;
-  --color-text-muted: #94a3b8;
+  --color-surface-bg: #f8fafc;
+  --color-surface-card: #ffffff;
+  --color-border-subtle: #e2e8f0;
+  --color-border-focus: #cbd5e1;
   
-  --color-brand: #3b82f6;
-  --color-brand-light: #60a5fa;
-  --color-brand-dim: rgba(59,130,246,0.15);
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748b;
+  
+  --color-brand: #2563eb;
+  --color-brand-light: #3b82f6;
+  --color-brand-dim: rgba(59, 130, 246, 0.1);
   
   --color-accent: #f59e0b;
-  --color-accent-hover: #fbbf24;
-  --color-accent-dim: rgba(245,158,11,0.15);
-  
   --color-danger: #ef4444;
   --color-success: #10b981;
+
   --font-display: 'Syne', sans-serif;
   --font-sans: 'Inter', sans-serif;
 }
@@ -30,17 +26,13 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  border-color: var(--color-border-dim);
 }
 
 html { scroll-behavior: smooth; }
 
 body {
   font-family: 'Inter', sans-serif;
-  background: #0b1120;
-  background-image: 
-    radial-gradient(ellipse at top, rgba(30, 41, 59, 0.4) 0%, transparent 70%),
-    radial-gradient(ellipse at bottom right, rgba(15, 23, 42, 1) 0%, transparent 60%);
+  background: var(--color-surface-bg);
   color: var(--color-text-primary);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -49,36 +41,30 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Syne', sans-serif;
+  color: var(--color-text-primary);
 }
 
 ::selection { background: var(--color-brand-dim); }
 
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-surface-3); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
-
-:focus-visible {
-  outline: 2px solid var(--color-brand-light);
-  outline-offset: 2px;
-}
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
 input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-visible {
   outline: 2px solid var(--color-brand-light);
   outline-offset: 2px;
 }
 
+/* Minimalist Light Mode Card */
 .glass-panel {
-  background: rgba(30, 41, 59, 0.45);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  background: #ffffff;
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
 }
 
 .glass-pill {
-  background: rgba(30, 41, 59, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
