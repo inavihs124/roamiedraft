@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "TripMind",
+    "name": "Roamie",
     "tagline": "Your AI Travel Companion"
   },
   "nav": {
@@ -12,7 +12,7 @@
     "logout": "Logout"
   },
   "onboarding": {
-    "title": "Welcome to TripMind",
+    "title": "Welcome to Roamie",
     "subtitle": "Your AI-powered travel companion",
     "login": "Sign In",
     "createAccount": "Create Account",
@@ -50,7 +50,7 @@
   },
   "disruption": {
     "title": "Disruption Shield",
-    "subtitle": "Simulate a flight cancellation and watch TripMind resolve everything automatically",
+    "subtitle": "Simulate a flight cancellation and watch Roamie resolve everything automatically",
     "simulate": "Simulate Flight Cancellation",
     "confirmPay": "Confirm & Pay"
   },

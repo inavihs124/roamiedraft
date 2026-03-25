@@ -1,5 +1,5 @@
 // ========================================
-// Domain Entities — TripMind
+// Domain Entities — Roamie
 // ========================================
 
 export interface UserEntity {

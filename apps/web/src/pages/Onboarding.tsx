@@ -17,7 +17,7 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
   const { login, register, error, setError } = useStore();
   const [step, setStep] = useState<'auth' | 'prefs'>('auth');
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('demo@tripmind.app');
+  const [email, setEmail] = useState('demo@roamie.app');
   const [password, setPassword] = useState('password123');
   const [name, setName] = useState('');
   const [lang, setLang] = useState('en');
@@ -53,7 +53,7 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
         seatPreference: seatPref,
       });
       i18n.changeLanguage(lang);
-      localStorage.setItem('tripmind-lang', lang);
+      localStorage.setItem('roamie-lang', lang);
       onComplete();
     } catch {
     } finally {
@@ -77,7 +77,7 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/5 border border-amber-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.2)] backdrop-blur-md">
               <Plane size={24} className="text-amber-500" strokeWidth={2} />
             </div>
-            <span className="font-display font-extrabold text-4xl bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent tracking-tight">TripMind</span>
+            <span className="font-display font-extrabold text-4xl bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent tracking-tight">Roamie</span>
           </div>
           <p className="text-slate-400 font-medium">The intelligent operating system for modern travel.</p>
         </motion.div>

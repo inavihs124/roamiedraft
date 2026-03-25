@@ -61,7 +61,7 @@ export default function Expenses() {
     const blob = new Blob([headers + rows], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `tripmind-expenses-${currentTrip?.destination || 'trip'}.csv`;
+    a.href = url; a.download = `roamie-expenses-${currentTrip?.destination || 'trip'}.csv`;
     a.click(); URL.revokeObjectURL(url);
   };
 

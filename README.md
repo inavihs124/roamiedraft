@@ -1,4 +1,4 @@
-# TripMind — AI Travel Companion
+# Roamie — AI Travel Companion
 
 > **Hackathon Demo** — Full-stack AI travel companion built from scratch
 
@@ -33,7 +33,7 @@ npm run dev
 
 ### Demo Login
 ```
-Email: demo@tripmind.app
+Email: demo@roamie.app
 Password: password123
 ```
 

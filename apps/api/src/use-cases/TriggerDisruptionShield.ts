@@ -172,7 +172,7 @@ export class TriggerDisruptionShield {
     emit(steps[6]);
 
     const confirmationToken = uuidv4().substring(0, 8);
-    const qrUrl = `https://tripmind.app/confirm/${confirmationToken}?action=pay&amount=${selectedFlight.price}&currency=INR&flight=${selectedFlight.flightNumber}`;
+    const qrUrl = `https://roamie.app/confirm/${confirmationToken}?action=pay&amount=${selectedFlight.price}&currency=INR&flight=${selectedFlight.flightNumber}`;
     let qrCodeData = '';
     try {
       qrCodeData = await this.qrService.generateQR(qrUrl);

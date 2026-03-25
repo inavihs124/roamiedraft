@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Calendar, Plane, Map, Plus,
-  Sun, Cloud, CloudRain, Clock, AlertTriangle, Receipt
+  Sun, Cloud, CloudRain, AlertTriangle, Receipt
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../stores/useStore';
@@ -214,8 +214,8 @@ export default function Dashboard() {
               <p className="text-slate-400">Where would you like to explore next?</p>
             </div>
           
-          <form onSubmit={handleCreateTrip} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <form onSubmit={handleCreateTrip} className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 gap-y-12">
               
               {/* Origin Autocomplete */}
               <div className="relative" ref={originSuggestionsRef}>
@@ -229,8 +229,9 @@ export default function Dashboard() {
                     value={origin}
                     onChange={e => handleOriginChange(e.target.value)}
                     onFocus={() => { if (originSuggestions.length > 0) setShowOriginSuggestions(true); }}
-                    className="bg-slate-900/50 border border-slate-700 text-slate-100 text-sm rounded-xl focus:ring-amber-500 focus:border-amber-500 block w-full pl-11 p-3.5 outline-none transition-colors"
+                    className="bg-slate-900/50 border border-slate-700 text-slate-100 text-base rounded-xl focus:ring-amber-500 focus:border-amber-500 block w-full pl-12 pr-4 h-14 outline-none transition-colors placeholder:text-slate-500"
                     placeholder="Enter city or airport"
+                    style={{ paddingLeft: '3.5rem' }}
                   />
                 </div>
                 
@@ -269,8 +270,9 @@ export default function Dashboard() {
                     onChange={e => handleDestChange(e.target.value)}
                     onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
                     required
-                    className="bg-slate-900/50 border border-slate-700 text-slate-100 text-sm rounded-xl focus:ring-amber-500 focus:border-amber-500 block w-full pl-11 p-3.5 outline-none transition-colors"
+                    className="bg-slate-900/50 border border-slate-700 text-slate-100 text-base rounded-xl focus:ring-amber-500 focus:border-amber-500 block w-full pl-12 pr-4 h-14 outline-none transition-colors placeholder:text-slate-500"
                     placeholder="Enter destination"
+                    style={{ paddingLeft: '3.5rem' }}
                   />
                 </div>
                 
@@ -304,7 +306,8 @@ export default function Dashboard() {
                     <Calendar size={18} className="text-slate-500" />
                   </div>
                   <input type="date" value={startDate} required onChange={e => setStartDate(e.target.value)}
-                    className="bg-slate-900/50 border border-slate-700 text-slate-100 text-sm rounded-xl focus:ring-amber-500 focus:border-amber-500 block w-full pl-11 p-3.5 outline-none transition-colors [color-scheme:dark]"
+                    className="bg-slate-900/50 border border-slate-700 text-slate-100 text-base rounded-xl focus:ring-amber-500 focus:border-amber-500 block w-full pl-12 pr-4 h-14 outline-none transition-colors [color-scheme:dark]"
+                    style={{ paddingLeft: '3.5rem' }}
                   />
                 </div>
               </div>
@@ -316,7 +319,8 @@ export default function Dashboard() {
                     <Calendar size={18} className="text-slate-500" />
                   </div>
                   <input type="date" value={endDate} required onChange={e => setEndDate(e.target.value)}
-                    className="bg-slate-900/50 border border-slate-700 text-slate-100 text-sm rounded-xl focus:ring-amber-500 focus:border-amber-500 block w-full pl-11 p-3.5 outline-none transition-colors [color-scheme:dark]"
+                    className="bg-slate-900/50 border border-slate-700 text-slate-100 text-base rounded-xl focus:ring-amber-500 focus:border-amber-500 block w-full pl-12 pr-4 h-14 outline-none transition-colors [color-scheme:dark]"
+                    style={{ paddingLeft: '3.5rem' }}
                   />
                 </div>
               </div>

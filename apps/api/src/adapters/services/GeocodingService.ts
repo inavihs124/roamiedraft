@@ -25,7 +25,7 @@ export class GeocodingService {
     try {
       const url = `${this.baseUrl}/search?q=${encodeURIComponent(query)}&format=json&limit=10&addressdetails=1&accept-language=en`;
       const res = await fetch(url, {
-        headers: { 'User-Agent': 'TripMind/1.0 (travel-planner)' },
+        headers: { 'User-Agent': 'Roamie/1.0 (travel-planner)' },
         signal: AbortSignal.timeout(5000),
       });
 
@@ -59,7 +59,7 @@ export class GeocodingService {
     try {
       const url = `${this.baseUrl}/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
       const res = await fetch(url, {
-        headers: { 'User-Agent': 'TripMind/1.0 (travel-planner)' },
+        headers: { 'User-Agent': 'Roamie/1.0 (travel-planner)' },
         signal: AbortSignal.timeout(5000),
       });
 

@@ -94,8 +94,8 @@ export const useStore = create<AppStore>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const { data } = await api.post('/auth/login', { email, password });
-      localStorage.setItem('tripmind-token', data.accessToken);
-      localStorage.setItem('tripmind-refresh', data.refreshToken);
+      localStorage.setItem('roamie-token', data.accessToken);
+      localStorage.setItem('roamie-refresh', data.refreshToken);
       set({ user: data.user, loading: false });
     } catch (e: any) {
       set({ error: e.response?.data?.error || 'Login failed', loading: false });
@@ -107,8 +107,8 @@ export const useStore = create<AppStore>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const { data } = await api.post('/auth/register', regData);
-      localStorage.setItem('tripmind-token', data.accessToken);
-      localStorage.setItem('tripmind-refresh', data.refreshToken);
+      localStorage.setItem('roamie-token', data.accessToken);
+      localStorage.setItem('roamie-refresh', data.refreshToken);
       set({ user: data.user, loading: false });
     } catch (e: any) {
       set({ error: e.response?.data?.error || 'Registration failed', loading: false });
@@ -117,8 +117,8 @@ export const useStore = create<AppStore>((set, get) => ({
   },
 
   logout: () => {
-    localStorage.removeItem('tripmind-token');
-    localStorage.removeItem('tripmind-refresh');
+    localStorage.removeItem('roamie-token');
+    localStorage.removeItem('roamie-refresh');
     set({ user: null, trips: [], currentTrip: null });
   },
 

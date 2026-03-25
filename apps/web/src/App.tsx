@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plane, LayoutDashboard, AlertTriangle, Receipt, Package,
-  LogOut, Menu, X, Map
+  Menu, X, Map
 } from 'lucide-react';
 import { useStore } from './stores/useStore';
 import Dashboard from './pages/Dashboard';
@@ -36,27 +36,22 @@ const NAV_ITEMS = [
 export default function App() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { user, fetchMe, logout } = useStore();
+  const { user, fetchMe, login } = useStore();
   const [initialized, setInitialized] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('tripmind-token');
+    const token = localStorage.getItem('roamie-token');
     if (token) {
       fetchMe().finally(() => setInitialized(true));
     } else {
-      setInitialized(true);
+      login('demo@roamie.app', 'password123').finally(() => setInitialized(true));
     }
-  }, []);
+  }, [fetchMe, login]);
 
   const handleLanguageChange = (code: string) => {
     i18n.changeLanguage(code);
-    localStorage.setItem('tripmind-lang', code);
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate('/');
+    localStorage.setItem('roamie-lang', code);
   };
 
   if (!initialized) {
@@ -106,7 +101,7 @@ export default function App() {
             <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}>
               <Plane size={24} className="text-amber-500" />
             </motion.div>
-            <span className="font-display font-bold text-xl tracking-tight text-white">TripMind</span>
+            <span className="font-display font-bold text-xl tracking-tight text-white">Roamie</span>
           </div>
           <button className="lg:hidden text-slate-400 hover:text-white" onClick={() => setMobileNav(false)}>
             <X size={20} />
@@ -133,8 +128,8 @@ export default function App() {
           })}
         </nav>
 
-        <div className="mt-auto space-y-2 border-t border-slate-700/50 pt-4">
-          <div className="flex gap-1 justify-center bg-slate-800/30 p-1.5 rounded-lg mb-4">
+        <div className="mt-auto space-y-2 border-t border-slate-700/50 pt-4 pb-2">
+          <div className="flex gap-1 justify-center bg-slate-800/30 p-1.5 rounded-lg">
             {LANGUAGES.map(l => (
               <button key={l.code} onClick={() => handleLanguageChange(l.code)}
                 className={`w-8 h-8 rounded-md flex items-center justify-center text-sm transition-all ${
@@ -145,11 +140,6 @@ export default function App() {
               </button>
             ))}
           </div>
-
-          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all">
-            <LogOut size={18} />
-            Sign Out
-          </button>
         </div>
       </aside>
 

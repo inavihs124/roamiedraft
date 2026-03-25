@@ -14,7 +14,7 @@ i18n.use(initReactI18next).init({
     fr: { translation: fr },
     ja: { translation: ja },
   },
-  lng: localStorage.getItem('tripmind-lang') || 'en',
+  lng: localStorage.getItem('roamie-lang') || 'en',
   fallbackLng: 'en',
   interpolation: { escapeValue: false },
 });

@@ -4,7 +4,7 @@ import * as bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function seed() {
-  console.log('🌱 Seeding TripMind database...\n');
+  console.log('🌱 Seeding Roamie database...\n');
 
   // Clean existing data
   await prisma.disruptionLog.deleteMany();
@@ -20,7 +20,7 @@ async function seed() {
   const passwordHash = await bcrypt.hash('password123', 10);
   const user = await prisma.user.create({
     data: {
-      email: 'demo@tripmind.app',
+      email: 'demo@roamie.app',
       name: 'Alex Chen',
       passwordHash,
       preferredLang: 'en',
@@ -174,7 +174,7 @@ async function seed() {
   console.log(`  ✅ Expenses: 5 sample entries`);
 
   console.log('\n✨ Seed complete!\n');
-  console.log('  Login: demo@tripmind.app / password123');
+  console.log('  Login: demo@roamie.app / password123');
   console.log(`  Trip ID: ${trip.id}`);
   console.log(`  Flight ID: ${flight.id} (SQ421 — disrupt this one)\n`);
 }

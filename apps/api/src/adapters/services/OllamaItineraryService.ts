@@ -199,7 +199,7 @@ Return ONLY valid JSON, no markdown, no explanation.`);
         try {
           const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=4&addressdetails=1&accept-language=en`;
           const res = await fetch(url, {
-            headers: { 'User-Agent': 'TripMind/1.0 (travel-planner)' },
+            headers: { 'User-Agent': 'Roamie/1.0 (travel-planner)' },
             signal: AbortSignal.timeout(5000),
           });
           if (!res.ok) continue;
