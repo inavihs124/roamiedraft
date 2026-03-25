@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../stores/useStore';
+import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
 
 function CountdownTimer({ targetDate }: { targetDate: string }) {
   const [days, setDays] = useState(0);
@@ -125,7 +127,7 @@ export default function Dashboard() {
   const temps = [28, 26, 24, 27, 25];
 
   return (
-    <div className="p-4 lg:p-8 max-w-6xl mx-auto space-y-8">
+    <div className="p-4 lg:p-10 w-full max-w-[1600px] mx-auto space-y-8">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -203,12 +205,14 @@ export default function Dashboard() {
           </div>
         </div>
       ) : (
-        /* Trip Creation Form */
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-panel p-8 rounded-3xl max-w-4xl border border-slate-700/50">
-          <div className="mb-8">
-            <h2 className="font-display font-bold text-2xl text-white mb-2">Create New Trip</h2>
-            <p className="text-slate-400">Where would you like to explore next?</p>
-          </div>
+        /* Trip Creation / Interactive Map Layout */
+        <div className="grid lg:grid-cols-2 gap-8 h-[auto] lg:h-[700px]">
+          {/* Trip Creation Form */}
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-panel p-8 md:p-10 rounded-3xl border border-slate-700/50 flex flex-col justify-center">
+            <div className="mb-8">
+              <h2 className="font-display font-bold text-3xl text-white mb-2">Create New Trip</h2>
+              <p className="text-slate-400">Where would you like to explore next?</p>
+            </div>
           
           <form onSubmit={handleCreateTrip} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -333,7 +337,13 @@ export default function Dashboard() {
               </button>
             </div>
           </form>
-        </motion.div>
+          </motion.div>
+
+          {/* Interactive Map Side Panel */}
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="rounded-3xl border border-slate-700/50 overflow-hidden relative shadow-2xl hidden lg:block bg-slate-900/50">
+            <InteractiveMap locationName={dest} />
+          </motion.div>
+        </div>
       )}
     </div>
   );
@@ -362,5 +372,51 @@ function GroupCard({ icon: Icon, title, desc, color, onClick }: any) {
         <p className="text-xs font-medium text-slate-400 group-hover:text-slate-300 transition-colors">{desc}</p>
       </div>
     </motion.button>
+  );
+}
+
+// Leaflet Map Components for Visual Feedback
+function MapUpdater({ center }: { center: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo(center, 10, { duration: 1.5, easeLinearity: 0.25 });
+  }, [center, map]);
+  return null;
+}
+
+function InteractiveMap({ locationName }: { locationName: string }) {
+  const [center, setCenter] = useState<[number, number]>([20, 0]);
+  const { getCoords } = useStore();
+
+  useEffect(() => {
+    if (locationName && locationName.length > 2) {
+      getCoords(locationName).then(coords => {
+        if (coords) setCenter([coords.lat, coords.lng]);
+      });
+    }
+  }, [locationName, getCoords]);
+
+  return (
+    <div className="w-full h-full absolute inset-0 z-0 bg-slate-900">
+      <MapContainer center={center} zoom={2} zoomControl={false} className="w-full h-full z-0" style={{ background: '#0f172a' }}>
+        <TileLayer
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          attribution='&copy; CARTO'
+        />
+        <MapUpdater center={center} />
+      </MapContainer>
+      
+      {/* Map Vignette Edge Blends */}
+      <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[#0b1120] to-transparent z-[10] pointer-events-none" />
+      <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#0b1120] to-transparent z-[10] pointer-events-none" />
+      <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#0b1120] to-transparent z-[10] pointer-events-none" />
+      <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#0b1120] to-transparent z-[10] pointer-events-none" />
+      
+      {/* Map Overlay Badge */}
+      <div className="absolute bottom-8 left-8 z-[20] glass-panel px-4 py-2 rounded-full border border-slate-700/50 flex items-center gap-2 shadow-2xl">
+        <Map size={14} className="text-amber-500" />
+        <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">Global Discovery</span>
+      </div>
+    </div>
   );
 }

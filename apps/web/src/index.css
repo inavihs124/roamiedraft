@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
-
 @theme {
   --color-surface-0: #0f172a;
   --color-surface-1: #1e293b;

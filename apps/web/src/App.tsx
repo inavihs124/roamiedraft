@@ -96,10 +96,10 @@ export default function App() {
       </AnimatePresence>
 
       {/* Persistent Sidebar */}
-      <motion.aside 
-        initial={false}
-        animate={{ x: mobileNav ? 0 : '-100%' }}
-        className="fixed lg:static inset-y-0 left-0 z-50 w-64 glass-panel border-r border-slate-700/50 flex flex-col pt-6 pb-4 px-4 lg:translate-x-0 outline-none transition-transform duration-300 shadow-2xl"
+      <aside 
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 glass-panel border-r border-slate-700/50 flex flex-col pt-6 pb-4 px-4 outline-none transition-transform duration-300 shadow-2xl ${
+          mobileNav ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}
       >
         <div className="flex items-center justify-between mb-10 px-2">
           <div className="flex items-center gap-3">
@@ -151,7 +151,7 @@ export default function App() {
             Sign Out
           </button>
         </div>
-      </motion.aside>
+      </aside>
 
       {/* Main Container */}
       <div className="flex-1 flex flex-col relative min-w-0 max-h-screen">
