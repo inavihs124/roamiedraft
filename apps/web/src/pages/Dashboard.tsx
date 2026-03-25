@@ -1,34 +1,47 @@
-import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  MapPin, Calendar, Plane, Building2, Plus, Clock, Sparkles,
-  Utensils, Eye, ShoppingBag, Bus, Coffee, Briefcase,
-  Battery, BatteryMedium, BatteryLow, ChevronDown, ChevronUp, Info
+  MapPin, Calendar, Plane, Map, Plus,
+  Sun, Cloud, CloudRain, Clock, AlertTriangle, Receipt
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useStore } from '../stores/useStore';
 
-const EVENT_ICONS: Record<string, { icon: typeof Utensils; color: string; bg: string }> = {
-  food:       { icon: Utensils,     color: '#4ADE80', bg: 'rgba(34,197,94,0.12)' },
-  sightseeing:{ icon: Eye,          color: '#60A5FA', bg: 'rgba(59,130,246,0.12)' },
-  activity:   { icon: Sparkles,     color: '#818CF8', bg: 'rgba(99,102,241,0.12)' },
-  shopping:   { icon: ShoppingBag,  color: '#F472B6', bg: 'rgba(236,72,153,0.12)' },
-  transport:  { icon: Bus,          color: '#22D3EE', bg: 'rgba(34,211,238,0.12)' },
-  break:      { icon: Coffee,       color: '#A78BFA', bg: 'rgba(167,139,250,0.12)' },
-  meeting:    { icon: Briefcase,    color: '#FBBF24', bg: 'rgba(251,191,36,0.12)' },
-};
+function CountdownTimer({ targetDate }: { targetDate: string }) {
+  const [days, setDays] = useState(0);
+
+  useEffect(() => {
+    const diff = new Date(targetDate).getTime() - new Date().getTime();
+    setDays(Math.max(0, Math.ceil(diff / (1000 * 3600 * 24))));
+  }, [targetDate]);
+
+  return (
+    <div className="flex flex-col items-center bg-slate-900/60 backdrop-blur-md rounded-2xl p-4 border border-slate-700/50">
+      <span className="font-display font-bold text-4xl text-amber-500">{days}</span>
+      <span className="text-xs uppercase tracking-wider font-semibold text-slate-400 mt-1">Days to go</span>
+    </div>
+  );
+}
 
 export default function Dashboard() {
-  const { t } = useTranslation();
-  const { trips, currentTrip, fetchTrips, fetchTrip, createTrip, buildItinerary } = useStore();
-  const [creating, setCreating] = useState(false);
+  const navigate = useNavigate();
+  const { trips, currentTrip, fetchTrips, fetchTrip, createTrip, searchDestinations } = useStore();
+  
   const [dest, setDest] = useState('');
+  const [origin, setOrigin] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [selectedDay, setSelectedDay] = useState(0);
-  const [energyLevel, setEnergyLevel] = useState<'high' | 'medium' | 'low'>('high');
-  const [expandedEvent, setExpandedEvent] = useState<number | null>(null);
-  const [buildingItinerary, setBuildingItinerary] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchTimer, setSearchTimer] = useState<any>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  const [originSuggestions, setOriginSuggestions] = useState<any[]>([]);
+  const [showOriginSuggestions, setShowOriginSuggestions] = useState(false);
+  const [originSearchTimer, setOriginSearchTimer] = useState<any>(null);
+  const originSuggestionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchTrips();
@@ -40,331 +53,314 @@ export default function Dashboard() {
     }
   }, [trips]);
 
-  const handleCreateTrip = async () => {
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+      if (originSuggestionsRef.current && !originSuggestionsRef.current.contains(e.target as Node)) {
+        setShowOriginSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleDestChange = (value: string) => {
+    setDest(value);
+    if (searchTimer) clearTimeout(searchTimer);
+    if (value.length < 2) {
+      setSuggestions([]); setShowSuggestions(false); return;
+    }
+    const timer = setTimeout(async () => {
+      const results = await searchDestinations(value);
+      setSuggestions(results);
+      setShowSuggestions(results.length > 0);
+    }, 300);
+    setSearchTimer(timer);
+  };
+
+  const selectSuggestion = (suggestion: any) => {
+    setDest(suggestion.name);
+    setShowSuggestions(false);
+    setSuggestions([]);
+  };
+
+  const handleOriginChange = (value: string) => {
+    setOrigin(value);
+    if (originSearchTimer) clearTimeout(originSearchTimer);
+    if (value.length < 2) {
+      setOriginSuggestions([]); setShowOriginSuggestions(false); return;
+    }
+    const timer = setTimeout(async () => {
+      const results = await searchDestinations(value);
+      setOriginSuggestions(results);
+      setShowOriginSuggestions(results.length > 0);
+    }, 300);
+    setOriginSearchTimer(timer);
+  };
+
+  const selectOriginSuggestion = (suggestion: any) => {
+    setOrigin(suggestion.name);
+    setShowOriginSuggestions(false);
+    setOriginSuggestions([]);
+  };
+
+  const handleCreateTrip = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!dest || !startDate || !endDate) return;
+    setCreating(true);
     try {
       const id = await createTrip({ destination: dest, startDate, endDate });
       await fetchTrip(id);
-      setCreating(false);
       setDest(''); setStartDate(''); setEndDate('');
-    } catch {}
+    } catch (err) {
+      console.error(err);
+    }
+    setCreating(false);
   };
 
-  const handleBuildItinerary = async () => {
-    if (!currentTrip) return;
-    setBuildingItinerary(true);
-    try {
-      await buildItinerary(currentTrip.id, [], [], energyLevel);
-      await fetchTrip(currentTrip.id);
-    } catch {}
-    setBuildingItinerary(false);
-  };
-
-  const itinerary = currentTrip?.itinerary || [];
-  const currentDay = itinerary[selectedDay];
-  const events = currentDay?.events || [];
-  const flights = currentTrip?.flights || [];
-  const hotels = currentTrip?.hotels || [];
-
-  const inputStyle: React.CSSProperties = {
-    width: '100%', height: 44, padding: '0 14px', fontSize: 14, color: '#F0F2F8',
-    background: '#161B2E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8,
-    outline: 'none', fontFamily: 'DM Sans, sans-serif',
-  };
+  // Weather mock data
+  const weatherIcons = [Sun, Cloud, CloudRain, Sun, Cloud];
+  const temps = [28, 26, 24, 27, 25];
 
   return (
-    <div style={{ padding: '28px 24px', maxWidth: 1024, margin: '0 auto' }}>
+    <div className="p-4 lg:p-8 max-w-6xl mx-auto space-y-8">
+      
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 28, color: '#F0F2F8', marginBottom: 4 }}>
-            {currentTrip ? currentTrip.destination : t('dashboard.title')}
-          </h1>
-          {currentTrip && (
-            <p style={{ fontSize: 14, color: '#4A5568' }}>
-              {new Date(currentTrip.startDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })} — {new Date(currentTrip.endDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
-            </p>
-          )}
+          <h1 className="font-display font-bold text-3xl text-slate-100">Welcome back!</h1>
+          <p className="text-slate-400 mt-1">Let's plan your next adventure.</p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {/* Trip Selector */}
-          {trips.length > 1 && (
+        
+        {trips.length > 0 && (
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-slate-400">Current Trip:</span>
             <select
               value={currentTrip?.id || ''}
               onChange={e => fetchTrip(e.target.value)}
-              style={{
-                padding: '8px 12px', borderRadius: 8, fontSize: 13,
-                background: '#0F1320', border: '1px solid rgba(255,255,255,0.08)',
-                color: '#F0F2F8', fontFamily: 'DM Sans, sans-serif', cursor: 'pointer',
-              }}
+              className="bg-slate-800/50 border border-slate-700 text-slate-200 text-sm rounded-xl focus:ring-amber-500 focus:border-amber-500 block p-2.5 outline-none"
             >
               {trips.map(tr => (
                 <option key={tr.id} value={tr.id}>{tr.destination}</option>
               ))}
             </select>
-          )}
-          <button onClick={() => setCreating(!creating)} style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '8px 14px', borderRadius: 8, fontSize: 13, fontWeight: 500,
-            background: '#F59E0B', border: 'none', color: '#000', cursor: 'pointer',
-            fontFamily: 'DM Sans, sans-serif',
-          }}>
-            <Plus size={14} /> {t('dashboard.newTrip')}
-          </button>
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Create Trip Card */}
-      <AnimatePresence>
-        {creating && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-            style={{
-              background: '#0F1320', border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: 14, padding: 24, marginBottom: 20, overflow: 'hidden',
-            }}
+      {currentTrip ? (
+        <div className="space-y-8">
+          {/* Animated Hero Card */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            className="relative rounded-3xl overflow-hidden glass-panel border border-slate-700/50 shadow-2xl h-[300px]"
           >
-            <h3 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 16, color: '#F0F2F8', marginBottom: 16 }}>{t('dashboard.createTrip')}</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892A4', marginBottom: 6 }}>{t('dashboard.destination')}</label>
-                <input value={dest} onChange={e => setDest(e.target.value)} placeholder="Singapore" style={inputStyle} />
+            {/* Gradient Overlay representing destination vibe */}
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/80 via-purple-900/60 to-slate-900/90 z-0"></div>
+            
+            <div className="relative z-10 p-8 h-full flex flex-col justify-between">
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold tracking-wide uppercase mb-3">
+                    <Plane size={14} /> Upcoming Flight
+                  </div>
+                  <h2 className="font-display font-bold text-4xl lg:text-5xl text-white mb-2">{currentTrip.destination}</h2>
+                  <p className="text-indigo-200 flex items-center gap-2 font-medium">
+                    <Calendar size={16} /> 
+                    {new Date(currentTrip.startDate).toLocaleDateString()} — {new Date(currentTrip.endDate).toLocaleDateString()}
+                  </p>
+                </div>
+                
+                <CountdownTimer targetDate={currentTrip.startDate} />
               </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892A4', marginBottom: 6 }}>{t('dashboard.start')}</label>
-                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={inputStyle} />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892A4', marginBottom: 6 }}>{t('dashboard.end')}</label>
-                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={inputStyle} />
+
+              {/* Weather Strip */}
+              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                {weatherIcons.map((Icon, i) => (
+                  <div key={i} className="flex flex-col items-center bg-slate-900/40 backdrop-blur-sm border border-slate-700/30 rounded-2xl p-3 min-w-[80px]">
+                    <span className="text-xs text-slate-400 font-medium mb-2">
+                       {new Date(new Date(currentTrip.startDate).getTime() + i*86400000).toLocaleDateString('en-US', { weekday: 'short' })}
+                    </span>
+                    <Icon size={24} className={i === 0 ? "text-amber-400" : "text-slate-300"} />
+                    <span className="text-sm font-bold text-white mt-2">{temps[i]}°</span>
+                  </div>
+                ))}
               </div>
             </div>
-            <button onClick={handleCreateTrip} style={{
-              marginTop: 16, height: 44, padding: '0 24px', borderRadius: 8, border: 'none',
-              background: '#F59E0B', color: '#000', fontWeight: 600, fontSize: 14, cursor: 'pointer',
-              fontFamily: 'DM Sans, sans-serif',
-            }}>{t('dashboard.create')}</button>
           </motion.div>
-        )}
-      </AnimatePresence>
 
-      {currentTrip && (
-        <>
-          {/* Stat Chips */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 24 }}>
-            {/* Events */}
-            <div style={{ background: '#0F1320', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '16px 18px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <Calendar size={16} style={{ color: '#F59E0B' }} />
-                <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#4A5568' }}>{t('dashboard.itinerary')}</span>
-              </div>
-              <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 24, color: '#F0F2F8' }}>{itinerary.length}</span>
-              <span style={{ fontSize: 13, color: '#4A5568', marginLeft: 6 }}>{t('dashboard.days')}</span>
-            </div>
-            {/* Flights */}
-            <div style={{ background: '#0F1320', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '16px 18px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <Plane size={16} style={{ color: '#60A5FA' }} />
-                <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#4A5568' }}>{t('dashboard.flights')}</span>
-              </div>
-              {flights.length > 0 ? (
-                <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 16, color: '#F0F2F8' }}>
-                  {flights[0].flightNumber} <span style={{ fontSize: 12, color: '#4A5568' }}>{flights[0].origin}→{flights[0].destination}</span>
-                </span>
-              ) : (
-                <span style={{ fontSize: 14, color: '#4A5568' }}>None</span>
-              )}
-            </div>
-            {/* Hotel */}
-            <div style={{ background: '#0F1320', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '16px 18px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <Building2 size={16} style={{ color: '#818CF8' }} />
-                <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#4A5568' }}>{t('dashboard.hotel')}</span>
-              </div>
-              <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 15, color: '#F0F2F8' }}>
-                {hotels[0]?.hotelName || 'None'}
-              </span>
+          {/* Quick Actions Row */}
+          <div>
+            <h3 className="font-display font-semibold text-lg text-slate-200 mb-4">Quick Actions</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <GroupCard icon={Map} title="Itinerary" desc="View plans" color="blue" onClick={() => navigate('/my-itinerary')} />
+              <GroupCard icon={Receipt} title="Expenses" desc="Log costs" color="emerald" onClick={() => navigate('/expenses')} />
+              <GroupCard icon={AlertTriangle} title="Disruptions" desc="Manage delays" color="rose" onClick={() => navigate('/disruption')} />
+              <GroupCard icon={Plus} title="New Trip" desc="Plan another" color="amber" onClick={() => { fetchTrip(''); }} />
             </div>
           </div>
-
-          {/* Context Engine: Energy Tap + Build */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24,
-            background: '#0F1320', border: '1px solid rgba(255,255,255,0.06)',
-            borderRadius: 12, padding: '14px 18px', flexWrap: 'wrap',
-          }}>
-            <span style={{ fontSize: 12, fontWeight: 500, color: '#4A5568', letterSpacing: '0.05em' }}>ENERGY</span>
-            {[
-              { key: 'high' as const, icon: Battery, label: 'High', color: '#22C55E' },
-              { key: 'medium' as const, icon: BatteryMedium, label: 'Med', color: '#FBBF24' },
-              { key: 'low' as const, icon: BatteryLow, label: 'Low', color: '#EF4444' },
-            ].map(opt => {
-              const EIcon = opt.icon;
-              const sel = energyLevel === opt.key;
-              return (
-                <button key={opt.key} onClick={() => setEnergyLevel(opt.key)} style={{
-                  display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8,
-                  background: sel ? `${opt.color}15` : 'transparent',
-                  border: sel ? `1px solid ${opt.color}40` : '1px solid transparent',
-                  color: sel ? opt.color : '#4A5568', fontSize: 12, fontWeight: 500,
-                  cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', transition: 'all 150ms',
-                }}>
-                  <EIcon size={14} />
-                  {opt.label}
-                </button>
-              );
-            })}
-            <div style={{ flex: 1 }} />
-            <motion.button
-              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-              onClick={handleBuildItinerary}
-              disabled={buildingItinerary}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '8px 18px', borderRadius: 8, border: 'none',
-                background: buildingItinerary ? 'rgba(245,158,11,0.5)' : '#F59E0B',
-                color: '#000', fontWeight: 600, fontSize: 13, cursor: 'pointer',
-                fontFamily: 'DM Sans, sans-serif',
-              }}
-            >
-              <Sparkles size={14} />
-              {buildingItinerary ? t('dashboard.building') : t('dashboard.buildItinerary')}
-            </motion.button>
+        </div>
+      ) : (
+        /* Trip Creation Form */
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-panel p-8 rounded-3xl max-w-4xl border border-slate-700/50">
+          <div className="mb-8">
+            <h2 className="font-display font-bold text-2xl text-white mb-2">Create New Trip</h2>
+            <p className="text-slate-400">Where would you like to explore next?</p>
           </div>
-
-          {/* Day Tabs */}
-          {itinerary.length > 0 && (
-            <div style={{ display: 'flex', gap: 6, marginBottom: 20, overflowX: 'auto', paddingBottom: 4 }}>
-              {itinerary.map((day: any, i: number) => {
-                const d = new Date(day.date);
-                const sel = selectedDay === i;
-                return (
-                  <button key={i} onClick={() => { setSelectedDay(i); setExpandedEvent(null); }}
-                    style={{
-                      padding: '10px 18px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                      fontFamily: 'DM Sans, sans-serif', fontSize: 13, fontWeight: 500,
-                      flexShrink: 0, transition: 'all 150ms ease-out',
-                      background: sel ? 'rgba(245,158,11,0.1)' : '#0F1320',
-                      color: sel ? '#F59E0B' : '#4A5568',
-                      boxShadow: sel ? '0 0 0 1px rgba(245,158,11,0.25)' : '0 0 0 1px rgba(255,255,255,0.06)',
-                    }}
-                  >
-                    <span style={{ display: 'block', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15 }}>Day {i + 1}</span>
-                    <span style={{ fontSize: 11 }}>{d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Event Timeline */}
-          {events.length > 0 ? (
-            <div style={{ position: 'relative', paddingLeft: 32 }}>
-              {/* Timeline line */}
-              <div style={{ position: 'absolute', left: 14, top: 8, bottom: 8, width: 1, background: 'rgba(255,255,255,0.06)' }} />
-
-              {events.map((evt: any, i: number) => {
-                const cfg = EVENT_ICONS[evt.type] || EVENT_ICONS.activity;
-                const EvtIcon = cfg.icon;
-                const isExpanded = expandedEvent === i;
-
-                return (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.04, duration: 0.3 }}
-                    style={{ position: 'relative', marginBottom: 6 }}
-                  >
-                    {/* Dot on timeline */}
-                    <div style={{
-                      position: 'absolute', left: -24, top: 16, width: 10, height: 10,
-                      borderRadius: '50%', background: cfg.bg, border: `2px solid ${cfg.color}`,
-                      zIndex: 1,
-                    }} />
-
-                    <div
-                      onClick={() => setExpandedEvent(isExpanded ? null : i)}
-                      style={{
-                        background: evt.isBreathingRoom ? 'rgba(167,139,250,0.04)' : '#0F1320',
-                        border: evt.isBreathingRoom
-                          ? '1px solid rgba(167,139,250,0.2)'
-                          : evt.isGapSuggestion
-                          ? '1px dashed rgba(245,158,11,0.25)'
-                          : '1px solid rgba(255,255,255,0.06)',
-                        borderRadius: 12, padding: '14px 18px', cursor: 'pointer',
-                        transition: 'all 150ms ease-out',
-                      }}
+          
+          <form onSubmit={handleCreateTrip} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Origin Autocomplete */}
+              <div className="relative" ref={originSuggestionsRef}>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Leaving from</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Plane size={18} className="text-slate-500" />
+                  </div>
+                  <input
+                    type="text"
+                    value={origin}
+                    onChange={e => handleOriginChange(e.target.value)}
+                    onFocus={() => { if (originSuggestions.length > 0) setShowOriginSuggestions(true); }}
+                    className="bg-slate-900/50 border border-slate-700 text-slate-100 text-sm rounded-xl focus:ring-amber-500 focus:border-amber-500 block w-full pl-11 p-3.5 outline-none transition-colors"
+                    placeholder="Enter city or airport"
+                  />
+                </div>
+                
+                {/* Autocomplete Dropdown */}
+                <AnimatePresence>
+                  {showOriginSuggestions && originSuggestions.length > 0 && (
+                    <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+                      className="absolute z-50 w-full mt-2 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl overflow-hidden"
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <div style={{
-                          width: 34, height: 34, borderRadius: 9, background: cfg.bg,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                        }}>
-                          <EvtIcon size={16} style={{ color: cfg.color }} />
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 14, color: '#F0F2F8' }}>{evt.title}</span>
-                            {evt.isBreathingRoom && (
-                              <span style={{ fontSize: 9, fontWeight: 600, color: '#A78BFA', background: 'rgba(167,139,250,0.12)', padding: '2px 6px', borderRadius: 9999 }}>BREATHING ROOM</span>
-                            )}
-                            {evt.isGapSuggestion && (
-                              <span style={{ fontSize: 9, fontWeight: 600, color: '#F59E0B', background: 'rgba(245,158,11,0.1)', padding: '2px 6px', borderRadius: 9999 }}>SUGGESTED</span>
-                            )}
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 3 }}>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#4A5568' }}>
-                              <Clock size={11} /> {evt.time}
-                            </span>
-                            <span style={{ fontSize: 12, color: '#4A5568' }}>{evt.duration_minutes}min</span>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#4A5568' }}>
-                              <MapPin size={11} /> {evt.location}
-                            </span>
+                      {originSuggestions.map((s: any, i: number) => (
+                        <div key={i} onClick={() => selectOriginSuggestion(s)}
+                          className="px-4 py-3 hover:bg-slate-700 cursor-pointer flex items-center gap-3 border-b border-slate-700/50 last:border-0"
+                        >
+                          <Plane size={16} className="text-amber-500 shrink-0" />
+                          <div className="truncate">
+                            <p className="text-sm font-semibold text-white truncate">{s.name}</p>
+                            <p className="text-xs text-slate-400 truncate">{s.displayName}</p>
                           </div>
                         </div>
-                        {isExpanded ? <ChevronUp size={14} style={{ color: '#4A5568' }} /> : <ChevronDown size={14} style={{ color: '#4A5568' }} />}
-                      </div>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
-                      <AnimatePresence>
-                        {isExpanded && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-                            style={{ overflow: 'hidden' }}
-                          >
-                            <p style={{ fontSize: 13, color: '#8892A4', marginTop: 12, lineHeight: 1.6 }}>{evt.description}</p>
-                            {evt.culturalNudge && (
-                              <div style={{
-                                marginTop: 10, padding: '8px 12px', borderRadius: 8,
-                                background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)',
-                                display: 'flex', alignItems: 'flex-start', gap: 8,
-                              }}>
-                                <Info size={14} style={{ color: '#F59E0B', flexShrink: 0, marginTop: 1 }} />
-                                <span style={{ fontSize: 12, color: '#FBBF24' }}>{evt.culturalNudge}</span>
-                              </div>
-                            )}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </motion.div>
-                );
-              })}
+              {/* Destination Autocomplete */}
+              <div className="relative" ref={suggestionsRef}>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Going to</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <MapPin size={18} className="text-slate-500" />
+                  </div>
+                  <input
+                    type="text"
+                    value={dest}
+                    onChange={e => handleDestChange(e.target.value)}
+                    onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
+                    required
+                    className="bg-slate-900/50 border border-slate-700 text-slate-100 text-sm rounded-xl focus:ring-amber-500 focus:border-amber-500 block w-full pl-11 p-3.5 outline-none transition-colors"
+                    placeholder="Enter destination"
+                  />
+                </div>
+                
+                {/* Autocomplete Dropdown */}
+                <AnimatePresence>
+                  {showSuggestions && suggestions.length > 0 && (
+                    <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+                      className="absolute z-50 w-full mt-2 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl overflow-hidden"
+                    >
+                      {suggestions.map((s: any, i: number) => (
+                        <div key={i} onClick={() => selectSuggestion(s)}
+                          className="px-4 py-3 hover:bg-slate-700 cursor-pointer flex items-center gap-3 border-b border-slate-700/50 last:border-0"
+                        >
+                          <MapPin size={16} className="text-amber-500 shrink-0" />
+                          <div className="truncate">
+                            <p className="text-sm font-semibold text-white truncate">{s.name}</p>
+                            <p className="text-xs text-slate-400 truncate">{s.displayName}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Dates */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Start Date</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Calendar size={18} className="text-slate-500" />
+                  </div>
+                  <input type="date" value={startDate} required onChange={e => setStartDate(e.target.value)}
+                    className="bg-slate-900/50 border border-slate-700 text-slate-100 text-sm rounded-xl focus:ring-amber-500 focus:border-amber-500 block w-full pl-11 p-3.5 outline-none transition-colors [color-scheme:dark]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">End Date</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Calendar size={18} className="text-slate-500" />
+                  </div>
+                  <input type="date" value={endDate} required onChange={e => setEndDate(e.target.value)}
+                    className="bg-slate-900/50 border border-slate-700 text-slate-100 text-sm rounded-xl focus:ring-amber-500 focus:border-amber-500 block w-full pl-11 p-3.5 outline-none transition-colors [color-scheme:dark]"
+                  />
+                </div>
+              </div>
             </div>
-          ) : (
-            <div style={{
-              background: '#0F1320', border: '1px dashed rgba(255,255,255,0.1)',
-              borderRadius: 14, padding: 60, textAlign: 'center',
-            }}>
-              <Calendar size={40} style={{ color: 'rgba(255,255,255,0.1)', marginBottom: 12 }} />
-              <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 16, color: '#4A5568' }}>
-                {t('dashboard.noItinerary')}
-              </p>
-              <p style={{ fontSize: 13, color: '#4A5568', marginTop: 4 }}>{t('dashboard.buildHint')}</p>
+
+            <div className="pt-4 flex justify-end gap-4">
+              {trips.length > 0 && (
+                <button type="button" onClick={() => fetchTrip(trips[0].id)} 
+                  className="px-6 py-3.5 rounded-xl font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+                >
+                  Cancel
+                </button>
+              )}
+              <button type="submit" disabled={creating} 
+                className="px-8 py-3.5 rounded-xl font-bold bg-amber-500 hover:bg-amber-400 text-slate-900 shadow-lg shadow-amber-500/20 transition-all focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
+              >
+                {creating ? 'Creating...' : 'Create Trip'}
+              </button>
             </div>
-          )}
-        </>
+          </form>
+        </motion.div>
       )}
     </div>
+  );
+}
+
+// Helper component for Quick Actions
+function GroupCard({ icon: Icon, title, desc, color, onClick }: any) {
+  const colorMap: any = {
+    blue: 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20 hover:border-blue-500/40',
+    emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20 hover:border-emerald-500/40',
+    rose: 'bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-500/20 hover:border-rose-500/40',
+    amber: 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/40',
+  };
+
+  return (
+    <motion.button 
+      whileHover={{ y: -4 }} whileTap={{ scale: 0.98 }}
+      onClick={onClick}
+      className={`relative w-full text-left p-5 rounded-2xl glass-panel border ${colorMap[color]} transition-colors group flex flex-col gap-4`}
+    >
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-slate-950/40 backdrop-blur-md`}>
+        <Icon size={20} />
+      </div>
+      <div>
+        <h4 className="font-display font-semibold text-white mb-1 group-hover:text-white transition-colors">{title}</h4>
+        <p className="text-xs font-medium text-slate-400 group-hover:text-slate-300 transition-colors">{desc}</p>
+      </div>
+    </motion.button>
   );
 }

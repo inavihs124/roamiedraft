@@ -144,6 +144,7 @@ export interface AlternativeFlight {
   seatClass: string;
   amenities: string[];
   score?: number;
+  bookingUrl?: string;
   scoreBreakdown?: {
     arrivalEarliness: number;
     priceDelta: number;

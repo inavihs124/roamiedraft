@@ -10,6 +10,10 @@ import itineraryController from '../adapters/controllers/itinerary.controller';
 import disruptionController from '../adapters/controllers/disruption.controller';
 import expenseController from '../adapters/controllers/expense.controller';
 import checklistController from '../adapters/controllers/checklist.controller';
+import geocodingController from '../adapters/controllers/geocoding.controller';
+import translationController from '../adapters/controllers/translation.controller';
+import suggestionsController from '../adapters/controllers/suggestions.controller';
+import bookingSuggestionsController from '../adapters/controllers/booking-suggestions.controller';
 
 export function createApp() {
   const app = express();
@@ -38,6 +42,10 @@ export function createApp() {
   app.use('/api/disruption', disruptionController);
   app.use('/api/expense', expenseController);
   app.use('/api/checklist', checklistController);
+  app.use('/api/geocode', geocodingController);
+  app.use('/api/translate', translationController);
+  app.use('/api/suggestions', suggestionsController);
+  app.use('/api/booking-suggestions', bookingSuggestionsController);
 
   app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
     console.error('Unhandled error:', err);

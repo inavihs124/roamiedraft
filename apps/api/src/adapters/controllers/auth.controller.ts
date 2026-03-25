@@ -28,12 +28,14 @@ router.post('/register', authLimiter, async (req: AuthRequest, res: Response) =>
   try {
     const parsed = registerSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: parsed.error.issues[0].message, code: 'VALIDATION_ERROR' });
+      res.status(400).json({ error: parsed.error.issues[0].message, code: 'VALIDATION_ERROR' });
+      return;
     }
 
     const existing = await prisma.user.findUnique({ where: { email: parsed.data.email } });
     if (existing) {
-      return res.status(409).json({ error: 'Email already exists', code: 'DUPLICATE_EMAIL' });
+      res.status(409).json({ error: 'Email already exists', code: 'DUPLICATE_EMAIL' });
+      return;
     }
 
     const passwordHash = await bcrypt.hash(parsed.data.password, 10);
@@ -66,17 +68,20 @@ router.post('/login', authLimiter, async (req: AuthRequest, res: Response) => {
   try {
     const parsed = loginSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: parsed.error.issues[0].message, code: 'VALIDATION_ERROR' });
+      res.status(400).json({ error: parsed.error.issues[0].message, code: 'VALIDATION_ERROR' });
+      return;
     }
 
     const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
     if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials', code: 'INVALID_CREDENTIALS' });
+      res.status(401).json({ error: 'Invalid credentials', code: 'INVALID_CREDENTIALS' });
+      return;
     }
 
     const validPassword = await bcrypt.compare(parsed.data.password, user.passwordHash);
     if (!validPassword) {
-      return res.status(401).json({ error: 'Invalid credentials', code: 'INVALID_CREDENTIALS' });
+      res.status(401).json({ error: 'Invalid credentials', code: 'INVALID_CREDENTIALS' });
+      return;
     }
 
     const accessToken = jwt.sign({ userId: user.id }, config.JWT_SECRET, { expiresIn: '15m' });
@@ -96,7 +101,8 @@ router.post('/refresh', async (req: AuthRequest, res: Response) => {
   try {
     const { refreshToken } = req.body;
     if (!refreshToken) {
-      return res.status(400).json({ error: 'Refresh token required', code: 'MISSING_TOKEN' });
+      res.status(400).json({ error: 'Refresh token required', code: 'MISSING_TOKEN' });
+      return;
     }
 
     const decoded = jwt.verify(refreshToken, config.JWT_REFRESH_SECRET) as { userId: string };
@@ -113,7 +119,8 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
     if (!user) {
-      return res.status(404).json({ error: 'User not found', code: 'NOT_FOUND' });
+      res.status(404).json({ error: 'User not found', code: 'NOT_FOUND' });
+      return;
     }
     res.json({
       user: { id: user.id, email: user.email, name: user.name, preferredLang: user.preferredLang, tripPurpose: user.tripPurpose, dietaryPref: user.dietaryPref, seatPreference: user.seatPreference },
@@ -135,7 +142,8 @@ router.put('/profile', authMiddleware, async (req: AuthRequest, res: Response) =
 
     const parsed = updateSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: parsed.error.issues[0].message, code: 'VALIDATION_ERROR' });
+      res.status(400).json({ error: parsed.error.issues[0].message, code: 'VALIDATION_ERROR' });
+      return;
     }
 
     const user = await prisma.user.update({

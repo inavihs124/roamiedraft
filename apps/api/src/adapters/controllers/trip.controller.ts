@@ -15,7 +15,8 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const parsed = createTripSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: parsed.error.issues[0].message, code: 'VALIDATION_ERROR' });
+      res.status(400).json({ error: parsed.error.issues[0].message, code: 'VALIDATION_ERROR' });
+      return;
     }
 
     const trip = await prisma.trip.create({
@@ -72,7 +73,8 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
     });
 
     if (!trip) {
-      return res.status(404).json({ error: 'Trip not found', code: 'NOT_FOUND' });
+      res.status(404).json({ error: 'Trip not found', code: 'NOT_FOUND' });
+      return;
     }
 
     res.json({
@@ -104,7 +106,8 @@ router.post('/:id/flights', authMiddleware, async (req: AuthRequest, res: Respon
 
     const parsed = flightSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: parsed.error.issues[0].message, code: 'VALIDATION_ERROR' });
+      res.status(400).json({ error: parsed.error.issues[0].message, code: 'VALIDATION_ERROR' });
+      return;
     }
 
     const flight = await prisma.flightBooking.create({
@@ -132,7 +135,8 @@ router.post('/:id/hotels', authMiddleware, async (req: AuthRequest, res: Respons
 
     const parsed = hotelSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: parsed.error.issues[0].message, code: 'VALIDATION_ERROR' });
+      res.status(400).json({ error: parsed.error.issues[0].message, code: 'VALIDATION_ERROR' });
+      return;
     }
 
     const hotel = await prisma.hotelBooking.create({

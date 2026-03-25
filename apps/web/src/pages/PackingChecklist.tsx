@@ -3,25 +3,25 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   CheckCircle2, Circle, AlertTriangle, Shield, FileText, Heart, DollarSign,
-  Shirt, Plug, Package, ChevronDown, ChevronRight, Info, Search
+  Shirt, Plug, Package, ChevronDown, ChevronRight, Info, Search, Plus
 } from 'lucide-react';
 import { useStore } from '../stores/useStore';
 
-const CATEGORY_CONFIG: Record<string, { icon: typeof Shirt; color: string; bg: string; label: string }> = {
-  clothing:    { icon: Shirt,     color: '#60A5FA', bg: 'rgba(59,130,246,0.1)',  label: 'Clothing' },
-  toiletries:  { icon: Heart,     color: '#F472B6', bg: 'rgba(236,72,153,0.1)',  label: 'Toiletries' },
-  tech:        { icon: Plug,      color: '#818CF8', bg: 'rgba(99,102,241,0.12)', label: 'Tech' },
-  documents:   { icon: FileText,  color: '#F59E0B', bg: 'rgba(245,158,11,0.1)', label: 'Documents' },
-  misc:        { icon: Package,   color: '#22D3EE', bg: 'rgba(34,211,238,0.1)',  label: 'Miscellaneous' },
-  health:      { icon: Heart,     color: '#4ADE80', bg: 'rgba(34,197,94,0.1)',   label: 'Health' },
-  money:       { icon: DollarSign, color: '#FBBF24', bg: 'rgba(251,191,36,0.1)', label: 'Money & Payments' },
-  safety:      { icon: Shield,    color: '#EF4444', bg: 'rgba(239,68,68,0.1)',   label: 'Safety' },
+const CATEGORY_CONFIG: Record<string, { icon: typeof Shirt; colorClass: string; bgClass: string; label: string }> = {
+  clothing:    { icon: Shirt,     colorClass: 'text-blue-400',    bgClass: 'bg-blue-500/10 border-blue-500/20',     label: 'Clothing' },
+  toiletries:  { icon: Heart,     colorClass: 'text-pink-400',    bgClass: 'bg-pink-500/10 border-pink-500/20',     label: 'Toiletries' },
+  tech:        { icon: Plug,      colorClass: 'text-indigo-400',  bgClass: 'bg-indigo-500/10 border-indigo-500/20',     label: 'Tech' },
+  documents:   { icon: FileText,  colorClass: 'text-amber-400',   bgClass: 'bg-amber-500/10 border-amber-500/20',   label: 'Documents' },
+  misc:        { icon: Package,   colorClass: 'text-cyan-400',    bgClass: 'bg-cyan-500/10 border-cyan-500/20',     label: 'Miscellaneous' },
+  health:      { icon: Heart,     colorClass: 'text-emerald-400', bgClass: 'bg-emerald-500/10 border-emerald-500/20',   label: 'Health' },
+  money:       { icon: DollarSign,colorClass: 'text-amber-400',   bgClass: 'bg-amber-500/10 border-amber-500/20',   label: 'Money & Payments' },
+  safety:      { icon: Shield,    colorClass: 'text-rose-400',    bgClass: 'bg-rose-500/10 border-rose-500/20',     label: 'Safety' },
 };
 
 const SEVERITY_STYLES: Record<string, { border: string; bg: string; color: string }> = {
-  critical: { border: 'rgba(239,68,68,0.4)', bg: 'rgba(239,68,68,0.06)', color: '#F87171' },
-  warning:  { border: 'rgba(245,158,11,0.4)', bg: 'rgba(245,158,11,0.06)', color: '#FBBF24' },
-  info:     { border: 'rgba(59,130,246,0.3)', bg: 'rgba(59,130,246,0.06)', color: '#60A5FA' },
+  critical: { border: 'border-rose-500/50', bg: 'bg-rose-500/10', color: 'text-rose-400' },
+  warning:  { border: 'border-amber-500/50', bg: 'bg-amber-500/10', color: 'text-amber-400' },
+  info:     { border: 'border-blue-500/50', bg: 'bg-blue-500/10', color: 'text-blue-400' },
 };
 
 export default function PackingChecklist() {
@@ -35,6 +35,11 @@ export default function PackingChecklist() {
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
   const [tab, setTab] = useState<'packing' | 'docs' | 'laws'>('packing');
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [customItemName, setCustomItemName] = useState('');
+  const [customItemCat, setCustomItemCat] = useState('misc');
+  const [customDocName, setCustomDocName] = useState('');
+  const [customDocDetail, setCustomDocDetail] = useState('');
 
   useEffect(() => { if (currentTrip) loadChecklist(); }, [currentTrip]);
 
@@ -83,226 +88,274 @@ export default function PackingChecklist() {
   ];
 
   return (
-    <div style={{ padding: '28px 24px', maxWidth: 800, margin: '0 auto' }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 28, color: '#F0F2F8', marginBottom: 4 }}>
-          {t('checklist.title')}
+    <div className="max-w-4xl mx-auto p-4 lg:p-8 pb-32">
+      <div className="mb-10">
+        <h1 className="font-display font-bold text-4xl text-white mb-2 flex items-center gap-3">
+          <Package size={36} className="text-amber-500" /> {t('checklist.title')}
         </h1>
-        <p style={{ fontSize: 14, color: '#4A5568' }}>
+        <p className="text-slate-400 font-medium text-lg">
           {currentTrip ? `${currentTrip.destination} · ${new Date(currentTrip.startDate).toLocaleDateString()} — ${new Date(currentTrip.endDate).toLocaleDateString()}` : t('checklist.noTrip')}
         </p>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, padding: 4, background: 'rgba(255,255,255,0.02)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)' }}>
+      {/* Glass Tabs */}
+      <div className="flex flex-wrap gap-2 mb-8 p-1.5 bg-slate-900/50 backdrop-blur-md rounded-2xl border border-slate-700/50 relative z-10">
         {tabs.map(tb => (
           <button key={tb.key} onClick={() => setTab(tb.key)}
-            style={{
-              flex: 1, padding: '10px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
-              fontFamily: 'DM Sans, sans-serif', fontSize: 13, fontWeight: 500,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              background: tab === tb.key ? 'rgba(245,158,11,0.1)' : 'transparent',
-              color: tab === tb.key ? '#F59E0B' : '#4A5568',
-              transition: 'all 150ms ease-out',
-            }}
+            className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+              tab === tb.key 
+                ? 'bg-slate-800 text-amber-400 shadow-[0_4px_12px_rgba(0,0,0,0.5)] border border-slate-600/50' 
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+            }`}
           >
             {tb.label}
             {tb.count > 0 && (
-              <span style={{
-                fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 9999,
-                background: tab === tb.key ? 'rgba(245,158,11,0.2)' : 'rgba(255,255,255,0.04)',
-                color: tab === tb.key ? '#F59E0B' : '#4A5568',
-              }}>{tb.count}</span>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                tab === tb.key ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-slate-800 text-slate-500 border border-slate-700'
+              }`}>
+                {tb.count}
+              </span>
             )}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 60, color: '#4A5568' }}>Loading...</div>
+        <div className="flex items-center justify-center py-20 text-slate-500 font-medium h-64 border border-dashed border-slate-700 rounded-3xl mt-4">
+          <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="mr-3">
+            <Package size={24} className="text-slate-600" />
+          </motion.div>
+          Analyzing itinerary to build packing list...
+        </div>
       ) : (
-        <>
+        <div className="relative z-10">
           {/* PACKING TAB */}
-          {tab === 'packing' && (
-            <>
-              {/* Search + Progress */}
-              <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, position: 'relative', minWidth: 200 }}>
-                  <Search size={14} style={{ color: '#4A5568', position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
-                  <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                    placeholder="Search items..."
-                    style={{
-                      width: '100%', height: 40, paddingLeft: 34, paddingRight: 12, fontSize: 13, color: '#F0F2F8',
-                      background: '#0F1320', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8,
-                      outline: 'none', fontFamily: 'DM Sans, sans-serif',
+          <AnimatePresence mode="wait">
+            {tab === 'packing' && (
+              <motion.div key="packing" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                
+                {/* Search + Progress */}
+                <div className="flex flex-col md:flex-row gap-4 mb-8">
+                  <div className="flex-1 relative group">
+                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-amber-500 transition-colors" />
+                    <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+                      placeholder="Search luggage..."
+                      className="w-full h-14 pl-12 pr-4 bg-slate-900/50 backdrop-blur-md border border-slate-700 text-slate-200 rounded-2xl focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 outline-none transition-all"
+                    />
+                  </div>
+                  <div className="md:w-64 h-14 bg-slate-900/50 backdrop-blur-md border border-slate-700 rounded-2xl flex items-center px-4 gap-4">
+                    <div className="flex-1 h-2.5 bg-slate-800 rounded-full overflow-hidden shadow-inner">
+                      <motion.div animate={{ width: `${progress}%` }} className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full" />
+                    </div>
+                    <span className={`font-display font-bold text-lg w-12 text-right ${progress === 100 ? 'text-emerald-400' : 'text-slate-300'}`}>
+                      {progress}%
+                    </span>
+                  </div>
+                </div>
+
+                {/* Add Custom Item */}
+                <div className="flex flex-col sm:flex-row gap-3 p-3 bg-slate-900/30 border border-slate-700 border-dashed rounded-2xl mb-8">
+                  <input
+                    value={customItemName} onChange={e => setCustomItemName(e.target.value)}
+                    placeholder="Add custom item..."
+                    className="flex-1 bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-xl px-4 py-3 outline-none focus:border-amber-500 transition-colors"
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && customItemName.trim()) {
+                        setPackingList(prev => [{ item: customItemName.trim(), category: customItemCat, reason: 'Added by you', essential: false }, ...prev]);
+                        setCustomItemName('');
+                      }
                     }}
                   />
-                </div>
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '0 14px', background: '#0F1320', border: '1px solid rgba(255,255,255,0.06)',
-                  borderRadius: 8, height: 40,
-                }}>
-                  <div style={{ width: 60, height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
-                    <motion.div animate={{ width: `${progress}%` }} style={{ height: '100%', background: '#F59E0B', borderRadius: 3 }} />
-                  </div>
-                  <span style={{ fontSize: 12, fontWeight: 500, color: progress === 100 ? '#22C55E' : '#8892A4' }}>{progress}%</span>
-                </div>
-              </div>
-
-              {/* Grouped List */}
-              {Object.entries(packingGroups).map(([cat, items]) => {
-                const config = CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.misc;
-                const CatIcon = config.icon;
-                const isExpanded = expandedCats.has(cat);
-                const catChecked = items.filter(i => checkedItems.has(`pack-${i.item}`)).length;
-
-                return (
-                  <div key={cat} style={{
-                    background: '#0F1320', border: '1px solid rgba(255,255,255,0.06)',
-                    borderRadius: 12, marginBottom: 8, overflow: 'hidden',
-                  }}>
-                    <button onClick={() => toggleCategory(cat)} style={{
-                      width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '14px 16px', background: 'none', border: 'none', cursor: 'pointer',
-                    }}>
-                      <div style={{
-                        width: 28, height: 28, borderRadius: 7, background: config.bg,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                      }}>
-                        <CatIcon size={14} style={{ color: config.color }} />
-                      </div>
-                      <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 14, color: '#F0F2F8', flex: 1, textAlign: 'left' }}>
-                        {config.label}
-                      </span>
-                      <span style={{ fontSize: 11, color: '#4A5568', marginRight: 8 }}>{catChecked}/{items.length}</span>
-                      {isExpanded ? <ChevronDown size={14} style={{ color: '#4A5568' }} /> : <ChevronRight size={14} style={{ color: '#4A5568' }} />}
-                    </button>
-
-                    <AnimatePresence>
-                      {isExpanded && (
-                        <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} style={{ overflow: 'hidden' }}>
-                          <div style={{ padding: '0 16px 12px' }}>
-                            {items.map((item: any) => {
-                              const key = `pack-${item.item}`;
-                              const checked = checkedItems.has(key);
-                              return (
-                                <div key={key} onClick={() => toggleCheck(key)} style={{
-                                  display: 'flex', alignItems: 'flex-start', gap: 10,
-                                  padding: '8px 0', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.03)',
-                                }}>
-                                  {checked ? (
-                                    <CheckCircle2 size={18} style={{ color: '#22C55E', marginTop: 1, flexShrink: 0 }} />
-                                  ) : (
-                                    <Circle size={18} style={{ color: '#4A5568', marginTop: 1, flexShrink: 0 }} />
-                                  )}
-                                  <div style={{ flex: 1 }}>
-                                    <p style={{ fontSize: 13, color: checked ? '#4A5568' : '#F0F2F8', textDecoration: checked ? 'line-through' : 'none', transition: 'all 150ms' }}>
-                                      {item.item}
-                                      {item.essential && <span style={{ fontSize: 9, fontWeight: 600, color: '#EF4444', marginLeft: 6 }}>ESSENTIAL</span>}
-                                    </p>
-                                    <p style={{ fontSize: 11, color: '#4A5568', marginTop: 2 }}>{item.reason}</p>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                );
-              })}
-            </>
-          )}
-
-          {/* DOCS TAB */}
-          {tab === 'docs' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {docChecklist.map((doc, i) => {
-                const config = CATEGORY_CONFIG[doc.category] || CATEGORY_CONFIG.documents;
-                const DocIcon = config.icon;
-                const key = `doc-${doc.item}`;
-                const checked = checkedItems.has(key);
-
-                return (
-                  <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.04 }}
-                    onClick={() => toggleCheck(key)}
-                    style={{
-                      display: 'flex', alignItems: 'flex-start', gap: 12,
-                      background: '#0F1320', border: doc.urgent ? '1px solid rgba(245,158,11,0.2)' : '1px solid rgba(255,255,255,0.06)',
-                      borderRadius: 12, padding: '14px 16px', cursor: 'pointer',
-                      transition: 'all 150ms ease-out',
-                    }}
-                  >
-                    {checked ? (
-                      <CheckCircle2 size={18} style={{ color: '#22C55E', marginTop: 1, flexShrink: 0 }} />
-                    ) : (
-                      <Circle size={18} style={{ color: doc.urgent ? '#F59E0B' : '#4A5568', marginTop: 1, flexShrink: 0 }} />
-                    )}
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 14, fontWeight: 500, color: checked ? '#4A5568' : '#F0F2F8', textDecoration: checked ? 'line-through' : 'none' }}>
-                        {doc.item}
-                        {doc.urgent && <span style={{ fontSize: 9, fontWeight: 600, color: '#EF4444', marginLeft: 8 }}>REQUIRED</span>}
-                      </p>
-                      <p style={{ fontSize: 12, color: '#4A5568', marginTop: 3 }}>{doc.details}</p>
-                    </div>
-                    <div style={{
-                      width: 28, height: 28, borderRadius: 7, background: config.bg,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                    }}>
-                      <DocIcon size={14} style={{ color: config.color }} />
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* LAWS TAB */}
-          {tab === 'laws' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {lawNudges.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: 40, color: '#4A5568' }}>
-                  <Info size={32} style={{ marginBottom: 8, opacity: 0.5 }} />
-                  <p>No law nudges available for this destination</p>
-                </div>
-              ) : (
-                lawNudges.map((nudge, i) => {
-                  const sev = SEVERITY_STYLES[nudge.severity] || SEVERITY_STYLES.info;
-                  return (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      style={{
-                        background: sev.bg, border: `1px solid ${sev.border}`,
-                        borderRadius: 12, padding: '14px 18px',
-                        display: 'flex', alignItems: 'flex-start', gap: 12,
-                      }}
+                  <div className="flex gap-3">
+                    <select
+                      value={customItemCat} onChange={e => setCustomItemCat(e.target.value)}
+                      className="bg-slate-800 border border-slate-700 text-slate-300 text-sm rounded-xl px-4 py-3 outline-none cursor-pointer focus:border-amber-500"
                     >
-                      <AlertTriangle size={18} style={{ color: sev.color, flexShrink: 0, marginTop: 1 }} />
-                      <div style={{ flex: 1 }}>
-                        <p style={{ fontSize: 14, color: '#F0F2F8', lineHeight: 1.5 }}>{nudge.rule}</p>
-                        <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-                          <span style={{
-                            fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 9999,
-                            background: sev.bg, color: sev.color, textTransform: 'uppercase' as const, border: `1px solid ${sev.border}`,
-                          }}>{nudge.severity}</span>
-                          <span style={{
-                            fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 9999,
-                            background: 'rgba(255,255,255,0.04)', color: '#4A5568', textTransform: 'capitalize' as const,
-                          }}>{nudge.venueType}</span>
-                        </div>
+                      {Object.entries(CATEGORY_CONFIG).map(([key, cfg]) => (
+                        <option key={key} value={key}>{cfg.label}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => {
+                        if (customItemName.trim()) {
+                          setPackingList(prev => [{ item: customItemName.trim(), category: customItemCat, reason: 'Added by you', essential: false }, ...prev]);
+                          setCustomItemName('');
+                        }
+                      }}
+                      className="w-12 h-12 bg-amber-500 hover:bg-amber-400 text-amber-950 rounded-xl flex items-center justify-center transition-colors shrink-0 font-bold"
+                    >
+                      <Plus size={20} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Grouped List */}
+                <div className="space-y-4">
+                  {Object.entries(packingGroups).map(([cat, items]) => {
+                    const config = CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.misc;
+                    const CatIcon = config.icon;
+                    const isExpanded = expandedCats.has(cat);
+                    const catChecked = items.filter(i => checkedItems.has(`pack-${i.item}`)).length;
+                    const allCheckedInCat = catChecked === items.length && items.length > 0;
+
+                    return (
+                      <div key={cat} className={`glass-panel rounded-2xl overflow-hidden transition-all ${isExpanded ? 'border-slate-600/60 shadow-lg bg-slate-800/20' : 'border-slate-700/50 hover:bg-slate-800/40'}`}>
+                        <button onClick={() => toggleCategory(cat)} className="w-full flex items-center gap-4 p-4 md:p-5 cursor-pointer outline-none">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${config.bgClass}`}>
+                            <CatIcon size={20} className={config.colorClass} />
+                          </div>
+                          <span className={`font-display font-bold text-lg flex-1 text-left ${allCheckedInCat ? 'text-slate-400 line-through' : 'text-slate-200'}`}>
+                            {config.label}
+                          </span>
+                          <span className={`text-sm font-bold ${allCheckedInCat ? 'text-emerald-400' : 'text-slate-500'}`}>
+                            {catChecked} / {items.length}
+                          </span>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isExpanded ? 'bg-slate-700/50 text-slate-300' : 'text-slate-500'}`}>
+                            {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                          </div>
+                        </button>
+
+                        <AnimatePresence>
+                          {isExpanded && (
+                            <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
+                              <div className="px-5 pb-5 pt-1 space-y-2">
+                                {items.map((item: any) => {
+                                  const key = `pack-${item.item}`;
+                                  const checked = checkedItems.has(key);
+                                  return (
+                                    <div key={key} onClick={() => toggleCheck(key)} 
+                                      className={`flex items-start gap-4 p-3 rounded-xl cursor-pointer transition-all border ${
+                                        checked ? 'bg-slate-900/40 border-slate-800 hover:bg-slate-800/50' : 'bg-slate-800/40 border-slate-700/50 hover:border-slate-600 hover:bg-slate-700/30'
+                                      }`}
+                                    >
+                                      <motion.div whileTap={{ scale: 0.8 }} className="mt-0.5 shrink-0">
+                                        {checked 
+                                          ? <CheckCircle2 size={22} className="text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]" /> 
+                                          : <Circle size={22} className="text-slate-600" />}
+                                      </motion.div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className={`font-semibold text-base transition-colors ${checked ? 'text-slate-500 line-through' : 'text-slate-200'}`}>
+                                          {item.item}
+                                          {item.essential && !checked && <span className="ml-3 px-2 py-0.5 rounded text-[10px] font-bold tracking-widest bg-rose-500/10 text-rose-400 border border-rose-500/20 uppercase">Must Pack</span>}
+                                        </p>
+                                        <p className={`text-sm mt-1 transition-colors ${checked ? 'text-slate-600' : 'text-slate-400'}`}>{item.reason}</p>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+
+            {/* DOCS TAB */}
+            {tab === 'docs' && (
+              <motion.div key="docs" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
+                
+                <div className="flex flex-col sm:flex-row gap-3 p-3 bg-slate-900/30 border border-slate-700 border-dashed rounded-2xl mb-6">
+                  <input value={customDocName} onChange={e => setCustomDocName(e.target.value)}
+                    placeholder="Document name..."
+                    className="flex-1 bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-xl px-4 py-3 outline-none focus:border-amber-500 transition-colors"
+                  />
+                  <input value={customDocDetail} onChange={e => setCustomDocDetail(e.target.value)}
+                    placeholder="Details..."
+                    className="flex-1 bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-xl px-4 py-3 outline-none focus:border-amber-500 transition-colors"
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && customDocName.trim()) {
+                        setDocChecklist(prev => [{ item: customDocName.trim(), details: customDocDetail || 'Custom document', category: 'documents', urgent: false }, ...prev]);
+                        setCustomDocName(''); setCustomDocDetail('');
+                      }
+                    }}
+                  />
+                  <button onClick={() => {
+                      if (customDocName.trim()) {
+                        setDocChecklist(prev => [{ item: customDocName.trim(), details: customDocDetail || 'Custom document', category: 'documents', urgent: false }, ...prev]);
+                        setCustomDocName(''); setCustomDocDetail('');
+                      }
+                    }}
+                    className="w-12 h-12 bg-amber-500 hover:bg-amber-400 text-amber-950 rounded-xl flex items-center justify-center transition-colors shrink-0 font-bold"
+                  >
+                    <Plus size={20} />
+                  </button>
+                </div>
+
+                {docChecklist.map((doc, i) => {
+                  const config = CATEGORY_CONFIG[doc.category] || CATEGORY_CONFIG.documents;
+                  const DocIcon = config.icon;
+                  const key = `doc-${doc.item}`;
+                  const checked = checkedItems.has(key);
+
+                  return (
+                    <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                      onClick={() => toggleCheck(key)}
+                      className={`glass-panel p-5 rounded-2xl border cursor-pointer transition-all flex items-start gap-4 hover:shadow-lg ${
+                        checked ? 'bg-slate-900/60 border-slate-800' : doc.urgent ? 'bg-amber-500/5 border-amber-500/40 hover:bg-amber-500/10' : 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/60 hover:border-slate-600'
+                      }`}
+                    >
+                      <motion.div whileTap={{ scale: 0.8 }} className="mt-0.5 shrink-0">
+                        {checked 
+                          ? <CheckCircle2 size={24} className="text-amber-500" /> 
+                          : <Circle size={24} className={doc.urgent ? 'text-amber-500' : 'text-slate-500'} />}
+                      </motion.div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-display font-bold text-lg mb-1 transition-colors ${checked ? 'text-slate-500 line-through' : 'text-slate-100'}`}>
+                          {doc.item}
+                          {doc.urgent && !checked && <span className="ml-3 px-2 py-0.5 rounded text-[10px] uppercase font-extrabold tracking-widest bg-amber-500 text-slate-900 shadow-[0_0_10px_rgba(245,158,11,0.3)]">Required</span>}
+                        </p>
+                        <p className={`text-sm transition-colors ${checked ? 'text-slate-600' : 'text-slate-400'}`}>{doc.details}</p>
+                      </div>
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${checked ? 'opacity-30' : ''} ${config.bgClass}`}>
+                        <DocIcon size={20} className={config.colorClass} />
                       </div>
                     </motion.div>
                   );
-                })
-              )}
-            </div>
-          )}
-        </>
+                })}
+              </motion.div>
+            )}
+
+            {/* LAWS TAB */}
+            {tab === 'laws' && (
+              <motion.div key="laws" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
+                {lawNudges.length === 0 ? (
+                  <div className="text-center py-20 bg-slate-900/30 rounded-3xl border border-slate-700 border-dashed">
+                    <Shield size={48} className="mx-auto mb-4 text-slate-700" />
+                    <p className="text-slate-400 font-medium">No specific safety nudges available for this destination.</p>
+                  </div>
+                ) : (
+                  lawNudges.map((nudge, i) => {
+                    const sev = SEVERITY_STYLES[nudge.severity] || SEVERITY_STYLES.info;
+                    return (
+                      <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                        className={`glass-panel p-6 rounded-2xl border flex items-start gap-5 ${sev.bg} ${sev.border}`}
+                      >
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border border-current bg-slate-900/50 ${sev.color}`}>
+                          <AlertTriangle size={24} />
+                        </div>
+                        <div className="flex-1 mt-1">
+                          <p className="text-slate-200 font-medium leading-relaxed mb-4">{nudge.rule}</p>
+                          <div className="flex flex-wrap gap-2">
+                            <span className={`px-3 py-1 rounded-md text-xs font-bold uppercase tracking-widest border bg-slate-900/50 ${sev.color} ${sev.border}`}>
+                              {nudge.severity} Priority
+                            </span>
+                            <span className="px-3 py-1 rounded-md text-xs font-bold uppercase tracking-widest border border-slate-700 bg-slate-800 text-slate-300">
+                              {nudge.venueType}
+                            </span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       )}
     </div>
   );

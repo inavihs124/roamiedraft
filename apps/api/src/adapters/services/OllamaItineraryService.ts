@@ -1,6 +1,7 @@
 import { IItineraryService } from '../../domain/interfaces';
 import { TripContext, ItineraryPlan, ItineraryEvent, FreeGap } from '../../domain/entities';
 import fallbackData from '../../data/fallbackItineraries.json';
+import { MockPlacesService } from './MockPlacesService';
 
 export class OllamaItineraryService implements IItineraryService {
   private baseUrl: string;
@@ -54,7 +55,12 @@ Return ONLY valid JSON, no markdown, no explanation.`);
       if (!response.ok) throw new Error(`Ollama returned ${response.status}`);
       const data: any = await response.json();
       const text = data.response || '';
-      const parsed = JSON.parse(text);
+      let parsed: any;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        throw new Error('Ollama returned malformed JSON');
+      }
 
       // Apply breathing room optimizer
       if (parsed.days) {
@@ -68,7 +74,7 @@ Return ONLY valid JSON, no markdown, no explanation.`);
       return parsed as ItineraryPlan;
     } catch (error) {
       console.warn('Ollama unavailable, using fallback itinerary:', (error as Error).message);
-      return this.getFallbackItinerary(context);
+      return await this.getFallbackItinerary(context);
     }
   }
 
@@ -136,13 +142,13 @@ Return ONLY valid JSON, no markdown, no explanation.`);
     return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
   }
 
-  private getFallbackItinerary(ctx: TripContext): ItineraryPlan {
+  private async getFallbackItinerary(ctx: TripContext): Promise<ItineraryPlan> {
     const dest = ctx.destination.toLowerCase();
     const fallbacks = fallbackData as Record<string, any>;
-    const cityData = fallbacks[dest] || fallbacks['singapore'] || fallbacks[Object.keys(fallbacks)[0]];
+    const cityData = fallbacks[dest];
 
     if (!cityData) {
-      return this.generateGenericItinerary(ctx);
+      return await this.generateGenericItinerary(ctx);
     }
 
     const start = new Date(ctx.startDate);
@@ -173,33 +179,142 @@ Return ONLY valid JSON, no markdown, no explanation.`);
     };
   }
 
-  private generateGenericItinerary(ctx: TripContext): ItineraryPlan {
+  private placesService = new MockPlacesService();
+
+  private async fetchNominatimPOIs(destination: string): Promise<{ name: string; category: string; description: string; location: string }[]> {
+    try {
+      // Fetch tourist attractions and notable places from Nominatim
+      const queries = [
+        `${destination} tourist attraction`,
+        `${destination} landmark`,
+        `${destination} restaurant`,
+        `${destination} park`,
+        `${destination} museum`,
+      ];
+
+      const allResults: { name: string; category: string; description: string; location: string }[] = [];
+      const seenNames = new Set<string>();
+
+      for (const q of queries) {
+        try {
+          const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=4&addressdetails=1&accept-language=en`;
+          const res = await fetch(url, {
+            headers: { 'User-Agent': 'TripMind/1.0 (travel-planner)' },
+            signal: AbortSignal.timeout(5000),
+          });
+          if (!res.ok) continue;
+          const data: any[] = await res.json() as any[];
+
+          for (const d of data) {
+            const name = d.name || d.display_name?.split(',')[0] || '';
+            if (!name || seenNames.has(name.toLowerCase())) continue;
+            seenNames.add(name.toLowerCase());
+
+            let category = 'sightseeing';
+            const type = (d.type || d.class || '').toLowerCase();
+            if (/restaurant|cafe|food|bar/i.test(type)) category = 'food';
+            else if (/park|garden|nature/i.test(type)) category = 'activity';
+            else if (/museum|gallery/i.test(type)) category = 'sightseeing';
+            else if (/shop|market|mall/i.test(type)) category = 'shopping';
+
+            allResults.push({
+              name,
+              category,
+              description: d.display_name || `Visit ${name} in ${destination}`,
+              location: d.display_name?.split(',').slice(0, 2).join(',').trim() || destination,
+            });
+          }
+          // Small delay to respect Nominatim rate limits
+          await new Promise(r => setTimeout(r, 200));
+        } catch {
+          // Continue with next query
+        }
+      }
+      return allResults;
+    } catch {
+      return [];
+    }
+  }
+
+  private async generateGenericItinerary(ctx: TripContext): Promise<ItineraryPlan> {
     const start = new Date(ctx.startDate);
     const end = new Date(ctx.endDate);
     const numDays = Math.max(1, Math.min(7, Math.ceil((end.getTime() - start.getTime()) / 86400000)));
     const isBusiness = ctx.tripPurpose === 'business';
+
+    // Try to find real places from places.json first
+    const knownPlaces = this.placesService.findByCity(ctx.destination);
+    let realPOIs: { name: string; category: string; description: string; location: string }[] = [];
+
+    if (knownPlaces.length > 0) {
+      realPOIs = knownPlaces.map(p => ({
+        name: p.name,
+        category: p.category === 'landmark' ? 'sightseeing' : p.category,
+        description: p.culturalNudge || `Visit ${p.name} at ${p.address}`,
+        location: `${p.name}, ${p.address}`,
+      }));
+    } else {
+      // Fallback: fetch POIs from Nominatim
+      realPOIs = await this.fetchNominatimPOIs(ctx.destination);
+    }
+
+    // Separate POIs by category
+    const landmarks = realPOIs.filter(p => p.category === 'sightseeing' || p.category === 'landmark' || p.category === 'activity');
+    const foods = realPOIs.filter(p => p.category === 'food');
+    const activities = realPOIs.filter(p => !['food', 'sightseeing', 'landmark'].includes(p.category));
+    const allAttractions = [...landmarks, ...activities];
+
+    let landmarkIdx = 0;
+    let foodIdx = 0;
+    let attractionIdx = 0;
+
+    const getNextLandmark = () => {
+      if (allAttractions.length === 0) return null;
+      const p = allAttractions[landmarkIdx % allAttractions.length];
+      landmarkIdx++;
+      return p;
+    };
+    const getNextFood = () => {
+      if (foods.length === 0) return null;
+      const p = foods[foodIdx % foods.length];
+      foodIdx++;
+      return p;
+    };
+    const getNextAttraction = () => {
+      if (allAttractions.length === 0) return null;
+      const p = allAttractions[attractionIdx % allAttractions.length];
+      attractionIdx++;
+      return p;
+    };
 
     const days = [];
     for (let i = 0; i < numDays; i++) {
       const dayDate = new Date(start);
       dayDate.setDate(dayDate.getDate() + i);
 
+      const morningFood = getNextFood();
+      const morningLandmark = getNextLandmark();
+      const lunchFood = getNextFood();
+      const afternoonAttraction = getNextAttraction();
+      const eveningLandmark = getNextLandmark();
+      const dinnerFood = getNextFood();
+
       const events: ItineraryEvent[] = isBusiness ? [
-        { time: '08:00', duration_minutes: 60, type: 'food', title: 'Hotel Breakfast', description: 'Start the day with a full breakfast at the hotel restaurant.', location: 'Hotel Restaurant', isGapSuggestion: false, isBreathingRoom: false },
+        { time: '08:00', duration_minutes: 60, type: 'food', title: morningFood ? `Breakfast at ${morningFood.name}` : 'Hotel Breakfast', description: morningFood ? morningFood.description : 'Start the day with a full breakfast at the hotel restaurant.', location: morningFood ? morningFood.location : 'Hotel Restaurant', isGapSuggestion: false, isBreathingRoom: false },
         { time: '09:30', duration_minutes: 180, type: 'meeting', title: 'Client Meeting', description: 'Scheduled meeting with the local team.', location: 'Business Center', isGapSuggestion: false, isBreathingRoom: false },
-        { time: '12:30', duration_minutes: 60, type: 'food', title: 'Working Lunch', description: 'Quick lunch nearby before the afternoon session.', location: 'Local Restaurant', isGapSuggestion: false, isBreathingRoom: false },
+        { time: '12:30', duration_minutes: 60, type: 'food', title: lunchFood ? `Working Lunch at ${lunchFood.name}` : 'Working Lunch', description: lunchFood ? lunchFood.description : 'Quick lunch nearby before the afternoon session.', location: lunchFood ? lunchFood.location : 'Local Restaurant', isGapSuggestion: false, isBreathingRoom: false },
         { time: '14:00', duration_minutes: 120, type: 'meeting', title: 'Afternoon Session', description: 'Follow-up meeting and planning session.', location: 'Business Center', isGapSuggestion: false, isBreathingRoom: false },
         { time: '16:30', duration_minutes: 30, type: 'break', title: 'Breathing Room', description: 'Take a moment to decompress. Find a quiet café or take a short walk.', location: 'Nearby Café', isGapSuggestion: false, isBreathingRoom: true },
-        { time: '17:30', duration_minutes: 90, type: 'activity', title: `Explore ${ctx.destination}`, description: `Free time to explore the local area around your hotel in ${ctx.destination}.`, location: ctx.destination, isGapSuggestion: true, isBreathingRoom: false },
-        { time: '19:30', duration_minutes: 90, type: 'food', title: 'Dinner', description: 'Enjoy local cuisine at a recommended restaurant.', location: 'Local Restaurant', isGapSuggestion: false, isBreathingRoom: false },
+        { time: '17:30', duration_minutes: 90, type: 'activity', title: eveningLandmark ? `Explore ${eveningLandmark.name}` : `Explore ${ctx.destination}`, description: eveningLandmark ? eveningLandmark.description : `Free time to explore the local area around your hotel in ${ctx.destination}.`, location: eveningLandmark ? eveningLandmark.location : ctx.destination, isGapSuggestion: true, isBreathingRoom: false },
+        { time: '19:30', duration_minutes: 90, type: 'food', title: dinnerFood ? `Dinner at ${dinnerFood.name}` : 'Dinner', description: dinnerFood ? dinnerFood.description : 'Enjoy local cuisine at a recommended restaurant.', location: dinnerFood ? dinnerFood.location : 'Local Restaurant', isGapSuggestion: false, isBreathingRoom: false },
       ] : [
-        { time: '08:30', duration_minutes: 60, type: 'food', title: 'Breakfast', description: 'Start with a local breakfast experience.', location: 'Local Café', isGapSuggestion: false, isBreathingRoom: false },
-        { time: '10:00', duration_minutes: 150, type: 'sightseeing', title: `Morning Exploration`, description: `Visit the top sights of ${ctx.destination}. Take your time and enjoy the atmosphere.`, location: ctx.destination, isGapSuggestion: false, isBreathingRoom: false },
-        { time: '12:30', duration_minutes: 90, type: 'food', title: 'Local Lunch', description: 'Try the local cuisine at a popular spot.', location: 'Local Eatery', isGapSuggestion: false, isBreathingRoom: false },
-        { time: '14:30', duration_minutes: 120, type: 'activity', title: 'Afternoon Activity', description: 'Museums, markets, or local attractions.', location: ctx.destination, isGapSuggestion: false, isBreathingRoom: false },
+        { time: '08:30', duration_minutes: 60, type: 'food', title: morningFood ? `Breakfast at ${morningFood.name}` : 'Breakfast', description: morningFood ? morningFood.description : 'Start with a local breakfast experience.', location: morningFood ? morningFood.location : 'Local Café', isGapSuggestion: false, isBreathingRoom: false },
+        { time: '10:00', duration_minutes: 150, type: 'sightseeing', title: morningLandmark ? morningLandmark.name : `Morning Exploration`, description: morningLandmark ? morningLandmark.description : `Visit the top sights of ${ctx.destination}. Take your time and enjoy the atmosphere.`, location: morningLandmark ? morningLandmark.location : ctx.destination, isGapSuggestion: false, isBreathingRoom: false },
+        { time: '12:30', duration_minutes: 90, type: 'food', title: lunchFood ? `Lunch at ${lunchFood.name}` : 'Local Lunch', description: lunchFood ? lunchFood.description : 'Try the local cuisine at a popular spot.', location: lunchFood ? lunchFood.location : 'Local Eatery', isGapSuggestion: false, isBreathingRoom: false },
+        { time: '14:30', duration_minutes: 120, type: 'activity', title: afternoonAttraction ? afternoonAttraction.name : 'Afternoon Activity', description: afternoonAttraction ? afternoonAttraction.description : 'Museums, markets, or local attractions.', location: afternoonAttraction ? afternoonAttraction.location : ctx.destination, isGapSuggestion: false, isBreathingRoom: false },
         { time: '17:00', duration_minutes: 30, type: 'break', title: 'Breathing Room', description: 'Rest and recharge. Find a scenic spot or a quiet park bench.', location: 'Nearby Park', isGapSuggestion: false, isBreathingRoom: true },
-        { time: '18:00', duration_minutes: 90, type: 'sightseeing', title: 'Golden Hour Walk', description: `Watch the sunset and explore the evening vibe of ${ctx.destination}.`, location: ctx.destination, isGapSuggestion: false, isBreathingRoom: false },
-        { time: '20:00', duration_minutes: 90, type: 'food', title: 'Dinner', description: 'End the day with a memorable dining experience.', location: 'Restaurant', isGapSuggestion: false, isBreathingRoom: false },
+        { time: '18:00', duration_minutes: 90, type: 'sightseeing', title: eveningLandmark ? eveningLandmark.name : 'Golden Hour Walk', description: eveningLandmark ? eveningLandmark.description : `Watch the sunset and explore the evening vibe of ${ctx.destination}.`, location: eveningLandmark ? eveningLandmark.location : ctx.destination, isGapSuggestion: false, isBreathingRoom: false },
+        { time: '20:00', duration_minutes: 90, type: 'food', title: dinnerFood ? `Dinner at ${dinnerFood.name}` : 'Dinner', description: dinnerFood ? dinnerFood.description : 'End the day with a memorable dining experience.', location: dinnerFood ? dinnerFood.location : 'Restaurant', isGapSuggestion: false, isBreathingRoom: false },
       ];
 
       days.push({

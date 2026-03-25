@@ -7,7 +7,7 @@ export class QRCodeService {
         width: 300,
         margin: 2,
         color: {
-          dark: '#0A0F1E',
+          dark: '#003580',
           light: '#FFFFFF',
         },
         errorCorrectionLevel: 'M',

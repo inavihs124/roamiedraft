@@ -80,7 +80,7 @@ export class TriggerDisruptionShield {
 
     const selectedFlight = alternativeFlights[0]; // Already sorted by score
     steps[2].status = 'completed';
-    steps[2].detail = `${selectedFlight.flightNumber} selected (score: ${selectedFlight.score})`;
+    steps[2].detail = `${selectedFlight.flightNumber} selected (score: ${selectedFlight.score?.toFixed(2) ?? 'N/A'})`;
     emit(steps[2]);
 
     // Step 4: Shift hotel

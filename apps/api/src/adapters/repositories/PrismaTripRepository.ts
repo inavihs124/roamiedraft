@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../../infrastructure/database';
 import {
   ITripRepository
 } from '../../domain/interfaces';
@@ -7,8 +7,6 @@ import {
   HotelBookingEntity, CabBookingEntity, UserEntity,
   DisruptionLogEntity
 } from '../../domain/entities';
-
-const prisma = new PrismaClient();
 
 function parseEvents(raw: any): any[] {
   if (typeof raw === 'string') {

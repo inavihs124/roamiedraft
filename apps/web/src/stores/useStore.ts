@@ -25,10 +25,22 @@ interface Trip {
   itinerary: any[];
 }
 
+export interface CartItem {
+  id: string;
+  type: 'hotel' | 'flight';
+  name: string;
+  details: string;
+  price: number;
+  bookingUrl?: string;
+  tripId: string;
+  imageTag?: string;
+}
+
 interface AppStore {
   user: User | null;
   trips: Trip[];
   currentTrip: Trip | null;
+  cart: CartItem[];
   loading: boolean;
   error: string | null;
 
@@ -43,19 +55,38 @@ interface AppStore {
   addFlight: (tripId: string, data: any) => Promise<void>;
   addHotel: (tripId: string, data: any) => Promise<void>;
   buildItinerary: (tripId: string, calendarEvents?: any[], savedPlaces?: string[], energyLevel?: string) => Promise<any>;
-  triggerDisruption: (tripId: string, flightId: string, type: string) => Promise<any>;
+  triggerDisruption: (tripId: string, flightId: string, type: string, simulateZeroFlights?: boolean) => Promise<any>;
   scanExpense: (receiptText: string, tripId?: string) => Promise<any>;
   fetchExpenses: (tripId?: string) => Promise<any>;
   fetchChecklist: (tripId: string) => Promise<any>;
   confirmDisruption: (token: string) => Promise<any>;
   cancelDisruption: (token: string) => Promise<any>;
+  searchDestinations: (query: string) => Promise<any[]>;
+  getCoords: (query: string) => Promise<{ lat: number; lng: number } | null>;
+  addToCart: (item: CartItem) => void;
+  removeFromCart: (id: string) => void;
+  clearCart: () => void;
+  fetchBookingSuggestions: (tripId: string) => Promise<{ hotels: any[]; flights: any[] }>;
   setError: (error: string | null) => void;
 }
+
+// Load persisted cart from localStorage
+const loadCart = (): CartItem[] => {
+  try {
+    const raw = localStorage.getItem('openclaw-cart');
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+};
+
+const persistCart = (cart: CartItem[]) => {
+  localStorage.setItem('openclaw-cart', JSON.stringify(cart));
+};
 
 export const useStore = create<AppStore>((set, get) => ({
   user: null,
   trips: [],
   currentTrip: null,
+  cart: loadCart(),
   loading: false,
   error: null,
 
@@ -158,10 +189,10 @@ export const useStore = create<AppStore>((set, get) => ({
     }
   },
 
-  triggerDisruption: async (tripId, flightId, disruptionType) => {
+  triggerDisruption: async (tripId, flightId, disruptionType, simulateZeroFlights = false) => {
     set({ loading: true });
     try {
-      const { data } = await api.post('/disruption/trigger', { tripId, flightId, disruptionType });
+      const { data } = await api.post('/disruption/trigger', { tripId, flightId, disruptionType, simulateZeroFlights });
       set({ loading: false });
       return data;
     } catch (e: any) {
@@ -201,6 +232,50 @@ export const useStore = create<AppStore>((set, get) => ({
   cancelDisruption: async (token) => {
     const { data } = await api.post(`/disruption/cancel/${token}`);
     return data;
+  },
+
+  searchDestinations: async (query) => {
+    try {
+      const { data } = await api.get(`/geocode/autocomplete?q=${encodeURIComponent(query)}`);
+      return data.results || [];
+    } catch {
+      return [];
+    }
+  },
+
+  getCoords: async (query) => {
+    try {
+      const { data } = await api.get(`/geocode/coords?q=${encodeURIComponent(query)}`);
+      return data;
+    } catch {
+      return null;
+    }
+  },
+
+  addToCart: (item) => {
+    const cart = [...get().cart.filter(c => c.id !== item.id), item];
+    persistCart(cart);
+    set({ cart });
+  },
+
+  removeFromCart: (id) => {
+    const cart = get().cart.filter(c => c.id !== id);
+    persistCart(cart);
+    set({ cart });
+  },
+
+  clearCart: () => {
+    persistCart([]);
+    set({ cart: [] });
+  },
+
+  fetchBookingSuggestions: async (tripId) => {
+    try {
+      const { data } = await api.get(`/booking-suggestions/${tripId}`);
+      return data;
+    } catch {
+      return { hotels: [], flights: [] };
+    }
   },
 
   setError: (error) => set({ error }),

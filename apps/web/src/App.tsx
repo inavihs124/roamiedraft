@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plane, LayoutDashboard, AlertTriangle, Receipt, Package,
-  LogOut, Menu, X
+  LogOut, Menu, X, Map
 } from 'lucide-react';
 import { useStore } from './stores/useStore';
 import Dashboard from './pages/Dashboard';
@@ -12,6 +12,10 @@ import Disruption from './pages/Disruption';
 import Expenses from './pages/Expenses';
 import PackingChecklist from './pages/PackingChecklist';
 import Onboarding from './pages/Onboarding';
+import Payment from './pages/Payment';
+import VoiceTranslateWidget from './components/VoiceTranslateWidget';
+import OpenClawCart from './components/OpenClawCart';
+import MyItinerary from './pages/MyItinerary';
 
 const LANGUAGES = [
   { code: 'en', label: '🇬🇧' },
@@ -22,10 +26,11 @@ const LANGUAGES = [
 ];
 
 const NAV_ITEMS = [
-  { path: '/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
-  { path: '/disruption', icon: AlertTriangle, labelKey: 'nav.disruption' },
-  { path: '/expenses', icon: Receipt, labelKey: 'nav.expenses' },
-  { path: '/checklist', icon: Package, labelKey: 'nav.checklist' },
+  { path: '/dashboard', icon: LayoutDashboard, labelKey: 'Dashboard' },
+  { path: '/my-itinerary', icon: Map, labelKey: 'My Itinerary' },
+  { path: '/disruption', icon: AlertTriangle, labelKey: 'Disruption' },
+  { path: '/expenses', icon: Receipt, labelKey: 'Expenses' },
+  { path: '/checklist', icon: Package, labelKey: 'Packing List' },
 ];
 
 export default function App() {
@@ -56,12 +61,12 @@ export default function App() {
 
   if (!initialized) {
     return (
-      <div style={{ minHeight: '100vh', background: '#090C14', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}>
-            <Plane size={32} style={{ color: '#F59E0B' }} />
+      <div className="min-h-screen bg-[#0b1120] flex items-center justify-center">
+        <div className="text-center">
+          <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }} className="inline-block">
+            <Plane size={32} className="text-amber-500" />
           </motion.div>
-          <p style={{ color: '#4A5568', marginTop: 16, fontFamily: 'DM Sans, sans-serif' }}>Loading TripMind...</p>
+          <p className="text-slate-400 mt-4 font-sans tracking-wide">Initializing Space...</p>
         </div>
       </div>
     );
@@ -76,168 +81,142 @@ export default function App() {
     );
   }
 
-  const navLinkStyle = (isActive: boolean): React.CSSProperties => ({
-    display: 'flex', alignItems: 'center', gap: 10,
-    padding: '10px 14px', borderRadius: 10, fontSize: 13, fontWeight: 500,
-    color: isActive ? '#F59E0B' : '#4A5568',
-    background: isActive ? 'rgba(245,158,11,0.08)' : 'transparent',
-    textDecoration: 'none', fontFamily: 'DM Sans, sans-serif',
-    transition: 'all 150ms ease-out', width: '100%',
-    border: isActive ? '1px solid rgba(245,158,11,0.15)' : '1px solid transparent',
-  });
-
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#090C14' }}>
-      {/* Sidebar — Desktop */}
-      <aside style={{
-        width: 240, flexShrink: 0, background: '#0A0F1E',
-        borderRight: '1px solid rgba(255,255,255,0.04)',
-        display: 'flex', flexDirection: 'column', padding: '20px 14px',
-        position: 'sticky', top: 0, height: '100vh',
-      }} className="sidebar-desktop">
-        {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 8px', marginBottom: 28 }}>
-          <div style={{
-            width: 34, height: 34, borderRadius: 9,
-            background: 'linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(245,158,11,0.05) 100%)',
-            border: '1px solid rgba(245,158,11,0.2)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Plane size={16} strokeWidth={1.5} style={{ color: '#F59E0B' }} />
+    <div className="flex bg-[#0b1120] text-slate-100 min-h-screen overflow-hidden">
+      
+      {/* Mobile Nav Overlay */}
+      <AnimatePresence>
+        {mobileNav && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setMobileNav(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Persistent Sidebar */}
+      <motion.aside 
+        initial={false}
+        animate={{ x: mobileNav ? 0 : '-100%' }}
+        className="fixed lg:static inset-y-0 left-0 z-50 w-64 glass-panel border-r border-slate-700/50 flex flex-col pt-6 pb-4 px-4 lg:translate-x-0 outline-none transition-transform duration-300 shadow-2xl"
+      >
+        <div className="flex items-center justify-between mb-10 px-2">
+          <div className="flex items-center gap-3">
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}>
+              <Plane size={24} className="text-amber-500" />
+            </motion.div>
+            <span className="font-display font-bold text-xl tracking-tight text-white">TripMind</span>
           </div>
-          <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 20, color: '#F59E0B' }}>TripMind</span>
+          <button className="lg:hidden text-slate-400 hover:text-white" onClick={() => setMobileNav(false)}>
+            <X size={20} />
+          </button>
         </div>
 
-        {/* Nav Items */}
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+        <nav className="flex-1 space-y-2">
           {NAV_ITEMS.map(item => {
             const Icon = item.icon;
             return (
-              <NavLink key={item.path} to={item.path} style={({ isActive }) => navLinkStyle(isActive)}>
-                {() => (
-                  <>
-                    <Icon size={18} strokeWidth={1.5} />
-                    <span>{t(item.labelKey)}</span>
-                  </>
-                )}
+              <NavLink 
+                key={item.path} 
+                to={item.path} 
+                className={({ isActive }) => `
+                  flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
+                  ${isActive ? 'bg-amber-500/10 text-amber-500 shadow-inner border border-amber-500/20' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}
+                `}
+                onClick={() => setMobileNav(false)}
+              >
+                <Icon size={18} strokeWidth={2.5} />
+                {t(item.labelKey)}
               </NavLink>
             );
           })}
         </nav>
 
-        {/* Bottom Section */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: 14 }}>
-          {/* Language Selector */}
-          <div style={{ display: 'flex', gap: 4, marginBottom: 12, justifyContent: 'center' }}>
+        <div className="mt-auto space-y-2 border-t border-slate-700/50 pt-4">
+          <div className="flex gap-1 justify-center bg-slate-800/30 p-1.5 rounded-lg mb-4">
             {LANGUAGES.map(l => (
               <button key={l.code} onClick={() => handleLanguageChange(l.code)}
-                style={{
-                  width: 32, height: 28, border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 14,
-                  background: i18n.language === l.code ? 'rgba(245,158,11,0.12)' : 'transparent',
-                  opacity: i18n.language === l.code ? 1 : 0.5,
-                  transition: 'all 150ms ease-out',
-                }}
+                className={`w-8 h-8 rounded-md flex items-center justify-center text-sm transition-all ${
+                  i18n.language === l.code ? 'bg-slate-700/80 shadow-md transform scale-105' : 'opacity-60 hover:opacity-100 hover:bg-slate-800'
+                }`}
               >
                 {l.label}
               </button>
             ))}
           </div>
 
-          {/* User */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 10, padding: '10px 8px',
-            borderRadius: 10, background: 'rgba(255,255,255,0.02)',
-          }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: '50%',
-              background: 'linear-gradient(135deg, #F59E0B, #EF4444)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 13, fontWeight: 700, color: '#FFF',
-            }}>
-              {user.name?.charAt(0)?.toUpperCase() || '?'}
+          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all">
+            <LogOut size={18} />
+            Sign Out
+          </button>
+        </div>
+      </motion.aside>
+
+      {/* Main Container */}
+      <div className="flex-1 flex flex-col relative min-w-0 max-h-screen">
+        
+        {/* Top Header */}
+        <header className="h-16 shrink-0 glass-panel border-b border-slate-700/50 flex items-center justify-between px-4 lg:px-8 z-30 sticky top-0">
+          <button className="lg:hidden text-slate-300 hover:text-white p-2" onClick={() => setMobileNav(true)}>
+            <Menu size={24} />
+          </button>
+
+          <div className="flex items-center ml-auto gap-4">
+            <OpenClawCart />
+            <div className="w-px h-6 bg-slate-700" />
+            
+            <div className="flex items-center gap-3 cursor-pointer hover:bg-slate-800/40 p-1.5 pr-4 rounded-full transition-colors border border-transparent hover:border-slate-700">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center text-sm font-bold text-slate-900 shadow-md">
+                {user.name?.charAt(0)?.toUpperCase() || '?'}
+              </div>
+              <span className="hidden sm:block text-sm font-medium text-slate-200">{user.name}</span>
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: 13, fontWeight: 500, color: '#F0F2F8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</p>
-              <p style={{ fontSize: 11, color: '#4A5568', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</p>
-            </div>
-            <button onClick={handleLogout} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
-              <LogOut size={16} style={{ color: '#4A5568' }} />
-            </button>
           </div>
-        </div>
-      </aside>
+        </header>
 
-      {/* Mobile Header */}
-      <div className="mobile-header" style={{
-        position: 'fixed', top: 0, left: 0, right: 0, height: 56, zIndex: 100,
-        background: '#0A0F1E', borderBottom: '1px solid rgba(255,255,255,0.04)',
-        display: 'none', alignItems: 'center', padding: '0 16px', justifyContent: 'space-between',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Plane size={18} style={{ color: '#F59E0B' }} />
-          <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 18, color: '#F59E0B' }}>TripMind</span>
-        </div>
-        <button onClick={() => setMobileNav(!mobileNav)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-          {mobileNav ? <X size={22} style={{ color: '#F0F2F8' }} /> : <Menu size={22} style={{ color: '#F0F2F8' }} />}
-        </button>
+        {/* Scrollable Content Viewport */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden relative">
+          <AnimatePresence mode="wait">
+            <Routes>
+              <Route path="/dashboard" element={
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} >
+                  <Dashboard />
+                </motion.div>
+              } />
+              <Route path="/my-itinerary" element={
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} >
+                  <MyItinerary />
+                </motion.div>
+              } />
+              <Route path="/disruption" element={
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} >
+                  <Disruption />
+                </motion.div>
+              } />
+              <Route path="/expenses" element={
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} >
+                  <Expenses />
+                </motion.div>
+              } />
+              <Route path="/checklist" element={
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} >
+                  <PackingChecklist />
+                </motion.div>
+              } />
+              <Route path="/payment/:token" element={
+                <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} >
+                  <Payment />
+                </motion.div>
+              } />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </AnimatePresence>
+        </main>
+        
+        {/* Floating AI Widget */}
+        <VoiceTranslateWidget />
       </div>
-
-      {/* Mobile Nav Drawer */}
-      <AnimatePresence>
-        {mobileNav && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{
-              position: 'fixed', inset: 0, zIndex: 99, background: 'rgba(0,0,0,0.6)', display: 'none',
-            }}
-            className="mobile-overlay"
-            onClick={() => setMobileNav(false)}
-          >
-            <motion.div
-              initial={{ x: -240 }} animate={{ x: 0 }} exit={{ x: -240 }}
-              onClick={e => e.stopPropagation()}
-              style={{
-                width: 240, height: '100%', background: '#0A0F1E',
-                padding: '72px 14px 20px', display: 'flex', flexDirection: 'column', gap: 4,
-              }}
-            >
-              {NAV_ITEMS.map(item => {
-                const Icon = item.icon;
-                return (
-                  <NavLink key={item.path} to={item.path}
-                    onClick={() => setMobileNav(false)}
-                    style={({ isActive }) => navLinkStyle(isActive)}>
-                    {() => (<>
-                      <Icon size={18} strokeWidth={1.5} />
-                      <span>{t(item.labelKey)}</span>
-                    </>)}
-                  </NavLink>
-                );
-              })}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Main Content */}
-      <main style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
-        <Routes>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/disruption" element={<Disruption />} />
-          <Route path="/expenses" element={<Expenses />} />
-          <Route path="/checklist" element={<PackingChecklist />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </main>
-
-      <style>{`
-        @media (max-width: 768px) {
-          .sidebar-desktop { display: none !important; }
-          .mobile-header { display: flex !important; }
-          .mobile-overlay { display: block !important; }
-          main { padding-top: 56px; }
-        }
-      `}</style>
     </div>
   );
 }

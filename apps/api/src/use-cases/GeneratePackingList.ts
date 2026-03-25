@@ -3,7 +3,7 @@ import { IPackingService } from '../domain/interfaces';
 import packingTemplates from '../data/packingTemplates.json';
 
 export class GeneratePackingList {
-  constructor(private packingService?: IPackingService) {}
+  constructor() {}
 
   async execute(params: {
     events: ItineraryEvent[];

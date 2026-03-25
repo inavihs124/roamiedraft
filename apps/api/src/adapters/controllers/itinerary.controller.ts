@@ -26,7 +26,8 @@ router.post('/build', authMiddleware, async (req: AuthRequest, res: Response) =>
   try {
     const parsed = buildSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: parsed.error.issues[0].message, code: 'VALIDATION_ERROR' });
+      res.status(400).json({ error: parsed.error.issues[0].message, code: 'VALIDATION_ERROR' });
+      return;
     }
 
     const plan = await buildItinerary.execute({
@@ -40,7 +41,8 @@ router.post('/build', authMiddleware, async (req: AuthRequest, res: Response) =>
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
     if (msg === 'Trip not found') {
-      return res.status(404).json({ error: msg, code: 'NOT_FOUND' });
+      res.status(404).json({ error: msg, code: 'NOT_FOUND' });
+      return;
     }
     res.status(500).json({ error: msg, code: 'SERVER_ERROR' });
   }

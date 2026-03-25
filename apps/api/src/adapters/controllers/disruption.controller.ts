@@ -29,7 +29,8 @@ router.post('/trigger', authMiddleware, disruptionLimiter, async (req: AuthReque
   try {
     const parsed = triggerSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: parsed.error.issues[0].message, code: 'VALIDATION_ERROR' });
+      res.status(400).json({ error: parsed.error.issues[0].message, code: 'VALIDATION_ERROR' });
+      return;
     }
 
     const resolution = await disruptionShield.execute({
@@ -49,7 +50,8 @@ router.post('/trigger', authMiddleware, disruptionLimiter, async (req: AuthReque
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
     if (msg.includes('not found')) {
-      return res.status(404).json({ error: msg, code: 'NOT_FOUND' });
+      res.status(404).json({ error: msg, code: 'NOT_FOUND' });
+      return;
     }
     res.status(500).json({ error: msg, code: 'SERVER_ERROR' });
   }
@@ -62,7 +64,8 @@ router.post('/confirm/:token', async (req, res: Response) => {
     const pending = pendingConfirmations.get(token);
 
     if (!pending) {
-      return res.status(404).json({ error: 'Confirmation token not found or expired', code: 'NOT_FOUND' });
+      res.status(404).json({ error: 'Confirmation token not found or expired', code: 'NOT_FOUND' });
+      return;
     }
 
     pending.status = 'confirmed';
@@ -92,7 +95,8 @@ router.post('/cancel/:token', async (req, res: Response) => {
     const pending = pendingConfirmations.get(token);
 
     if (!pending) {
-      return res.status(404).json({ error: 'Confirmation token not found or expired', code: 'NOT_FOUND' });
+      res.status(404).json({ error: 'Confirmation token not found or expired', code: 'NOT_FOUND' });
+      return;
     }
 
     pending.status = 'cancelled';

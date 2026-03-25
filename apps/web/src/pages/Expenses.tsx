@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Receipt, Utensils, Car, Building2, Ticket, Tag, Download, Sparkles } from 'lucide-react';
+import { Receipt, Utensils, Car, Building2, Ticket, Tag, Download, Sparkles, Plus, CreditCard, ChevronRight } from 'lucide-react';
 import { useStore } from '../stores/useStore';
 
-const CATEGORY_STYLES: Record<string, { bg: string; color: string; Icon: typeof Utensils }> = {
-  food:          { bg: 'rgba(34,197,94,0.12)',   color: '#4ADE80', Icon: Utensils },
-  transport:     { bg: 'rgba(168,85,247,0.12)',  color: '#C084FC', Icon: Car },
-  accommodation: { bg: 'rgba(59,130,246,0.12)',  color: '#60A5FA', Icon: Building2 },
-  activity:      { bg: 'rgba(99,102,241,0.15)',  color: '#818CF8', Icon: Ticket },
-  shopping:      { bg: 'rgba(236,72,153,0.12)',  color: '#F472B6', Icon: Tag },
-  other:         { bg: 'rgba(245,158,11,0.12)',  color: '#F59E0B', Icon: Receipt },
+const CATEGORY_STYLES: Record<string, { bg: string; border: string; color: string; Icon: typeof Utensils }> = {
+  food:          { bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', color: 'text-emerald-400', Icon: Utensils },
+  transport:     { bg: 'bg-purple-500/10',  border: 'border-purple-500/20',  color: 'text-purple-400',  Icon: Car },
+  accommodation: { bg: 'bg-blue-500/10',    border: 'border-blue-500/20',    color: 'text-blue-400',    Icon: Building2 },
+  activity:      { bg: 'bg-indigo-500/10',  border: 'border-indigo-500/20',  color: 'text-indigo-400',  Icon: Ticket },
+  shopping:      { bg: 'bg-pink-500/10',    border: 'border-pink-500/20',    color: 'text-pink-400',    Icon: Tag },
+  other:         { bg: 'bg-amber-500/10',   border: 'border-amber-500/20',   color: 'text-amber-400',   Icon: Receipt },
 };
 
-const DONUT_COLORS = ['#4ADE80', '#C084FC', '#60A5FA', '#818CF8', '#F472B6', '#F59E0B', '#22D3EE'];
+const DONUT_COLORS = ['#34D399', '#C084FC', '#60A5FA', '#818CF8', '#F472B6', '#FBBF24', '#22D3EE'];
 
 export default function Expenses() {
   const { t } = useTranslation();
@@ -24,6 +24,11 @@ export default function Expenses() {
   const [byCategory, setByCategory] = useState<Record<string, number>>({});
   const [total, setTotal] = useState(0);
   const [lastResult, setLastResult] = useState<any>(null);
+
+  const [manualDesc, setManualDesc] = useState('');
+  const [manualAmount, setManualAmount] = useState('');
+  const [manualCurrency, setManualCurrency] = useState('INR');
+  const [manualCategory, setManualCategory] = useState('other');
 
   useEffect(() => { loadExpenses(); }, [currentTrip]);
 
@@ -60,7 +65,6 @@ export default function Expenses() {
     a.click(); URL.revokeObjectURL(url);
   };
 
-  // Donut chart SVG
   const categories = Object.entries(byCategory);
   const donutSegments: { color: string; startAngle: number; endAngle: number; label: string; pct: number }[] = [];
   let cumAngle = 0;
@@ -84,197 +88,247 @@ export default function Expenses() {
   };
 
   return (
-    <div style={{ padding: '28px 24px', maxWidth: 900, margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
+    <div className="max-w-6xl mx-auto p-4 lg:p-8 pb-32">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
         <div>
-          <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 28, color: '#F0F2F8', marginBottom: 4 }}>
-            {t('expenses.title')}
+          <h1 className="font-display font-bold text-4xl text-white mb-2 flex items-center gap-3">
+            <CreditCard size={36} className="text-emerald-500" /> {t('expenses.title')}
           </h1>
-          <p style={{ fontSize: 14, color: '#4A5568' }}>{t('expenses.subtitle')}</p>
+          <p className="text-slate-400 font-medium text-lg">{t('expenses.subtitle')}</p>
         </div>
+        
         {expenses.length > 0 && (
-          <button onClick={exportCSV} style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '8px 14px', borderRadius: 8, fontSize: 13, fontWeight: 500,
-            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-            color: '#8892A4', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
-            transition: 'all 150ms ease-out',
-          }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = '#F0F2F8'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#8892A4'; }}
-          >
-            <Download size={14} /> Export CSV
+          <button onClick={exportCSV} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-300 font-bold hover:bg-slate-700 hover:text-white transition-colors backdrop-blur-md shadow-lg">
+            <Download size={18} /> Export CSV
           </button>
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }} className="expenses-grid">
-        {/* Left: Scanner */}
-        <div>
-          {/* Receipt Input */}
-          <div style={{
-            background: '#0F1320', border: '1px solid rgba(255,255,255,0.06)',
-            borderRadius: 14, padding: 20, marginBottom: 16,
-          }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892A4', marginBottom: 10 }}>
-              {t('expenses.pasteReceipt')}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
+        
+        {/* Left Column: Forms & List */}
+        <div className="space-y-8">
+          
+          {/* AI Scanner */}
+          <div className="glass-panel p-6 rounded-3xl border border-emerald-500/20 shadow-[0_4px_30px_rgba(16,185,129,0.05)] relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
+            <div className="relative z-10">
+              <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-400 mb-4">
+                <Sparkles size={14} /> AI Receipt Scanner
+              </label>
+              <textarea
+                value={receiptText} onChange={e => setReceiptText(e.target.value)}
+                placeholder="Paste receipt text here and let AI extract the details..."
+                rows={4}
+                className="w-full bg-slate-900/60 border border-slate-700 text-slate-200 p-4 rounded-2xl font-mono text-sm resize-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all outline-none placeholder:text-slate-600 mb-4"
+              />
+              <motion.button onClick={handleScan} disabled={scanning || !receiptText.trim()}
+                whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
+                className="w-full h-14 rounded-xl font-bold text-slate-900 bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 transition-colors flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.2)] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {scanning ? (
+                  <><motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}><Sparkles size={18} /></motion.div> Analyzing receipt...</>
+                ) : (
+                  <><Sparkles size={18} /> Extract Expense Detail</>
+                )}
+              </motion.button>
+            </div>
+          </div>
+
+          {/* Quick Manual Entry */}
+          <div className="glass-panel p-6 rounded-3xl border border-slate-700/50">
+            <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 mb-6">
+              <CreditCard size={14} /> Quick Add Expense
             </label>
-            <textarea
-              value={receiptText}
-              onChange={e => setReceiptText(e.target.value)}
-              placeholder={t('expenses.placeholder')}
-              rows={6}
-              style={{
-                width: '100%', padding: 14, fontSize: 13, color: '#F0F2F8',
-                background: '#161B2E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10,
-                outline: 'none', fontFamily: '"DM Mono", monospace', resize: 'vertical',
-                transition: 'border-color 200ms ease-out',
-              }}
-              onFocus={e => { e.target.style.borderColor = 'rgba(245,158,11,0.4)'; }}
-              onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; }}
-            />
-            <motion.button
+            
+            <div className="flex flex-wrap gap-2 mb-6">
+              {Object.entries(CATEGORY_STYLES).map(([cat, s]) => {
+                const CatIcon = s.Icon;
+                const isActive = manualCategory === cat;
+                return (
+                  <button key={cat} onClick={() => setManualCategory(cat)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold capitalize transition-all border ${
+                      isActive ? `${s.bg} ${s.border} ${s.color} shadow-lg ring-1 ring-${s.color.split('-')[1]}-500/30` : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+                    }`}
+                  >
+                    <CatIcon size={14} /> {cat}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 mb-4">
+              <input value={manualDesc} onChange={e => setManualDesc(e.target.value)} placeholder="What did you buy?"
+                className="flex-[2] bg-slate-900/50 border border-slate-700 text-slate-200 rounded-xl px-4 h-12 outline-none focus:border-blue-500 transition-colors placeholder:text-slate-500"
+              />
+              <input value={manualAmount} onChange={e => setManualAmount(e.target.value)} placeholder="0.00" type="number"
+                className="flex-1 bg-slate-900/50 border border-slate-700 text-slate-200 rounded-xl px-4 h-12 outline-none focus:border-blue-500 transition-colors placeholder:text-slate-500"
+              />
+              <select value={manualCurrency} onChange={e => setManualCurrency(e.target.value)}
+                className="w-28 bg-slate-900/50 border border-slate-700 text-slate-300 rounded-xl px-3 h-12 outline-none focus:border-blue-500 transition-colors cursor-pointer"
+              >
+                <option value="INR">₹ INR</option>
+                <option value="USD">$ USD</option>
+                <option value="EUR">€ EUR</option>
+                <option value="GBP">£ GBP</option>
+                <option value="JPY">¥ JPY</option>
+                <option value="SGD">S$ SGD</option>
+              </select>
+            </div>
+            
+            <motion.button disabled={!manualDesc.trim() || !manualAmount}
               whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
-              onClick={handleScan}
-              disabled={scanning || !receiptText.trim()}
-              style={{
-                width: '100%', height: 48, marginTop: 12, borderRadius: 10, border: 'none',
-                background: scanning ? 'rgba(245,158,11,0.5)' : '#F59E0B',
-                color: '#000', fontWeight: 600, fontSize: 14, cursor: 'pointer',
-                fontFamily: 'DM Sans, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              onClick={async () => {
+                if (!manualDesc.trim() || !manualAmount) return;
+                try {
+                  const expense = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/expenses/scan`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token') || 'demo-token'}` },
+                    body: JSON.stringify({ receiptText: `${manualDesc} - ${manualCurrency} ${manualAmount} - ${manualCategory}`, tripId: currentTrip?.id }),
+                  });
+                  if (expense.ok) {
+                    setManualDesc(''); setManualAmount('');
+                    await loadExpenses();
+                  }
+                } catch {}
               }}
+              className="w-full h-12 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-500 transition-colors flex items-center justify-center gap-2 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed"
             >
-              <Sparkles size={16} />
-              {scanning ? 'Scanning...' : t('expenses.scan')}
+              <Plus size={18} /> Add Record
             </motion.button>
           </div>
 
           {/* Last scan result */}
           <AnimatePresence>
             {lastResult && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                style={{
-                  background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)',
-                  borderRadius: 12, padding: 16, marginBottom: 16,
-                }}
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
+                className="glass-panel p-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 relative overflow-hidden"
               >
-                <p style={{ fontSize: 12, fontWeight: 500, color: '#22C55E', marginBottom: 8 }}>✅ Expense extracted</p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  <div><span style={{ fontSize: 10, color: '#4A5568' }}>AMOUNT</span><p style={{ fontSize: 16, fontWeight: 600, color: '#F0F2F8' }}>{lastResult.currency} {lastResult.amount}</p></div>
-                  <div><span style={{ fontSize: 10, color: '#4A5568' }}>CATEGORY</span><p style={{ fontSize: 14, color: '#F0F2F8', textTransform: 'capitalize' as const }}>{lastResult.category}</p></div>
+                <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                    <Sparkles size={16} /> Data Extracted Successfully
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 mt-4 pl-2">
+                  <div>
+                    <span className="text-xs font-bold tracking-widest uppercase text-slate-500 block mb-1">Amount</span>
+                    <span className="font-display font-bold text-2xl text-white">{lastResult.currency} {lastResult.amount}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold tracking-widest uppercase text-slate-500 block mb-1">Category</span>
+                    <span className="font-medium text-lg text-emerald-300 capitalize">{lastResult.category}</span>
+                  </div>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Expense List */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {/* Ledger List */}
+          <div className="space-y-3">
+            <h3 className="font-display font-bold text-xl text-white mb-4 flex items-center justify-between">
+              Ledger <span className="text-sm font-medium text-slate-400 bg-slate-800 px-3 py-1 rounded-full">{expenses.length} Records</span>
+            </h3>
             {expenses.map((exp, i) => {
               const style = CATEGORY_STYLES[exp.category] || CATEGORY_STYLES.other;
               const CatIcon = style.Icon;
               return (
-                <motion.div
-                  key={exp.id}
-                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    background: '#0F1320', border: '1px solid rgba(255,255,255,0.06)',
-                    borderRadius: 10, padding: '12px 16px',
-                  }}
+                <motion.div key={exp.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
+                  className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl glass-panel border border-slate-700/50 hover:bg-slate-800/60 transition-colors"
                 >
-                  <div style={{
-                    width: 36, height: 36, borderRadius: '50%', background: style.bg,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                  }}>
-                    <CatIcon size={16} style={{ color: style.color }} />
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center border shrink-0 ${style.bg} ${style.border} ${style.color}`}>
+                      <CatIcon size={20} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-slate-200 truncate">{exp.description}</p>
+                      <p className="text-xs text-slate-500 mt-1">{new Date(exp.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                    </div>
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 14, fontWeight: 500, color: '#F0F2F8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{exp.description}</p>
-                    <p style={{ fontSize: 11, color: '#4A5568' }}>{new Date(exp.date).toLocaleDateString()}</p>
-                  </div>
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 15, color: '#F0F2F8' }}>{exp.currency} {exp.amount.toFixed(2)}</p>
-                    <span style={{
-                      fontSize: 10, fontWeight: 500, padding: '2px 6px', borderRadius: 9999,
-                      background: style.bg, color: style.color, textTransform: 'capitalize' as const,
-                    }}>{exp.category}</span>
+                  <div className="flex items-center justify-between sm:justify-end gap-6 sm:pl-4 sm:border-l border-slate-700">
+                    <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider ${style.bg} ${style.color}`}>
+                      {exp.category}
+                    </span>
+                    <p className="font-display font-bold text-xl text-white whitespace-nowrap">
+                      {exp.currency} {exp.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
                   </div>
                 </motion.div>
               );
             })}
+            {expenses.length === 0 && (
+              <div className="text-center py-16 border border-dashed border-slate-700 rounded-3xl bg-slate-900/30 text-slate-500">
+                No expenses recorded yet. Scan a receipt or add one manually.
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Right: Summary */}
-        <div>
-          {/* Donut Chart */}
+        {/* Right Column: Chart & Totals */}
+        <div className="space-y-8">
+          
+          {/* Total Card */}
+          <div className="glass-panel p-8 rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-slate-900 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
+            <p className="text-sm font-bold tracking-widest uppercase text-amber-500 mb-2 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]">
+              Total Spent
+            </p>
+            <p className="font-display font-extrabold text-5xl text-white mb-4">
+              <span className="text-amber-500/80 mr-2">{expenses[0]?.currency || 'SGD'}</span>
+              {total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+            <div className="h-px w-full bg-slate-700/50 mb-4" />
+            <p className="text-sm text-slate-400 font-medium">
+              Based on {expenses.length} tracked transactions mapped to {categories.length} categories.
+            </p>
+          </div>
+
+          {/* Metrics Chart */}
           {categories.length > 0 && (
-            <div style={{
-              background: '#0F1320', border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: 14, padding: 24, marginBottom: 16,
-            }}>
-              <h3 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 16, color: '#F0F2F8', marginBottom: 20 }}>
-                {t('expenses.breakdown')}
-              </h3>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-                <svg width="180" height="180" viewBox="0 0 180 180">
-                  {donutSegments.map((seg, i) => (
-                    <path
-                      key={i}
-                      d={describeArc(90, 90, 65, seg.startAngle, seg.endAngle - 0.5)}
-                      stroke={seg.color}
-                      strokeWidth="20"
-                      fill="none"
-                      strokeLinecap="round"
-                    />
-                  ))}
-                  <text x="90" y="85" textAnchor="middle" style={{ fontSize: 22, fontWeight: 700, fill: '#F0F2F8', fontFamily: 'Syne, sans-serif' }}>
-                    {total.toFixed(0)}
-                  </text>
-                  <text x="90" y="105" textAnchor="middle" style={{ fontSize: 11, fill: '#4A5568' }}>
-                    {expenses[0]?.currency || 'USD'}
-                  </text>
-                </svg>
+            <div className="glass-panel p-8 rounded-3xl border border-slate-700/50">
+              <h3 className="font-display font-bold text-xl text-white mb-8">Category Breakdown</h3>
+              
+              <div className="flex justify-center mb-10 relative">
+                <div className="relative w-[240px] h-[240px]">
+                  {/* Outer Glow */}
+                  <div className="absolute inset-4 bg-slate-800 rounded-full blur-2xl opacity-50 pointer-events-none" />
+                  
+                  {/* SVG Chart */}
+                  <svg width="240" height="240" viewBox="0 0 200 200" className="transform -rotate-90 relative z-10 drop-shadow-2xl">
+                    <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(30,41,59,0.5)" strokeWidth="24" />
+                    {donutSegments.map((seg, i) => (
+                      <path key={i} d={describeArc(100, 100, 80, seg.startAngle, seg.endAngle - 1)} stroke={seg.color} strokeWidth="24" fill="none" strokeLinecap="round" className="transition-all duration-500 hover:stroke-[28px] cursor-pointer" />
+                    ))}
+                  </svg>
+                  
+                  {/* Chart Center */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20">
+                    <span className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1">Total</span>
+                    <span className="font-display font-bold text-2xl text-white">{total.toFixed(0)}</span>
+                  </div>
+                </div>
               </div>
+
               {/* Legend */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div className="space-y-4">
                 {categories.map(([cat, amt], i) => (
-                  <div key={cat} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ width: 10, height: 10, borderRadius: 3, background: DONUT_COLORS[i % DONUT_COLORS.length] }} />
-                    <span style={{ fontSize: 12, color: '#8892A4', textTransform: 'capitalize' as const, flex: 1 }}>{cat}</span>
-                    <span style={{ fontSize: 12, fontWeight: 500, color: '#F0F2F8' }}>{amt.toFixed(0)}</span>
+                  <div key={cat} className="flex items-center justify-between group">
+                    <div className="flex items-center gap-3">
+                      <div className="w-4 h-4 rounded-md shadow-inner" style={{ background: DONUT_COLORS[i % DONUT_COLORS.length] }} />
+                      <span className="text-slate-300 font-medium capitalize group-hover:text-white transition-colors">{cat}</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm text-slate-500">{((amt / total) * 100).toFixed(0)}%</span>
+                      <span className="font-bold text-white w-20 text-right">{amt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Total Card */}
-          <div style={{
-            background: 'rgba(245,158,11,0.04)', border: '1px solid rgba(245,158,11,0.15)',
-            borderRadius: 14, padding: 24,
-          }}>
-            <p style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#4A5568', marginBottom: 8 }}>
-              {t('expenses.total')}
-            </p>
-            <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 36, color: '#F59E0B' }}>
-              {expenses[0]?.currency || 'SGD'} {total.toFixed(2)}
-            </p>
-            <p style={{ fontSize: 13, color: '#4A5568', marginTop: 4 }}>
-              {expenses.length} {t('expenses.transactions')}
-            </p>
-          </div>
         </div>
       </div>
-
-      <style>{`
-        @media (max-width: 768px) {
-          .expenses-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
     </div>
   );
 }

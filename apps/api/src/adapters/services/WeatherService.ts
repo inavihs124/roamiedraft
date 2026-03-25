@@ -33,7 +33,7 @@ export class WeatherService implements IWeatherService {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=${days}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error(`Weather API returned ${res.status}`);
-      const data: any = await res.json();
+      const data = await res.json() as any;
 
       return {
         daily: data.daily.time.map((date: string, i: number) => ({

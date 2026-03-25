@@ -16,10 +16,10 @@ router.get('/:tripId', authMiddleware, async (req: AuthRequest, res: Response) =
   try {
     const tripId = req.params.tripId as string;
     const trip = await tripRepo.findTripById(tripId);
-    if (!trip) return res.status(404).json({ error: 'Trip not found', code: 'NOT_FOUND' });
+    if (!trip) { res.status(404).json({ error: 'Trip not found', code: 'NOT_FOUND' }); return; }
 
     const user = await tripRepo.findUserById(trip.userId);
-    if (!user) return res.status(404).json({ error: 'User not found', code: 'NOT_FOUND' });
+    if (!user) { res.status(404).json({ error: 'User not found', code: 'NOT_FOUND' }); return; }
 
     const itineraryDays = await tripRepo.findItineraryDays(tripId);
     const allEvents = itineraryDays.flatMap(d => d.events);
@@ -57,7 +57,7 @@ router.get('/:tripId/law-nudges', authMiddleware, async (req: AuthRequest, res: 
   try {
     const tripId = req.params.tripId as string;
     const trip = await tripRepo.findTripById(tripId);
-    if (!trip) return res.status(404).json({ error: 'Trip not found', code: 'NOT_FOUND' });
+    if (!trip) { res.status(404).json({ error: 'Trip not found', code: 'NOT_FOUND' }); return; }
 
     const itineraryDays = await tripRepo.findItineraryDays(tripId);
     const eventCategories = [...new Set(itineraryDays.flatMap(d => d.events.map(e => e.type)))];

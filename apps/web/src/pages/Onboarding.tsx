@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
-import { Plane, Globe, Briefcase, Palmtree, UtensilsCrossed, Armchair } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Plane, Globe, Briefcase, Palmtree, UtensilsCrossed, Armchair, ArrowRight, User, Mail, Lock } from 'lucide-react';
 import { useStore } from '../stores/useStore';
 
 const LANGUAGES = [
@@ -61,244 +61,181 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
     }
   };
 
-  const containerAnim: any = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } };
-  const itemAnim: any = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.4, 0, 0.2, 1] } } };
-
-  const inputStyle: React.CSSProperties = {
-    width: '100%', height: 52, padding: '0 18px', fontSize: 15, color: '#F0F2F8',
-    background: '#161B2E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10,
-    outline: 'none', fontFamily: 'DM Sans, sans-serif', transition: 'border-color 200ms ease-out, box-shadow 200ms ease-out',
-  };
+  const containerAnim = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } }, exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } } };
+  const itemAnim = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] } } };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#090C14', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'radial-gradient(ellipse at 50% 0%, rgba(245,158,11,0.06) 0%, transparent 60%)', pointerEvents: 'none' }} />
+    <div className="min-h-screen bg-[#020617] flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Background glow effects */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-amber-500/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[100px] pointer-events-none" />
 
-      <motion.div
-        variants={containerAnim}
-        initial="hidden"
-        animate="show"
-        style={{ width: '100%', maxWidth: 440, position: 'relative', zIndex: 1 }}
-      >
-        {/* Logo */}
-        <motion.div variants={itemAnim} style={{ textAlign: 'center', marginBottom: 36 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: 10,
-              background: 'linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(245,158,11,0.05) 100%)',
-              border: '1px solid rgba(245,158,11,0.2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Plane size={20} strokeWidth={1.5} style={{ color: '#F59E0B' }} />
+      <div className="w-full max-w-md relative z-10">
+        {/* Logo Header */}
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-center mb-10">
+          <div className="inline-flex items-center gap-3 mb-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/5 border border-amber-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.2)] backdrop-blur-md">
+              <Plane size={24} className="text-amber-500" strokeWidth={2} />
             </div>
-            <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 26, color: '#F59E0B' }}>TripMind</span>
+            <span className="font-display font-extrabold text-4xl bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent tracking-tight">TripMind</span>
           </div>
-          <p style={{ fontSize: 14, color: '#4A5568', fontFamily: 'DM Sans, sans-serif' }}>
-            {t('onboarding.subtitle')}
-          </p>
+          <p className="text-slate-400 font-medium">The intelligent operating system for modern travel.</p>
         </motion.div>
 
-        {step === 'auth' ? (
-          <motion.div
-            variants={containerAnim}
-            initial="hidden"
-            animate="show"
-            style={{
-              background: '#0F1320', border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: 16, padding: 32,
-            }}
-          >
-            <motion.h2 variants={itemAnim} style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 22, color: '#F0F2F8', marginBottom: 24, textAlign: 'center' }}>
-              {isLogin ? t('onboarding.login') : t('onboarding.createAccount')}
-            </motion.h2>
+        <AnimatePresence mode="wait">
+          {step === 'auth' ? (
+            <motion.div key="auth" variants={containerAnim} initial="hidden" animate="show" exit="exit"
+              className="glass-panel p-8 rounded-3xl border border-slate-700/50 shadow-2xl relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 via-emerald-500 to-blue-500" />
+              
+              <motion.h2 variants={itemAnim} className="font-display font-bold text-2xl text-white mb-8 text-center">
+                {isLogin ? 'Welcome Back' : 'Create an Account'}
+              </motion.h2>
 
-            {error && (
-              <motion.div variants={itemAnim} style={{
-                padding: '10px 14px', borderRadius: 8, marginBottom: 16,
-                background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
-                fontSize: 13, color: '#F87171',
-              }}>
-                {error}
-              </motion.div>
-            )}
+              {error && (
+                <motion.div variants={itemAnim} className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm font-medium flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" /> {error}
+                </motion.div>
+              )}
 
-            <motion.div variants={itemAnim} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {!isLogin && (
-                <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892A4', marginBottom: 8 }}>
-                    {t('onboarding.name')}
-                  </label>
-                  <input value={name} onChange={e => setName(e.target.value)} placeholder="Your name" style={inputStyle}
-                    onFocus={e => { e.target.style.borderColor = 'rgba(245,158,11,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.08)'; }}
-                    onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none'; }}
+              <motion.div variants={itemAnim} className="space-y-4">
+                <AnimatePresence>
+                  {!isLogin && (
+                    <motion.div initial={{ opacity: 0, height: 0, marginBottom: 0 }} animate={{ opacity: 1, height: 'auto', marginBottom: 16 }} exit={{ opacity: 0, height: 0, marginBottom: 0 }} className="relative group">
+                      <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-amber-500 transition-colors" />
+                      <input value={name} onChange={e => setName(e.target.value)} placeholder="Full Name"
+                        className="w-full h-14 pl-12 pr-4 bg-slate-900/50 border border-slate-700 text-slate-200 rounded-xl focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 outline-none transition-all placeholder:text-slate-600"
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                
+                <div className="relative group">
+                  <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-amber-500 transition-colors" />
+                  <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email Address"
+                    className="w-full h-14 pl-12 pr-4 bg-slate-900/50 border border-slate-700 text-slate-200 rounded-xl focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 outline-none transition-all placeholder:text-slate-600"
                   />
                 </div>
-              )}
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892A4', marginBottom: 8 }}>
-                  {t('onboarding.email')}
-                </label>
-                <input value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" style={inputStyle}
-                  onFocus={e => { e.target.style.borderColor = 'rgba(245,158,11,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.08)'; }}
-                  onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none'; }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892A4', marginBottom: 8 }}>
-                  {t('onboarding.password')}
-                </label>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" style={inputStyle}
-                  onFocus={e => { e.target.style.borderColor = 'rgba(245,158,11,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.08)'; }}
-                  onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none'; }}
-                />
-              </div>
-            </motion.div>
+                
+                <div className="relative group">
+                  <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-amber-500 transition-colors" />
+                  <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password"
+                    className="w-full h-14 pl-12 pr-4 bg-slate-900/50 border border-slate-700 text-slate-200 rounded-xl focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 outline-none transition-all placeholder:text-slate-600"
+                  />
+                </div>
+              </motion.div>
 
-            <motion.button
-              variants={itemAnim}
-              onClick={handleAuth}
-              disabled={loading || !email || !password}
-              style={{
-                width: '100%', height: 52, marginTop: 24, borderRadius: 10, border: 'none',
-                background: loading ? 'rgba(245,158,11,0.5)' : '#F59E0B',
-                color: '#000', fontWeight: 600, fontSize: 15, cursor: 'pointer',
-                fontFamily: 'DM Sans, sans-serif', transition: 'all 200ms ease-out',
-              }}
-              onMouseEnter={e => { if (!loading) { e.currentTarget.style.background = '#FBBF24'; e.currentTarget.style.transform = 'translateY(-1px)'; } }}
-              onMouseLeave={e => { e.currentTarget.style.background = '#F59E0B'; e.currentTarget.style.transform = 'translateY(0)'; }}
-            >
-              {loading ? '⏳' : isLogin ? t('onboarding.login') : t('common.next')}
-            </motion.button>
+              <motion.button variants={itemAnim} onClick={handleAuth} disabled={loading || !email || !password}
+                className="w-full h-14 mt-8 rounded-xl font-bold text-slate-900 bg-amber-500 hover:bg-amber-400 transition-colors shadow-[0_0_20px_rgba(245,158,11,0.2)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {loading ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-5 h-5 border-2 border-slate-900 border-t-transparent rounded-full" /> : isLogin ? 'Sign In to Dashboard' : 'Continue to Preferences'}
+                {!loading && !isLogin && <ArrowRight size={18} />}
+              </motion.button>
 
-            <motion.p variants={itemAnim} style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: '#4A5568' }}>
-              {isLogin ? t('onboarding.noAccount') : t('onboarding.hasAccount')}{' '}
-              <button onClick={() => { setIsLogin(!isLogin); setError(null); }} style={{ background: 'none', border: 'none', color: '#F59E0B', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>
-                {isLogin ? t('onboarding.createAccount') : t('onboarding.login')}
-              </button>
-            </motion.p>
-          </motion.div>
-        ) : (
-          <motion.div
-            variants={containerAnim}
-            initial="hidden"
-            animate="show"
-            style={{
-              background: '#0F1320', border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: 16, padding: 32,
-            }}
-          >
-            <motion.h2 variants={itemAnim} style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 22, color: '#F0F2F8', marginBottom: 8 }}>
-              {t('onboarding.preferences')}
-            </motion.h2>
-            <motion.p variants={itemAnim} style={{ fontSize: 13, color: '#4A5568', marginBottom: 24 }}>
-              {t('onboarding.preferencesSubtitle')}
-            </motion.p>
-
-            {/* Language Selection */}
-            <motion.div variants={itemAnim} style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892A4', marginBottom: 10 }}>
-                <Globe size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
-                {t('onboarding.language')}
-              </label>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {LANGUAGES.map(l => (
-                  <button
-                    key={l.code}
-                    onClick={() => setLang(l.code)}
-                    style={{
-                      padding: '8px 14px', borderRadius: 8, fontSize: 13, fontWeight: 500,
-                      fontFamily: 'DM Sans, sans-serif', cursor: 'pointer', whiteSpace: 'nowrap' as const,
-                      background: lang === l.code ? 'rgba(245,158,11,0.12)' : '#161B2E',
-                      color: lang === l.code ? '#F59E0B' : '#8892A4',
-                      border: lang === l.code ? '1px solid rgba(245,158,11,0.3)' : '1px solid rgba(255,255,255,0.06)',
-                      transition: 'all 150ms ease-out',
-                    }}
-                  >
-                    {l.flag} {l.label}
+              <motion.div variants={itemAnim} className="mt-8 text-center bg-slate-900/40 p-3 rounded-lg border border-slate-800">
+                <p className="text-sm text-slate-400">
+                  {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
+                  <button onClick={() => { setIsLogin(!isLogin); setError(null); }} className="text-amber-400 font-bold hover:underline ml-1">
+                    {isLogin ? 'Create one' : 'Sign in'}
                   </button>
-                ))}
-              </div>
+                </p>
+              </motion.div>
             </motion.div>
-
-            {/* Trip Purpose */}
-            <motion.div variants={itemAnim} style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892A4', marginBottom: 10 }}>
-                {t('onboarding.tripPurpose')}
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                {[
-                  { key: 'business' as const, icon: Briefcase, label: t('onboarding.business') },
-                  { key: 'leisure' as const, icon: Palmtree, label: t('onboarding.leisure') },
-                ].map(opt => {
-                  const Icon = opt.icon;
-                  const sel = purpose === opt.key;
-                  return (
-                    <button key={opt.key} onClick={() => setPurpose(opt.key)}
-                      style={{
-                        padding: '16px', borderRadius: 12, cursor: 'pointer',
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                        background: sel ? 'rgba(245,158,11,0.08)' : '#161B2E',
-                        border: sel ? '1px solid rgba(245,158,11,0.3)' : '1px solid rgba(255,255,255,0.06)',
-                        color: sel ? '#F59E0B' : '#8892A4', fontFamily: 'DM Sans, sans-serif',
-                        transition: 'all 150ms ease-out',
-                      }}
-                    >
-                      <Icon size={24} strokeWidth={1.5} />
-                      <span style={{ fontSize: 14, fontWeight: 500 }}>{opt.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </motion.div>
-
-            {/* Preferences */}
-            <motion.div variants={itemAnim} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892A4', marginBottom: 8 }}>
-                  <UtensilsCrossed size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
-                  {t('onboarding.dietary')}
-                </label>
-                <select value={dietaryPref} onChange={e => setDietaryPref(e.target.value)}
-                  style={{ ...inputStyle, height: 44, appearance: 'none' as const, cursor: 'pointer' }}>
-                  <option value="">None</option>
-                  <option value="vegetarian">Vegetarian</option>
-                  <option value="vegan">Vegan</option>
-                  <option value="halal">Halal</option>
-                  <option value="kosher">Kosher</option>
-                  <option value="gluten-free">Gluten-free</option>
-                </select>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892A4', marginBottom: 8 }}>
-                  <Armchair size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
-                  {t('onboarding.seat')}
-                </label>
-                <select value={seatPref} onChange={e => setSeatPref(e.target.value)}
-                  style={{ ...inputStyle, height: 44, appearance: 'none' as const, cursor: 'pointer' }}>
-                  <option value="window">Window</option>
-                  <option value="aisle">Aisle</option>
-                  <option value="middle">Middle</option>
-                </select>
-              </div>
-            </motion.div>
-
-            <motion.button
-              variants={itemAnim}
-              onClick={handleComplete}
-              disabled={loading}
-              style={{
-                width: '100%', height: 52, borderRadius: 10, border: 'none',
-                background: '#F59E0B', color: '#000', fontWeight: 600, fontSize: 15,
-                cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', transition: 'all 200ms ease-out',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = '#FBBF24'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = '#F59E0B'; e.currentTarget.style.transform = 'translateY(0)'; }}
+          ) : (
+            <motion.div key="prefs" variants={containerAnim} initial="hidden" animate="show" exit="exit"
+              className="glass-panel p-8 rounded-3xl border border-slate-700/50 shadow-2xl relative overflow-hidden"
             >
-              {loading ? '⏳ Setting up...' : t('onboarding.getStarted')}
-            </motion.button>
-          </motion.div>
-        )}
-      </motion.div>
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-blue-500" />
+              
+              <motion.div variants={itemAnim} className="mb-8">
+                <h2 className="font-display font-bold text-2xl text-white mb-2">Configure Profile</h2>
+                <p className="text-slate-400 text-sm">Help the AI agents tailor your travel experience.</p>
+              </motion.div>
+
+              {/* Language */}
+              <motion.div variants={itemAnim} className="mb-6">
+                <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+                  <Globe size={14} /> Interface Language
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {LANGUAGES.map(l => (
+                    <button key={l.code} onClick={() => setLang(l.code)}
+                      className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all border ${
+                        lang === l.code ? 'bg-amber-500/10 border-amber-500/50 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.15)]' : 'bg-slate-900/50 border-slate-700 text-slate-400 hover:bg-slate-800'
+                      }`}
+                    >
+                      {l.flag} {l.label}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* Purpose */}
+              <motion.div variants={itemAnim} className="mb-6">
+                <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+                  Trip Purpose Focus
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { key: 'business' as const, icon: Briefcase, label: 'Business' },
+                    { key: 'leisure' as const, icon: Palmtree, label: 'Leisure' },
+                  ].map(opt => {
+                    const sel = purpose === opt.key;
+                    return (
+                      <button key={opt.key} onClick={() => setPurpose(opt.key)}
+                        className={`flex flex-col items-center gap-3 p-4 rounded-2xl transition-all border ${
+                          sel ? 'bg-blue-500/10 border-blue-500/50 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'bg-slate-900/50 border-slate-700 text-slate-400 hover:bg-slate-800'
+                        }`}
+                      >
+                        <opt.icon size={24} />
+                        <span className="font-bold text-sm tracking-wide uppercase">{opt.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+
+              <motion.div variants={itemAnim} className="grid grid-cols-2 gap-4 mb-8">
+                <div>
+                  <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
+                    <UtensilsCrossed size={14} /> Dietary
+                  </label>
+                  <select value={dietaryPref} onChange={e => setDietaryPref(e.target.value)}
+                    className="w-full h-12 px-4 bg-slate-900/50 border border-slate-700 text-slate-200 rounded-xl focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 outline-none transition-all cursor-pointer appearance-none"
+                  >
+                    <option value="">No Restrictions</option>
+                    <option value="vegetarian">Vegetarian</option>
+                    <option value="vegan">Vegan</option>
+                    <option value="halal">Halal</option>
+                    <option value="kosher">Kosher</option>
+                    <option value="gluten-free">Gluten-Free</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
+                    <Armchair size={14} /> Seat Req.
+                  </label>
+                  <select value={seatPref} onChange={e => setSeatPref(e.target.value)}
+                    className="w-full h-12 px-4 bg-slate-900/50 border border-slate-700 text-slate-200 rounded-xl focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 outline-none transition-all cursor-pointer appearance-none"
+                  >
+                    <option value="window">Window</option>
+                    <option value="aisle">Aisle</option>
+                    <option value="middle">Middle</option>
+                  </select>
+                </div>
+              </motion.div>
+
+              <motion.button variants={itemAnim} onClick={handleComplete} disabled={loading}
+                className="w-full h-14 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-500 transition-colors shadow-[0_0_20px_rgba(59,130,246,0.3)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {loading ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-5 h-5 border-2 border-white border-t-transparent rounded-full" /> : 'Launch Dashboard'}
+              </motion.button>
+              
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
