@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -8,20 +8,20 @@ import {
 import { useStore } from '../stores/useStore';
 
 const CATEGORY_CONFIG: Record<string, { icon: typeof Shirt; colorClass: string; bgClass: string; label: string }> = {
-  clothing:    { icon: Shirt,     colorClass: 'text-blue-400',    bgClass: 'bg-blue-500/10 border-blue-500/20',     label: 'Clothing' },
-  toiletries:  { icon: Heart,     colorClass: 'text-pink-400',    bgClass: 'bg-pink-500/10 border-pink-500/20',     label: 'Toiletries' },
-  tech:        { icon: Plug,      colorClass: 'text-indigo-400',  bgClass: 'bg-indigo-500/10 border-indigo-500/20',     label: 'Tech' },
-  documents:   { icon: FileText,  colorClass: 'text-amber-400',   bgClass: 'bg-amber-500/10 border-amber-500/20',   label: 'Documents' },
-  misc:        { icon: Package,   colorClass: 'text-cyan-400',    bgClass: 'bg-cyan-500/10 border-cyan-500/20',     label: 'Miscellaneous' },
-  health:      { icon: Heart,     colorClass: 'text-emerald-400', bgClass: 'bg-emerald-500/10 border-emerald-500/20',   label: 'Health' },
-  money:       { icon: DollarSign,colorClass: 'text-amber-400',   bgClass: 'bg-amber-500/10 border-amber-500/20',   label: 'Money & Payments' },
+  clothing:    { icon: Shirt,     colorClass: 'text-[#e55803]',    bgClass: 'bg-[#e55803]/10 border-[#e55803]/20',     label: 'Clothing' },
+  toiletries:  { icon: Heart,     colorClass: 'text-[#e55803]',    bgClass: 'bg-[#fce4ec]0/10 border-[#e55803]/20',     label: 'Toiletries' },
+  tech:        { icon: Plug,      colorClass: 'text-[#e55803]',  bgClass: 'bg-[#fde8d8]0/10 border-[#e55803]/20',     label: 'Tech' },
+  documents:   { icon: FileText,  colorClass: 'text-[#e55803]',   bgClass: 'bg-[#e55803]/10 border-[#e55803]/20',   label: 'Documents' },
+  misc:        { icon: Package,   colorClass: 'text-[#0e2125]',    bgClass: 'bg-[#e0f2f1]0/10 border-[#0e2125]/15',     label: 'Miscellaneous' },
+  health:      { icon: Heart,     colorClass: 'text-[#22c55e]', bgClass: 'bg-[#22c55e]/100/10 border-[#22c55e]/20',   label: 'Health' },
+  money:       { icon: DollarSign,colorClass: 'text-[#e55803]',   bgClass: 'bg-[#e55803]/10 border-[#e55803]/20',   label: 'Money & Payments' },
   safety:      { icon: Shield,    colorClass: 'text-rose-400',    bgClass: 'bg-rose-500/10 border-rose-500/20',     label: 'Safety' },
 };
 
 const SEVERITY_STYLES: Record<string, { border: string; bg: string; color: string }> = {
   critical: { border: 'border-rose-500/50', bg: 'bg-rose-500/10', color: 'text-rose-400' },
-  warning:  { border: 'border-amber-500/50', bg: 'bg-amber-500/10', color: 'text-amber-400' },
-  info:     { border: 'border-blue-500/50', bg: 'bg-blue-500/10', color: 'text-blue-400' },
+  warning:  { border: 'border-amber-500/50', bg: 'bg-[#e55803]/10', color: 'text-[#e55803]' },
+  info:     { border: 'border-[#e55803]/50', bg: 'bg-[#e55803]/10', color: 'text-[#e55803]' },
 };
 
 export default function PackingChecklist() {
@@ -90,28 +90,28 @@ export default function PackingChecklist() {
   return (
     <div className="max-w-4xl mx-auto p-4 lg:p-8 pb-32">
       <div className="mb-10">
-        <h1 className="font-display font-bold text-4xl text-slate-900 mb-2 flex items-center gap-3">
-          <Package size={36} className="text-blue-600" /> {t('checklist.title')}
+        <h1 className="font-display font-bold text-4xl text-[#0e2125] mb-2 flex items-center gap-3">
+          <Package size={36} className="text-[#e55803]" /> {t('checklist.title')}
         </h1>
-        <p className="text-slate-500 font-medium text-lg">
-          {currentTrip ? `${currentTrip.destination} · ${new Date(currentTrip.startDate).toLocaleDateString()} — ${new Date(currentTrip.endDate).toLocaleDateString()}` : t('checklist.noTrip')}
+        <p className="text-[#6b5c45] font-medium text-lg">
+          {currentTrip ? `${currentTrip.destination} Â· ${new Date(currentTrip.startDate).toLocaleDateString()} â€” ${new Date(currentTrip.endDate).toLocaleDateString()}` : t('checklist.noTrip')}
         </p>
       </div>
 
       {/* Glass Tabs */}
-      <div className="flex flex-wrap gap-2 mb-8 p-1.5 bg-white rounded-2xl border border-slate-200 shadow-sm relative z-10">
+      <div className="flex flex-wrap gap-2 mb-8 p-1.5 bg-white rounded-2xl border border-[#f0dfc0] shadow-sm relative z-10">
         {tabs.map(tb => (
           <button key={tb.key} onClick={() => setTab(tb.key)}
             className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
               tab === tb.key 
-                ? 'bg-blue-50 text-blue-700 shadow-sm border border-blue-200' 
-                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-[#fde8d8] text-[#e55803] shadow-sm border border-[#e55803]/20' 
+                : 'text-[#6b5c45] hover:text-[#0e2125] hover:bg-[#fff6e0]'
             }`}
           >
             {tb.label}
             {tb.count > 0 && (
               <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                tab === tb.key ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-500 border border-slate-200'
+                tab === tb.key ? 'bg-[#fde8d8] text-[#e55803] border border-[#e55803]/20' : 'bg-[#f5e8ca] text-[#6b5c45] border border-[#f0dfc0]'
               }`}>
                 {tb.count}
               </span>
@@ -121,9 +121,9 @@ export default function PackingChecklist() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20 text-slate-500 font-medium h-64 border border-dashed border-slate-200 rounded-3xl mt-4 bg-white">
+        <div className="flex items-center justify-center py-20 text-[#6b5c45] font-medium h-64 border border-dashed border-[#f0dfc0] rounded-3xl mt-4 bg-white">
           <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="mr-3">
-            <Package size={24} className="text-blue-500" />
+            <Package size={24} className="text-[#e55803]" />
           </motion.div>
           Analyzing itinerary to build packing list...
         </div>
@@ -137,28 +137,28 @@ export default function PackingChecklist() {
                 {/* Search + Progress */}
                 <div className="flex flex-col md:flex-row gap-4 mb-8">
                   <div className="flex-1 relative group">
-                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6b5c45]/70 group-focus-within:text-[#e55803] transition-colors" />
                     <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
                       placeholder="Search luggage..."
-                      className="w-full h-14 pl-12 pr-4 bg-white border border-slate-200 text-slate-900 rounded-2xl focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none transition-all shadow-sm"
+                      className="w-full h-14 pl-12 pr-4 bg-white border border-[#f0dfc0] text-[#0e2125] rounded-2xl focus:ring-2 focus:ring-[#e55803]/20 focus:border-[#e55803] outline-none transition-all shadow-sm"
                     />
                   </div>
-                  <div className="md:w-64 h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 gap-4 shadow-sm">
-                    <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                      <motion.div animate={{ width: `${progress}%` }} className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full" />
+                  <div className="md:w-64 h-14 bg-white border border-[#f0dfc0] rounded-2xl flex items-center px-4 gap-4 shadow-sm">
+                    <div className="flex-1 h-2.5 bg-[#f5e8ca] rounded-full overflow-hidden">
+                      <motion.div animate={{ width: `${progress}%` }} className="h-full bg-gradient-to-r from-[#e55803] to-[#c44a00] rounded-full" />
                     </div>
-                    <span className={`font-display font-bold text-lg w-12 text-right ${progress === 100 ? 'text-emerald-600' : 'text-slate-700'}`}>
+                    <span className={`font-display font-bold text-lg w-12 text-right ${progress === 100 ? 'text-[#22c55e]' : 'text-[#0e2125]'}`}>
                       {progress}%
                     </span>
                   </div>
                 </div>
 
                 {/* Add Custom Item */}
-                <div className="flex flex-col sm:flex-row gap-3 p-3 bg-slate-50 border border-slate-200 border-dashed rounded-2xl mb-8">
+                <div className="flex flex-col sm:flex-row gap-3 p-3 bg-[#fff6e0] border border-[#f0dfc0] border-dashed rounded-2xl mb-8">
                   <input
                     value={customItemName} onChange={e => setCustomItemName(e.target.value)}
                     placeholder="Add custom item..."
-                    className="flex-1 bg-white border border-slate-200 text-slate-900 text-sm rounded-xl px-4 py-3 outline-none focus:border-blue-400 transition-colors shadow-sm"
+                    className="flex-1 bg-white border border-[#f0dfc0] text-[#0e2125] text-sm rounded-xl px-4 py-3 outline-none focus:border-[#e55803] transition-colors shadow-sm"
                     onKeyDown={e => {
                       if (e.key === 'Enter' && customItemName.trim()) {
                         setPackingList(prev => [{ item: customItemName.trim(), category: customItemCat, reason: 'Added by you', essential: false }, ...prev]);
@@ -169,7 +169,7 @@ export default function PackingChecklist() {
                   <div className="flex gap-3">
                     <select
                       value={customItemCat} onChange={e => setCustomItemCat(e.target.value)}
-                      className="bg-white border border-slate-200 text-slate-700 text-sm rounded-xl px-4 py-3 outline-none cursor-pointer focus:border-blue-400 shadow-sm"
+                      className="bg-white border border-[#f0dfc0] text-[#0e2125] text-sm rounded-xl px-4 py-3 outline-none cursor-pointer focus:border-[#e55803] shadow-sm"
                     >
                       {Object.entries(CATEGORY_CONFIG).map(([key, cfg]) => (
                         <option key={key} value={key}>{cfg.label}</option>
@@ -182,7 +182,7 @@ export default function PackingChecklist() {
                           setCustomItemName('');
                         }
                       }}
-                      className="w-12 h-12 bg-blue-600 hover:bg-blue-500 text-white rounded-xl flex items-center justify-center transition-colors shrink-0 font-bold shadow-sm"
+                      className="w-12 h-12 bg-[#e55803] hover:bg-[#e55803] text-white rounded-xl flex items-center justify-center transition-colors shrink-0 font-bold shadow-sm"
                     >
                       <Plus size={20} />
                     </button>
@@ -199,18 +199,18 @@ export default function PackingChecklist() {
                     const allCheckedInCat = catChecked === items.length && items.length > 0;
 
                     return (
-                      <div key={cat} className={`glass-panel rounded-2xl overflow-hidden transition-all ${isExpanded ? 'border-slate-300 shadow-md bg-white' : 'border-slate-200 hover:bg-slate-50'}`}>
+                      <div key={cat} className={`glass-panel rounded-2xl overflow-hidden transition-all ${isExpanded ? 'border-[#f0dfc0] shadow-md bg-white' : 'border-[#f0dfc0] hover:bg-[#fff6e0]'}`}>
                         <button onClick={() => toggleCategory(cat)} className="w-full flex items-center gap-4 p-4 md:p-5 cursor-pointer outline-none">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${config.bgClass}`}>
                             <CatIcon size={20} className={config.colorClass} />
                           </div>
-                          <span className={`font-display font-bold text-lg flex-1 text-left ${allCheckedInCat ? 'text-slate-400 line-through' : 'text-slate-900'}`}>
+                          <span className={`font-display font-bold text-lg flex-1 text-left ${allCheckedInCat ? 'text-[#6b5c45]/70 line-through' : 'text-[#0e2125]'}`}>
                             {config.label}
                           </span>
-                          <span className={`text-sm font-bold ${allCheckedInCat ? 'text-emerald-600' : 'text-slate-500'}`}>
+                          <span className={`text-sm font-bold ${allCheckedInCat ? 'text-[#22c55e]' : 'text-[#6b5c45]'}`}>
                             {catChecked} / {items.length}
                           </span>
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isExpanded ? 'bg-slate-100 text-slate-600' : 'text-slate-400'}`}>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isExpanded ? 'bg-[#f5e8ca] text-[#6b5c45]' : 'text-[#6b5c45]/70'}`}>
                             {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                           </div>
                         </button>
@@ -225,20 +225,20 @@ export default function PackingChecklist() {
                                   return (
                                     <div key={key} onClick={() => toggleCheck(key)} 
                                       className={`flex items-start gap-4 p-3 rounded-xl cursor-pointer transition-all border ${
-                                        checked ? 'bg-slate-50 border-slate-100 hover:bg-slate-100' : 'bg-white border-slate-200 hover:border-blue-200 hover:bg-blue-50/30'
+                                        checked ? 'bg-[#fff6e0] border-[#f0dfc0] hover:bg-[#f5e8ca]' : 'bg-white border-[#f0dfc0] hover:border-[#e55803]/20 hover:bg-[#fde8d8]/30'
                                       }`}
                                     >
                                       <motion.div whileTap={{ scale: 0.8 }} className="mt-0.5 shrink-0">
                                         {checked 
-                                          ? <CheckCircle2 size={22} className="text-blue-600" /> 
+                                          ? <CheckCircle2 size={22} className="text-[#e55803]" /> 
                                           : <Circle size={22} className="text-slate-300" />}
                                       </motion.div>
                                       <div className="flex-1 min-w-0">
-                                        <p className={`font-semibold text-base transition-colors ${checked ? 'text-slate-400 line-through' : 'text-slate-900'}`}>
+                                        <p className={`font-semibold text-base transition-colors ${checked ? 'text-[#6b5c45]/70 line-through' : 'text-[#0e2125]'}`}>
                                           {item.item}
                                           {item.essential && !checked && <span className="ml-3 px-2 py-0.5 rounded text-[10px] font-bold tracking-widest bg-rose-500/10 text-rose-400 border border-rose-500/20 uppercase">Must Pack</span>}
                                         </p>
-                                        <p className={`text-sm mt-1 transition-colors ${checked ? 'text-slate-400' : 'text-slate-500'}`}>{item.reason}</p>
+                                        <p className={`text-sm mt-1 transition-colors ${checked ? 'text-[#6b5c45]/70' : 'text-[#6b5c45]'}`}>{item.reason}</p>
                                       </div>
                                     </div>
                                   );
@@ -258,14 +258,14 @@ export default function PackingChecklist() {
             {tab === 'docs' && (
               <motion.div key="docs" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
                 
-                <div className="flex flex-col sm:flex-row gap-3 p-3 bg-slate-50 border border-slate-200 border-dashed rounded-2xl mb-6">
+                <div className="flex flex-col sm:flex-row gap-3 p-3 bg-[#fff6e0] border border-[#f0dfc0] border-dashed rounded-2xl mb-6">
                   <input value={customDocName} onChange={e => setCustomDocName(e.target.value)}
                     placeholder="Document name..."
-                    className="flex-1 bg-white border border-slate-200 text-slate-900 text-sm rounded-xl px-4 py-3 outline-none focus:border-blue-400 transition-colors shadow-sm"
+                    className="flex-1 bg-white border border-[#f0dfc0] text-[#0e2125] text-sm rounded-xl px-4 py-3 outline-none focus:border-[#e55803] transition-colors shadow-sm"
                   />
                   <input value={customDocDetail} onChange={e => setCustomDocDetail(e.target.value)}
                     placeholder="Details..."
-                    className="flex-1 bg-white border border-slate-200 text-slate-900 text-sm rounded-xl px-4 py-3 outline-none focus:border-blue-400 transition-colors shadow-sm"
+                    className="flex-1 bg-white border border-[#f0dfc0] text-[#0e2125] text-sm rounded-xl px-4 py-3 outline-none focus:border-[#e55803] transition-colors shadow-sm"
                     onKeyDown={e => {
                       if (e.key === 'Enter' && customDocName.trim()) {
                         setDocChecklist(prev => [{ item: customDocName.trim(), details: customDocDetail || 'Custom document', category: 'documents', urgent: false }, ...prev]);
@@ -279,7 +279,7 @@ export default function PackingChecklist() {
                         setCustomDocName(''); setCustomDocDetail('');
                       }
                     }}
-                    className="w-12 h-12 bg-amber-500 hover:bg-amber-400 text-amber-950 rounded-xl flex items-center justify-center transition-colors shrink-0 font-bold shadow-sm dark:shadow-slate-900/20"
+                    className="w-12 h-12 bg-[#e55803] hover:bg-[#c44a00] text-[#fff6e0] rounded-xl flex items-center justify-center transition-colors shrink-0 font-bold shadow-sm shadow-[#0e2125]/10"
                   >
                     <Plus size={20} />
                   </button>
@@ -295,20 +295,20 @@ export default function PackingChecklist() {
                     <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
                       onClick={() => toggleCheck(key)}
                       className={`glass-panel p-5 rounded-2xl border cursor-pointer transition-all flex items-start gap-4 hover:shadow-md ${
-                        checked ? 'bg-slate-50 border-slate-100' : doc.urgent ? 'bg-amber-50 border-amber-200 hover:bg-amber-100' : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                        checked ? 'bg-[#fff6e0] border-[#f0dfc0]' : doc.urgent ? 'bg-[#fde8d8] border-[#e55803]/20 hover:bg-[#fde8d8]' : 'bg-white border-[#f0dfc0] hover:bg-[#fff6e0] hover:border-[#f0dfc0]'
                       }`}
                     >
                       <motion.div whileTap={{ scale: 0.8 }} className="mt-0.5 shrink-0">
                         {checked 
-                          ? <CheckCircle2 size={24} className="text-blue-600" /> 
-                          : <Circle size={24} className={doc.urgent ? 'text-amber-600' : 'text-slate-400'} />}
+                          ? <CheckCircle2 size={24} className="text-[#e55803]" /> 
+                          : <Circle size={24} className={doc.urgent ? 'text-[#e55803]' : 'text-[#6b5c45]/70'} />}
                       </motion.div>
                       <div className="flex-1 min-w-0">
-                        <p className={`font-display font-bold text-lg mb-1 transition-colors ${checked ? 'text-slate-400 line-through' : 'text-slate-900'}`}>
+                        <p className={`font-display font-bold text-lg mb-1 transition-colors ${checked ? 'text-[#6b5c45]/70 line-through' : 'text-[#0e2125]'}`}>
                           {doc.item}
-                          {doc.urgent && !checked && <span className="ml-3 px-2 py-0.5 rounded text-[10px] uppercase font-extrabold tracking-widest bg-amber-500 text-white shadow-sm">Required</span>}
+                          {doc.urgent && !checked && <span className="ml-3 px-2 py-0.5 rounded text-[10px] uppercase font-extrabold tracking-widest bg-[#e55803] text-white shadow-sm">Required</span>}
                         </p>
-                        <p className={`text-sm transition-colors ${checked ? 'text-slate-400' : 'text-slate-500'}`}>{doc.details}</p>
+                        <p className={`text-sm transition-colors ${checked ? 'text-[#6b5c45]/70' : 'text-[#6b5c45]'}`}>{doc.details}</p>
                       </div>
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${checked ? 'opacity-30' : ''} ${config.bgClass}`}>
                         <DocIcon size={20} className={config.colorClass} />
@@ -323,9 +323,9 @@ export default function PackingChecklist() {
             {tab === 'laws' && (
               <motion.div key="laws" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
                 {lawNudges.length === 0 ? (
-                  <div className="text-center py-20 bg-white rounded-3xl border border-slate-200 border-dashed">
+                  <div className="text-center py-20 bg-white rounded-3xl border border-[#f0dfc0] border-dashed">
                     <Shield size={48} className="mx-auto mb-4 text-slate-300" />
-                    <p className="text-slate-500 font-medium">No specific safety nudges available for this destination.</p>
+                    <p className="text-[#6b5c45] font-medium">No specific safety nudges available for this destination.</p>
                   </div>
                 ) : (
                   lawNudges.map((nudge, i) => {
@@ -338,12 +338,12 @@ export default function PackingChecklist() {
                           <AlertTriangle size={24} />
                         </div>
                         <div className="flex-1 mt-1">
-                          <p className="text-slate-700 font-medium leading-relaxed mb-4">{nudge.rule}</p>
+                          <p className="text-[#0e2125] font-medium leading-relaxed mb-4">{nudge.rule}</p>
                           <div className="flex flex-wrap gap-2">
                             <span className={`px-3 py-1 rounded-md text-xs font-bold uppercase tracking-widest border bg-white ${sev.color} ${sev.border}`}>
                               {nudge.severity} Priority
                             </span>
-                            <span className="px-3 py-1 rounded-md text-xs font-bold uppercase tracking-widest border border-slate-200 bg-slate-50 text-slate-700">
+                            <span className="px-3 py-1 rounded-md text-xs font-bold uppercase tracking-widest border border-[#f0dfc0] bg-[#fff6e0] text-[#0e2125]">
                               {nudge.venueType}
                             </span>
                           </div>

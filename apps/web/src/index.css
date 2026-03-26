@@ -1,25 +1,45 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap');
 
 @theme {
-  --color-surface-bg: #f8fafc;
-  --color-surface-card: #ffffff;
-  --color-border-subtle: #e2e8f0;
-  --color-border-focus: #cbd5e1;
-  
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-muted: #64748b;
-  
-  --color-brand: #2563eb;
-  --color-brand-light: #3b82f6;
-  --color-brand-dim: rgba(59, 130, 246, 0.1);
-  
-  --color-accent: #f59e0b;
-  --color-danger: #ef4444;
-  --color-success: #10b981;
+  /* ── Primary Brand Colours ── */
+  --color-roamie-orange:       #e55803;
+  --color-roamie-orange-light: #fde8d8;
+  --color-roamie-orange-dark:  #c44a00;
+  --color-roamie-black:        #000000;
+  --color-roamie-dark:         #0e2125;
+  --color-roamie-dark-lighter: #163037;
+  --color-roamie-cream:        #fff6e0;
+  --color-roamie-cream-dark:   #f5e8ca;
 
+  /* ── Supporting ── */
+  --color-roamie-border:       #f0dfc0;
+  --color-roamie-text-muted:   #6b5c45;
+  --color-roamie-success:      #22c55e;
+  --color-roamie-warning:      #f59e0b;
+  --color-roamie-danger:       #ef4444;
+
+  /* ── Legacy aliases (used by components) ── */
+  --color-surface-bg:      #fff6e0;
+  --color-surface-card:    #ffffff;
+  --color-border-subtle:   #f0dfc0;
+  --color-border-focus:    #e55803;
+
+  --color-text-primary:    #000000;
+  --color-text-secondary:  #6b5c45;
+  --color-text-muted:      #6b5c45;
+
+  --color-brand:           #e55803;
+  --color-brand-light:     #fde8d8;
+  --color-brand-dim:       rgba(229, 88, 3, 0.12);
+
+  --color-accent:          #f59e0b;
+  --color-danger:          #ef4444;
+  --color-success:         #22c55e;
+
+  /* ── Fonts ── */
   --font-display: 'Syne', sans-serif;
-  --font-sans: 'Inter', sans-serif;
+  --font-sans:    'DM Sans', sans-serif;
 }
 
 * {
@@ -31,9 +51,9 @@
 html { scroll-behavior: smooth; }
 
 body {
-  font-family: 'Inter', sans-serif;
-  background: var(--color-surface-bg);
-  color: var(--color-text-primary);
+  font-family: 'DM Sans', sans-serif;
+  background: #fff6e0;
+  color: #000000;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -41,30 +61,104 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Syne', sans-serif;
-  color: var(--color-text-primary);
+  color: #000000;
 }
 
-::selection { background: var(--color-brand-dim); }
+::selection { background: rgba(229, 88, 3, 0.12); }
 
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+::-webkit-scrollbar-thumb { background: #e0cfa8; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #c4ad7d; }
 
 input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-visible {
-  outline: 2px solid var(--color-brand-light);
+  outline: 2px solid #e55803;
   outline-offset: 2px;
 }
 
-/* Minimalist Light Mode Card */
+/* ── Roamie Card System ── */
 .glass-panel {
   background: #ffffff;
-  border: 1px solid var(--color-border-subtle);
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+  border: 1px solid #f0dfc0;
+  box-shadow: 0 2px 12px rgba(14, 33, 37, 0.06);
 }
 
 .glass-pill {
   background: #ffffff;
-  border: 1px solid var(--color-border-subtle);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid #f0dfc0;
+  box-shadow: 0 1px 4px rgba(14, 33, 37, 0.04);
 }
+
+/* ── Roamie Button Base ── */
+.btn-primary {
+  background: #e55803;
+  color: #fff6e0;
+  border-radius: 10px;
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 15px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+.btn-primary:hover { background: #c44a00; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-secondary {
+  background: transparent;
+  color: #e55803;
+  border: 1.5px solid #e55803;
+  border-radius: 10px;
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 15px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-secondary:hover { background: #fde8d8; }
+
+.btn-ghost {
+  background: #f5e8ca;
+  color: #0e2125;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 15px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.btn-ghost:hover { background: #f0dfc0; }
+
+/* ── Input Base ── */
+.input-roamie {
+  background: #ffffff;
+  border: 1.5px solid #f0dfc0;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  color: #000000;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.input-roamie:focus {
+  border-color: #e55803;
+  box-shadow: 0 0 0 3px rgba(229, 88, 3, 0.12);
+  outline: none;
+}
+.input-roamie::placeholder { color: #b8a88a; }
