@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Receipt, Utensils, Car, Building2, Ticket, Tag, Download, Sparkles, Plus, CreditCard, ChevronRight } from 'lucide-react';
 import { useStore } from '../stores/useStore';
+import { calculateTripCost, formatCurrency } from '../lib/currency';
 
 const CATEGORY_STYLES: Record<string, { bg: string; border: string; color: string; Icon: typeof Utensils }> = {
   food:          { bg: 'bg-emerald-50', border: 'border-emerald-200', color: 'text-emerald-700', Icon: Utensils },
@@ -17,7 +18,7 @@ const DONUT_COLORS = ['#34D399', '#C084FC', '#60A5FA', '#818CF8', '#F472B6', '#F
 
 export default function Expenses() {
   const { t } = useTranslation();
-  const { currentTrip, scanExpense, fetchExpenses } = useStore();
+  const { currentTrip, scanExpense, fetchExpenses, cart } = useStore();
   const [receiptText, setReceiptText] = useState('');
   const [scanning, setScanning] = useState(false);
   const [expenses, setExpenses] = useState<any[]>([]);
@@ -55,7 +56,7 @@ export default function Expenses() {
 
   const exportCSV = () => {
     const headers = 'Date,Category,Description,Amount,Currency\n';
-    const rows = expenses.map(e =>
+    const rows = expenses.map((e: any) =>
       `${new Date(e.date).toLocaleDateString()},${e.category},${e.description},${e.amount},${e.currency}`
     ).join('\n');
     const blob = new Blob([headers + rows], { type: 'text/csv' });
@@ -274,9 +275,36 @@ export default function Expenses() {
               Total Spent
             </p>
             <p className="font-display font-extrabold text-5xl text-slate-900 mb-4 z-10 relative">
-              <span className="text-amber-600 mr-2">{expenses[0]?.currency || 'SGD'}</span>
+              <span className="text-amber-600 mr-2">{expenses[0]?.currency || currentTrip?.currency || 'USD'}</span>
               {total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
+
+            {currentTrip?.budgetAmount && (
+              <div className="mb-4 pt-4 border-t border-amber-200/50 relative z-10">
+                 <div className="flex justify-between items-end mb-2">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">Estimated Trip Total vs Budget</p>
+                      <p className="font-bold text-slate-800 text-lg">
+                        {formatCurrency(calculateTripCost(currentTrip, cart), currentTrip.currency || 'USD')} 
+                        <span className="text-slate-400 font-medium text-sm ml-1">/ {formatCurrency(currentTrip.budgetAmount, currentTrip.currency || 'USD')}</span>
+                      </p>
+                    </div>
+                    <div className="text-right">
+                       <span className={`text-sm font-bold ${calculateTripCost(currentTrip, cart) > currentTrip.budgetAmount ? 'text-rose-600' : 'text-emerald-600'}`}>
+                         {Math.round((calculateTripCost(currentTrip, cart) / currentTrip.budgetAmount) * 100)}%
+                       </span>
+                    </div>
+                 </div>
+                 <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                   <motion.div 
+                     initial={{ width: 0 }}
+                     animate={{ width: `${Math.min(100, (calculateTripCost(currentTrip, cart) / currentTrip.budgetAmount) * 100)}%` }}
+                     className={`h-full ${calculateTripCost(currentTrip, cart) > currentTrip.budgetAmount ? 'bg-rose-500' : 'bg-emerald-500'}`}
+                   />
+                 </div>
+              </div>
+            )}
+            
             <div className="h-px w-full bg-slate-200 mb-4 relative z-10" />
             <p className="text-sm text-slate-500 font-medium relative z-10">
               Based on {expenses.length} tracked transactions mapped to {categories.length} categories.

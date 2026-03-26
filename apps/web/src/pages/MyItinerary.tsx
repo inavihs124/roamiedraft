@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useStore } from '../stores/useStore';
 import api from '../lib/api';
+import { calculateTripCost, formatCurrency } from '../lib/currency';
 
 // Timeline node types
 type NodeType = 'home' | 'flight' | 'hotel' | 'day' | 'activity' | 'disruption' | 'return';
@@ -169,13 +170,13 @@ export default function MyItinerary() {
       nodes.push({
         id: `flight-${outboundFlight.id}`, type: 'flight',
         title: `${outboundFlight.airline || 'Flight'} ${outboundFlight.flightNumber}`,
-        subtitle: `${outboundFlight.origin || 'Home'} → ${outboundFlight.destination || currentTrip.destination}`,
+        subtitle: `${outboundFlight.origin || 'Home'} → ${outboundFlight.destination || currentTrip.destination} • Cost: ${formatCurrency(outboundFlight.price || 0, outboundFlight.currency || 'USD')}`,
         time: outboundFlight.departureTime ? new Date(outboundFlight.departureTime).toLocaleString() : undefined,
         details: outboundFlight,
         status: outboundFlight.status === 'cancelled' ? 'disrupted' : 'active',
       });
     } else if (cartFlights.length > 0) {
-      cartFlights.forEach((cf, i) => {
+      cartFlights.forEach((cf: any, i: number) => {
         nodes.push({
           id: `cart-flight-${i}`, type: 'flight',
           title: cf.name, subtitle: cf.details, time: cf.details, details: cf, status: 'upcoming',
@@ -190,11 +191,11 @@ export default function MyItinerary() {
       nodes.push({
         id: `hotel-${hotel.id}`, type: 'hotel',
         title: hotel.hotelName || 'Hotel Check-in',
-        subtitle: `Check-in: ${new Date(hotel.checkIn).toLocaleDateString()}`,
+        subtitle: `Check-in: ${new Date(hotel.checkIn).toLocaleDateString()} • Cost: ${formatCurrency(hotel.price || 0, hotel.currency || 'USD')}`,
         details: hotel, status: 'active',
       });
     } else if (cartHotels.length > 0) {
-      cartHotels.forEach((ch, i) => {
+      cartHotels.forEach((ch: any, i: number) => {
         nodes.push({
           id: `cart-hotel-${i}`, type: 'hotel',
           title: ch.name, subtitle: ch.details, details: ch, status: 'upcoming',
@@ -214,7 +215,7 @@ export default function MyItinerary() {
         details: { dayId: day.id },
         children: events.map((evt: any, evtIdx: number) => ({
           id: `day-${dayIdx}-evt-${evtIdx}`, type: 'activity',
-          title: evt.title, subtitle: evt.location || evt.description,
+          title: evt.title, subtitle: `${evt.location || evt.description} ${evt.price ? `• ${formatCurrency(evt.price, evt.currency || 'USD')}` : ''}`,
           time: evt.time, details: { ...evt, userAdded: evt.userAdded }, status: 'upcoming',
         })),
         status: dayIdx === 0 ? 'active' : 'upcoming',
@@ -240,7 +241,7 @@ export default function MyItinerary() {
 
   const handleSimulateDisruption = async () => {
     if (!currentTrip) return;
-    const flight = currentTrip.flights?.[0] || cart.find(c => c.type === 'flight');
+    const flight = currentTrip.flights?.[0] || cart.find((c: any) => c.type === 'flight');
     if (!flight) return;
 
     setDisrupting(true);
@@ -345,6 +346,11 @@ export default function MyItinerary() {
               {cart.filter(c => c.tripId === currentTrip.id).length} bookings in cart
             </span>
           )}
+          {currentTrip.budgetAmount && (
+            <span className="px-4 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 shadow-sm text-sm font-semibold tracking-wide backdrop-blur-md flex items-center gap-1.5">
+              <Sparkles size={13} /> Optimized for budget ({formatCurrency(currentTrip.budgetAmount, currentTrip.currency || 'USD')}) & preferences
+            </span>
+          )}
           <button
             onClick={async () => {
               try {
@@ -395,6 +401,33 @@ export default function MyItinerary() {
             </button>
           ))}
         </div>
+        
+        {currentTrip.budgetAmount && (
+          <div className="mt-8 flex items-center justify-between p-6 bg-white rounded-3xl border border-slate-200 shadow-sm max-w-2xl">
+            <div>
+              <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1">Total Trip Cost</p>
+              <p className="font-display font-bold text-4xl text-slate-900">{formatCurrency(calculateTripCost(currentTrip, cart), currentTrip.currency || 'USD')}</p>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              {calculateTripCost(currentTrip, cart) <= currentTrip.budgetAmount ? (
+                <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-200 text-sm font-bold">
+                  <Check size={18} /> Within Budget
+                </div>
+              ) : calculateTripCost(currentTrip, cart) < currentTrip.budgetAmount * 1.1 ? (
+                <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 rounded-xl border border-amber-200 text-sm font-bold">
+                  <AlertTriangle size={18} /> Approaching Limit
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-700 rounded-xl border border-rose-200 text-sm font-bold">
+                  <AlertTriangle size={18} /> Exceeds Budget
+                </div>
+              )}
+              <p className="text-xs text-slate-500 font-medium tracking-wide">
+                Limit: {formatCurrency(currentTrip.budgetAmount, currentTrip.currency || 'USD')}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Timeline Container */}

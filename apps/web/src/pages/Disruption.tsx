@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Plane, Clock, ArrowRight, Check, Calendar, Zap, Timer, ShieldAlert } from 'lucide-react';
 import { useStore } from '../stores/useStore';
+import { calculateTripCost, formatCurrency } from '../lib/currency';
 
 const DISRUPTION_STEPS = [
   { label: 'Coordinator Alert', icon: AlertTriangle },
@@ -18,8 +19,7 @@ const HOLD_DURATION_SECONDS = 15 * 60; // 15 minutes
 export default function Disruption() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { currentTrip, triggerDisruption } = useStore();
-  const cart = useStore(s => s.cart);
+  const { currentTrip, triggerDisruption, cart } = useStore();
   const [resolution, setResolution] = useState<any>(null);
   const [disrupting, setDisrupting] = useState(false);
   const [showBanner, setShowBanner] = useState(false);
@@ -49,7 +49,7 @@ export default function Disruption() {
   useEffect(() => {
     if (!holdActive || holdTimeRemaining <= 0) return;
     const interval = setInterval(() => {
-      setHoldTimeRemaining(prev => {
+      setHoldTimeRemaining((prev: number) => {
         if (prev <= 1) {
           setHoldActive(false);
           return 0;
@@ -327,6 +327,13 @@ export default function Disruption() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {resolution.alternativeFlights.map((alt: any, i: number) => {
                 const isSelected = alt.flightNumber === resolution.selectedFlight?.flightNumber;
+                
+                const currentCost = calculateTripCost(currentTrip, cart);
+                const flightCost = flight.price || 0; 
+                const newTotal = currentCost - flightCost + (alt.price || 0);
+                const budget = currentTrip?.budgetAmount;
+                const fitsBudget = budget ? newTotal <= budget : true;
+
                 return (
                   <motion.div
                     key={i}
@@ -346,15 +353,20 @@ export default function Disruption() {
                             <Plane size={24} />
                           </div>
                           <div>
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
                               <span className="font-display font-bold text-xl text-slate-900">{alt.flightNumber}</span>
                               {isSelected && <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider bg-blue-600 text-white uppercase">Best Match</span>}
+                              {budget && (
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase ${fitsBudget ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                                  {fitsBudget ? 'Within Budget' : 'Exceeds Budget'}
+                                </span>
+                              )}
                             </div>
                             <span className="text-sm font-medium text-slate-500">{alt.airline}</span>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-display font-bold text-2xl text-slate-900">₹{alt.price?.toLocaleString()}</p>
+                          <p className="font-display font-bold text-2xl text-slate-900">{formatCurrency(alt.price, currentTrip?.currency || 'USD')}</p>
                           {alt.score && <p className="text-xs font-bold text-emerald-600">{Math.round(alt.score * 100)}% Match</p>}
                         </div>
                       </div>
@@ -443,7 +455,7 @@ export default function Disruption() {
                  ) : (
                    <div className="flex flex-col sm:flex-row p-6 gap-4 bg-slate-50 border-t border-slate-200 relative overflow-hidden">
                      <motion.button onClick={handleConfirm} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-[2] py-4 rounded-xl font-bold text-white text-lg bg-blue-600 hover:bg-blue-700 shadow-md transition-all">
-                       Confirm & Pay ₹{resolution.selectedFlight?.price?.toLocaleString()}
+                       Confirm & Pay {formatCurrency(resolution.selectedFlight?.price, currentTrip?.currency || 'USD')}
                      </motion.button>
                      <motion.button onClick={handleCancel} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1 py-4 rounded-xl font-bold text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 border border-slate-200 shadow-sm transition-all">
                        Release Booking
