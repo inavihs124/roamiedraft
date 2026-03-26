@@ -46,14 +46,42 @@ export class MockFlightService implements IFlightService {
         } as AlternativeFlight;
       });
 
+    // If no date-matched flights, fall back to all matching route flights (date-agnostic)
+    const result = candidates.length > 0 ? candidates : (flightsData as any[])
+      .filter((f) => f.origin === origin && f.destination === destination && f.seatsAvailable > 0)
+      .map((f) => {
+        // Shift the flight times to be relative to the requested date
+        const originalDep = new Date(f.departureTime);
+        const originalArr = new Date(f.arrivalTime);
+        const durationMs = originalArr.getTime() - originalDep.getTime();
+        const newDep = new Date(date);
+        newDep.setHours(originalDep.getHours(), originalDep.getMinutes(), 0, 0);
+        const newArr = new Date(newDep.getTime() + durationMs);
+        const hours = Math.floor(durationMs / (1000 * 60 * 60));
+        const mins = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+        return {
+          flightNumber: f.flightNumber,
+          airline: f.airline,
+          origin: f.origin,
+          destination: f.destination,
+          departureTime: newDep,
+          arrivalTime: newArr,
+          price: f.price,
+          duration: `${hours}h ${mins}m`,
+          seatsAvailable: f.seatsAvailable,
+          seatClass: f.seatClass || 'economy',
+          amenities: f.amenities || [],
+        } as AlternativeFlight;
+      });
+
     // Score each candidate: 40% arrival earliness + 30% price + 30% seat match
-    const origPrice = preferences?.originalPrice || candidates[0]?.price || 15000;
+    const origPrice = preferences?.originalPrice || result[0]?.price || 15000;
     const seatPref = preferences?.seatPreference?.toLowerCase() || 'any';
 
-    const scored = candidates.map((f) => {
-      // Arrival earliness: earlier is better (normalize to 0–1)
+    const scored = result.map((f) => {
+      // Arrival earliness: earlier is better (normalize to 0-1)
       const arrivalMs = f.arrivalTime.getTime();
-      const allArrivals = candidates.map((c) => c.arrivalTime.getTime());
+      const allArrivals = result.map((c) => c.arrivalTime.getTime());
       const earliest = Math.min(...allArrivals);
       const latest = Math.max(...allArrivals);
       const arrivalRange = latest - earliest || 1;

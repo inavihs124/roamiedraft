@@ -26,20 +26,23 @@ model User {
 }
 
 model Trip {
-  id          String          @id @default(uuid())
-  userId      String
-  user        User            @relation(fields: [userId], references: [id])
-  destination String
-  startDate   DateTime
-  endDate     DateTime
-  status      String          @default("active")
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  itinerary   ItineraryDay[]
-  flights     FlightBooking[]
-  hotels      HotelBooking[]
-  cabs        CabBooking[]
-  disruptions DisruptionLog[]
+  id             String          @id @default(uuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id])
+  destination    String
+  startDate      DateTime
+  endDate        DateTime
+  status         String          @default("active")
+  budget         Float           @default(0)
+  budgetCurrency String          @default("INR")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  itinerary      ItineraryDay[]
+  flights        FlightBooking[]
+  hotels         HotelBooking[]
+  cabs           CabBooking[]
+  disruptions    DisruptionLog[]
+  notes          ItineraryNote[]
 
   @@index([userId])
   @@index([status])
@@ -141,3 +144,18 @@ model DisruptionLog {
 
   @@index([tripId])
 }
+
+model ItineraryNote {
+  id        String   @id @default(uuid())
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  dayId     String
+  eventTime String
+  note      String
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@index([tripId])
+  @@index([dayId])
+}
+

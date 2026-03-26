@@ -90,28 +90,28 @@ export default function PackingChecklist() {
   return (
     <div className="max-w-4xl mx-auto p-4 lg:p-8 pb-32">
       <div className="mb-10">
-        <h1 className="font-display font-bold text-4xl text-white mb-2 flex items-center gap-3">
-          <Package size={36} className="text-amber-500" /> {t('checklist.title')}
+        <h1 className="font-display font-bold text-4xl text-slate-900 mb-2 flex items-center gap-3">
+          <Package size={36} className="text-blue-600" /> {t('checklist.title')}
         </h1>
-        <p className="text-slate-400 font-medium text-lg">
+        <p className="text-slate-500 font-medium text-lg">
           {currentTrip ? `${currentTrip.destination} · ${new Date(currentTrip.startDate).toLocaleDateString()} — ${new Date(currentTrip.endDate).toLocaleDateString()}` : t('checklist.noTrip')}
         </p>
       </div>
 
       {/* Glass Tabs */}
-      <div className="flex flex-wrap gap-2 mb-8 p-1.5 bg-slate-900/50 backdrop-blur-md rounded-2xl border border-slate-700/50 relative z-10">
+      <div className="flex flex-wrap gap-2 mb-8 p-1.5 bg-white rounded-2xl border border-slate-200 shadow-sm relative z-10">
         {tabs.map(tb => (
           <button key={tb.key} onClick={() => setTab(tb.key)}
             className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
               tab === tb.key 
-                ? 'bg-slate-800 text-amber-400 shadow-[0_4px_12px_rgba(0,0,0,0.5)] border border-slate-600/50' 
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                ? 'bg-blue-50 text-blue-700 shadow-sm border border-blue-200' 
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
             {tb.label}
             {tb.count > 0 && (
               <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                tab === tb.key ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-slate-800 text-slate-500 border border-slate-700'
+                tab === tb.key ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-500 border border-slate-200'
               }`}>
                 {tb.count}
               </span>
@@ -121,9 +121,9 @@ export default function PackingChecklist() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20 text-slate-500 font-medium h-64 border border-dashed border-slate-700 rounded-3xl mt-4">
+        <div className="flex items-center justify-center py-20 text-slate-500 font-medium h-64 border border-dashed border-slate-200 rounded-3xl mt-4 bg-white">
           <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="mr-3">
-            <Package size={24} className="text-slate-600" />
+            <Package size={24} className="text-blue-500" />
           </motion.div>
           Analyzing itinerary to build packing list...
         </div>
@@ -137,28 +137,28 @@ export default function PackingChecklist() {
                 {/* Search + Progress */}
                 <div className="flex flex-col md:flex-row gap-4 mb-8">
                   <div className="flex-1 relative group">
-                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-amber-500 transition-colors" />
+                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                     <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
                       placeholder="Search luggage..."
-                      className="w-full h-14 pl-12 pr-4 bg-slate-900/50 backdrop-blur-md border border-slate-700 text-slate-200 rounded-2xl focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 outline-none transition-all"
+                      className="w-full h-14 pl-12 pr-4 bg-white border border-slate-200 text-slate-900 rounded-2xl focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none transition-all shadow-sm"
                     />
                   </div>
-                  <div className="md:w-64 h-14 bg-slate-900/50 backdrop-blur-md border border-slate-700 rounded-2xl flex items-center px-4 gap-4">
-                    <div className="flex-1 h-2.5 bg-slate-800 rounded-full overflow-hidden shadow-inner">
-                      <motion.div animate={{ width: `${progress}%` }} className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full" />
+                  <div className="md:w-64 h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 gap-4 shadow-sm">
+                    <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                      <motion.div animate={{ width: `${progress}%` }} className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full" />
                     </div>
-                    <span className={`font-display font-bold text-lg w-12 text-right ${progress === 100 ? 'text-emerald-400' : 'text-slate-300'}`}>
+                    <span className={`font-display font-bold text-lg w-12 text-right ${progress === 100 ? 'text-emerald-600' : 'text-slate-700'}`}>
                       {progress}%
                     </span>
                   </div>
                 </div>
 
                 {/* Add Custom Item */}
-                <div className="flex flex-col sm:flex-row gap-3 p-3 bg-slate-900/30 border border-slate-700 border-dashed rounded-2xl mb-8">
+                <div className="flex flex-col sm:flex-row gap-3 p-3 bg-slate-50 border border-slate-200 border-dashed rounded-2xl mb-8">
                   <input
                     value={customItemName} onChange={e => setCustomItemName(e.target.value)}
                     placeholder="Add custom item..."
-                    className="flex-1 bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-xl px-4 py-3 outline-none focus:border-amber-500 transition-colors"
+                    className="flex-1 bg-white border border-slate-200 text-slate-900 text-sm rounded-xl px-4 py-3 outline-none focus:border-blue-400 transition-colors shadow-sm"
                     onKeyDown={e => {
                       if (e.key === 'Enter' && customItemName.trim()) {
                         setPackingList(prev => [{ item: customItemName.trim(), category: customItemCat, reason: 'Added by you', essential: false }, ...prev]);
@@ -169,7 +169,7 @@ export default function PackingChecklist() {
                   <div className="flex gap-3">
                     <select
                       value={customItemCat} onChange={e => setCustomItemCat(e.target.value)}
-                      className="bg-slate-800 border border-slate-700 text-slate-300 text-sm rounded-xl px-4 py-3 outline-none cursor-pointer focus:border-amber-500"
+                      className="bg-white border border-slate-200 text-slate-700 text-sm rounded-xl px-4 py-3 outline-none cursor-pointer focus:border-blue-400 shadow-sm"
                     >
                       {Object.entries(CATEGORY_CONFIG).map(([key, cfg]) => (
                         <option key={key} value={key}>{cfg.label}</option>
@@ -182,7 +182,7 @@ export default function PackingChecklist() {
                           setCustomItemName('');
                         }
                       }}
-                      className="w-12 h-12 bg-amber-500 hover:bg-amber-400 text-amber-950 rounded-xl flex items-center justify-center transition-colors shrink-0 font-bold"
+                      className="w-12 h-12 bg-blue-600 hover:bg-blue-500 text-white rounded-xl flex items-center justify-center transition-colors shrink-0 font-bold shadow-sm"
                     >
                       <Plus size={20} />
                     </button>
@@ -199,18 +199,18 @@ export default function PackingChecklist() {
                     const allCheckedInCat = catChecked === items.length && items.length > 0;
 
                     return (
-                      <div key={cat} className={`glass-panel rounded-2xl overflow-hidden transition-all ${isExpanded ? 'border-slate-600/60 shadow-lg bg-slate-800/20' : 'border-slate-700/50 hover:bg-slate-800/40'}`}>
+                      <div key={cat} className={`glass-panel rounded-2xl overflow-hidden transition-all ${isExpanded ? 'border-slate-300 shadow-md bg-white' : 'border-slate-200 hover:bg-slate-50'}`}>
                         <button onClick={() => toggleCategory(cat)} className="w-full flex items-center gap-4 p-4 md:p-5 cursor-pointer outline-none">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${config.bgClass}`}>
                             <CatIcon size={20} className={config.colorClass} />
                           </div>
-                          <span className={`font-display font-bold text-lg flex-1 text-left ${allCheckedInCat ? 'text-slate-400 line-through' : 'text-slate-200'}`}>
+                          <span className={`font-display font-bold text-lg flex-1 text-left ${allCheckedInCat ? 'text-slate-400 line-through' : 'text-slate-900'}`}>
                             {config.label}
                           </span>
-                          <span className={`text-sm font-bold ${allCheckedInCat ? 'text-emerald-400' : 'text-slate-500'}`}>
+                          <span className={`text-sm font-bold ${allCheckedInCat ? 'text-emerald-600' : 'text-slate-500'}`}>
                             {catChecked} / {items.length}
                           </span>
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isExpanded ? 'bg-slate-700/50 text-slate-300' : 'text-slate-500'}`}>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isExpanded ? 'bg-slate-100 text-slate-600' : 'text-slate-400'}`}>
                             {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                           </div>
                         </button>
@@ -225,20 +225,20 @@ export default function PackingChecklist() {
                                   return (
                                     <div key={key} onClick={() => toggleCheck(key)} 
                                       className={`flex items-start gap-4 p-3 rounded-xl cursor-pointer transition-all border ${
-                                        checked ? 'bg-slate-900/40 border-slate-800 hover:bg-slate-800/50' : 'bg-slate-800/40 border-slate-700/50 hover:border-slate-600 hover:bg-slate-700/30'
+                                        checked ? 'bg-slate-50 border-slate-100 hover:bg-slate-100' : 'bg-white border-slate-200 hover:border-blue-200 hover:bg-blue-50/30'
                                       }`}
                                     >
                                       <motion.div whileTap={{ scale: 0.8 }} className="mt-0.5 shrink-0">
                                         {checked 
-                                          ? <CheckCircle2 size={22} className="text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]" /> 
-                                          : <Circle size={22} className="text-slate-600" />}
+                                          ? <CheckCircle2 size={22} className="text-blue-600" /> 
+                                          : <Circle size={22} className="text-slate-300" />}
                                       </motion.div>
                                       <div className="flex-1 min-w-0">
-                                        <p className={`font-semibold text-base transition-colors ${checked ? 'text-slate-500 line-through' : 'text-slate-200'}`}>
+                                        <p className={`font-semibold text-base transition-colors ${checked ? 'text-slate-400 line-through' : 'text-slate-900'}`}>
                                           {item.item}
                                           {item.essential && !checked && <span className="ml-3 px-2 py-0.5 rounded text-[10px] font-bold tracking-widest bg-rose-500/10 text-rose-400 border border-rose-500/20 uppercase">Must Pack</span>}
                                         </p>
-                                        <p className={`text-sm mt-1 transition-colors ${checked ? 'text-slate-600' : 'text-slate-400'}`}>{item.reason}</p>
+                                        <p className={`text-sm mt-1 transition-colors ${checked ? 'text-slate-400' : 'text-slate-500'}`}>{item.reason}</p>
                                       </div>
                                     </div>
                                   );
@@ -258,14 +258,14 @@ export default function PackingChecklist() {
             {tab === 'docs' && (
               <motion.div key="docs" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
                 
-                <div className="flex flex-col sm:flex-row gap-3 p-3 bg-slate-900/30 border border-slate-700 border-dashed rounded-2xl mb-6">
+                <div className="flex flex-col sm:flex-row gap-3 p-3 bg-slate-50 border border-slate-200 border-dashed rounded-2xl mb-6">
                   <input value={customDocName} onChange={e => setCustomDocName(e.target.value)}
                     placeholder="Document name..."
-                    className="flex-1 bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-xl px-4 py-3 outline-none focus:border-amber-500 transition-colors"
+                    className="flex-1 bg-white border border-slate-200 text-slate-900 text-sm rounded-xl px-4 py-3 outline-none focus:border-blue-400 transition-colors shadow-sm"
                   />
                   <input value={customDocDetail} onChange={e => setCustomDocDetail(e.target.value)}
                     placeholder="Details..."
-                    className="flex-1 bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-xl px-4 py-3 outline-none focus:border-amber-500 transition-colors"
+                    className="flex-1 bg-white border border-slate-200 text-slate-900 text-sm rounded-xl px-4 py-3 outline-none focus:border-blue-400 transition-colors shadow-sm"
                     onKeyDown={e => {
                       if (e.key === 'Enter' && customDocName.trim()) {
                         setDocChecklist(prev => [{ item: customDocName.trim(), details: customDocDetail || 'Custom document', category: 'documents', urgent: false }, ...prev]);
@@ -279,7 +279,7 @@ export default function PackingChecklist() {
                         setCustomDocName(''); setCustomDocDetail('');
                       }
                     }}
-                    className="w-12 h-12 bg-amber-500 hover:bg-amber-400 text-amber-950 rounded-xl flex items-center justify-center transition-colors shrink-0 font-bold"
+                    className="w-12 h-12 bg-amber-500 hover:bg-amber-400 text-amber-950 rounded-xl flex items-center justify-center transition-colors shrink-0 font-bold shadow-sm dark:shadow-slate-900/20"
                   >
                     <Plus size={20} />
                   </button>
@@ -294,21 +294,21 @@ export default function PackingChecklist() {
                   return (
                     <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
                       onClick={() => toggleCheck(key)}
-                      className={`glass-panel p-5 rounded-2xl border cursor-pointer transition-all flex items-start gap-4 hover:shadow-lg ${
-                        checked ? 'bg-slate-900/60 border-slate-800' : doc.urgent ? 'bg-amber-500/5 border-amber-500/40 hover:bg-amber-500/10' : 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/60 hover:border-slate-600'
+                      className={`glass-panel p-5 rounded-2xl border cursor-pointer transition-all flex items-start gap-4 hover:shadow-md ${
+                        checked ? 'bg-slate-50 border-slate-100' : doc.urgent ? 'bg-amber-50 border-amber-200 hover:bg-amber-100' : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300'
                       }`}
                     >
                       <motion.div whileTap={{ scale: 0.8 }} className="mt-0.5 shrink-0">
                         {checked 
-                          ? <CheckCircle2 size={24} className="text-amber-500" /> 
-                          : <Circle size={24} className={doc.urgent ? 'text-amber-500' : 'text-slate-500'} />}
+                          ? <CheckCircle2 size={24} className="text-blue-600" /> 
+                          : <Circle size={24} className={doc.urgent ? 'text-amber-600' : 'text-slate-400'} />}
                       </motion.div>
                       <div className="flex-1 min-w-0">
-                        <p className={`font-display font-bold text-lg mb-1 transition-colors ${checked ? 'text-slate-500 line-through' : 'text-slate-100'}`}>
+                        <p className={`font-display font-bold text-lg mb-1 transition-colors ${checked ? 'text-slate-400 line-through' : 'text-slate-900'}`}>
                           {doc.item}
-                          {doc.urgent && !checked && <span className="ml-3 px-2 py-0.5 rounded text-[10px] uppercase font-extrabold tracking-widest bg-amber-500 text-slate-900 shadow-[0_0_10px_rgba(245,158,11,0.3)]">Required</span>}
+                          {doc.urgent && !checked && <span className="ml-3 px-2 py-0.5 rounded text-[10px] uppercase font-extrabold tracking-widest bg-amber-500 text-white shadow-sm">Required</span>}
                         </p>
-                        <p className={`text-sm transition-colors ${checked ? 'text-slate-600' : 'text-slate-400'}`}>{doc.details}</p>
+                        <p className={`text-sm transition-colors ${checked ? 'text-slate-400' : 'text-slate-500'}`}>{doc.details}</p>
                       </div>
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${checked ? 'opacity-30' : ''} ${config.bgClass}`}>
                         <DocIcon size={20} className={config.colorClass} />
@@ -323,9 +323,9 @@ export default function PackingChecklist() {
             {tab === 'laws' && (
               <motion.div key="laws" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
                 {lawNudges.length === 0 ? (
-                  <div className="text-center py-20 bg-slate-900/30 rounded-3xl border border-slate-700 border-dashed">
-                    <Shield size={48} className="mx-auto mb-4 text-slate-700" />
-                    <p className="text-slate-400 font-medium">No specific safety nudges available for this destination.</p>
+                  <div className="text-center py-20 bg-white rounded-3xl border border-slate-200 border-dashed">
+                    <Shield size={48} className="mx-auto mb-4 text-slate-300" />
+                    <p className="text-slate-500 font-medium">No specific safety nudges available for this destination.</p>
                   </div>
                 ) : (
                   lawNudges.map((nudge, i) => {
@@ -334,16 +334,16 @@ export default function PackingChecklist() {
                       <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                         className={`glass-panel p-6 rounded-2xl border flex items-start gap-5 ${sev.bg} ${sev.border}`}
                       >
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border border-current bg-slate-900/50 ${sev.color}`}>
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border border-current bg-white ${sev.color}`}>
                           <AlertTriangle size={24} />
                         </div>
                         <div className="flex-1 mt-1">
-                          <p className="text-slate-200 font-medium leading-relaxed mb-4">{nudge.rule}</p>
+                          <p className="text-slate-700 font-medium leading-relaxed mb-4">{nudge.rule}</p>
                           <div className="flex flex-wrap gap-2">
-                            <span className={`px-3 py-1 rounded-md text-xs font-bold uppercase tracking-widest border bg-slate-900/50 ${sev.color} ${sev.border}`}>
+                            <span className={`px-3 py-1 rounded-md text-xs font-bold uppercase tracking-widest border bg-white ${sev.color} ${sev.border}`}>
                               {nudge.severity} Priority
                             </span>
-                            <span className="px-3 py-1 rounded-md text-xs font-bold uppercase tracking-widest border border-slate-700 bg-slate-800 text-slate-300">
+                            <span className="px-3 py-1 rounded-md text-xs font-bold uppercase tracking-widest border border-slate-200 bg-slate-50 text-slate-700">
                               {nudge.venueType}
                             </span>
                           </div>

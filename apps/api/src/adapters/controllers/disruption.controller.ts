@@ -4,7 +4,7 @@ import { authMiddleware, AuthRequest } from '../../infrastructure/middleware/aut
 import { TriggerDisruptionShield } from '../../use-cases/TriggerDisruptionShield';
 import { PrismaTripRepository } from '../repositories/PrismaTripRepository';
 import { MockFlightService } from '../services/MockFlightService';
-import { OllamaItineraryService } from '../services/OllamaItineraryService';
+import { ClaudeItineraryService } from '../services/ClaudeItineraryService';
 import { QRCodeService } from '../services/QRCodeService';
 import { disruptionLimiter } from '../../infrastructure/middleware/rateLimiter';
 import prisma from '../../infrastructure/database';
@@ -12,7 +12,7 @@ import prisma from '../../infrastructure/database';
 const router = Router();
 const tripRepo = new PrismaTripRepository();
 const flightService = new MockFlightService();
-const itineraryService = new OllamaItineraryService();
+const itineraryService = new ClaudeItineraryService();
 const qrService = new QRCodeService();
 const disruptionShield = new TriggerDisruptionShield(tripRepo, flightService, itineraryService, qrService);
 
@@ -23,6 +23,7 @@ const triggerSchema = z.object({
   tripId: z.string().min(1),
   flightId: z.string().min(1),
   disruptionType: z.enum(['cancelled', 'delayed', 'missed']),
+  simulateZeroFlights: z.boolean().optional().default(false),
 });
 
 router.post('/trigger', authMiddleware, disruptionLimiter, async (req: AuthRequest, res: Response) => {
@@ -33,8 +34,22 @@ router.post('/trigger', authMiddleware, disruptionLimiter, async (req: AuthReque
       return;
     }
 
+    // Ownership check
+    const trip = await prisma.trip.findUnique({ where: { id: parsed.data.tripId } });
+    if (!trip) {
+      res.status(404).json({ error: 'Trip not found', code: 'NOT_FOUND' });
+      return;
+    }
+    if (trip.userId !== req.userId) {
+      res.status(403).json({ error: 'Forbidden', code: 'FORBIDDEN' });
+      return;
+    }
+
     const resolution = await disruptionShield.execute({
-      ...parsed.data,
+      tripId: parsed.data.tripId,
+      flightId: parsed.data.flightId,
+      disruptionType: parsed.data.disruptionType,
+      simulateZeroFlights: parsed.data.simulateZeroFlights,
       lang: req.lang,
     });
 

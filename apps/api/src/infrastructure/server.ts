@@ -14,6 +14,7 @@ import geocodingController from '../adapters/controllers/geocoding.controller';
 import translationController from '../adapters/controllers/translation.controller';
 import suggestionsController from '../adapters/controllers/suggestions.controller';
 import bookingSuggestionsController from '../adapters/controllers/booking-suggestions.controller';
+import packingController from '../adapters/controllers/packing.controller';
 
 export function createApp() {
   const app = express();
@@ -46,6 +47,7 @@ export function createApp() {
   app.use('/api/translate', translationController);
   app.use('/api/suggestions', suggestionsController);
   app.use('/api/booking-suggestions', bookingSuggestionsController);
+  app.use('/api/packing', packingController);
 
   app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
     console.error('Unhandled error:', err);

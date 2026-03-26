@@ -83,7 +83,6 @@ Return ONLY valid JSON, no markdown, no explanation.`);
     const totalMins = activityEvents.reduce((sum, e) => sum + (e.duration_minutes || 0), 0);
 
     if (totalMins > 480 || activityEvents.length > 5) {
-      // Find the pair with the largest gap and insert a break
       let maxGapIdx = 0;
       let maxGap = 0;
       for (let i = 0; i < events.length - 1; i++) {
@@ -183,7 +182,6 @@ Return ONLY valid JSON, no markdown, no explanation.`);
 
   private async fetchNominatimPOIs(destination: string): Promise<{ name: string; category: string; description: string; location: string }[]> {
     try {
-      // Fetch tourist attractions and notable places from Nominatim
       const queries = [
         `${destination} tourist attraction`,
         `${destination} landmark`,
@@ -224,7 +222,6 @@ Return ONLY valid JSON, no markdown, no explanation.`);
               location: d.display_name?.split(',').slice(0, 2).join(',').trim() || destination,
             });
           }
-          // Small delay to respect Nominatim rate limits
           await new Promise(r => setTimeout(r, 200));
         } catch {
           // Continue with next query
@@ -239,8 +236,9 @@ Return ONLY valid JSON, no markdown, no explanation.`);
   private async generateGenericItinerary(ctx: TripContext): Promise<ItineraryPlan> {
     const start = new Date(ctx.startDate);
     const end = new Date(ctx.endDate);
-    const numDays = Math.max(1, Math.min(7, Math.ceil((end.getTime() - start.getTime()) / 86400000)));
+    const numDays = Math.max(1, Math.min(14, Math.ceil((end.getTime() - start.getTime()) / 86400000)));
     const isBusiness = ctx.tripPurpose === 'business';
+    const energy = ctx.energyLevel || 'medium';
 
     // Try to find real places from places.json first
     const knownPlaces = this.placesService.findByCity(ctx.destination);
@@ -254,68 +252,155 @@ Return ONLY valid JSON, no markdown, no explanation.`);
         location: `${p.name}, ${p.address}`,
       }));
     } else {
-      // Fallback: fetch POIs from Nominatim
       realPOIs = await this.fetchNominatimPOIs(ctx.destination);
     }
 
-    // Separate POIs by category
-    const landmarks = realPOIs.filter(p => p.category === 'sightseeing' || p.category === 'landmark' || p.category === 'activity');
+    // Separate POIs by category for smart distribution
+    const sightseeing = realPOIs.filter(p => ['sightseeing', 'landmark'].includes(p.category));
     const foods = realPOIs.filter(p => p.category === 'food');
-    const activities = realPOIs.filter(p => !['food', 'sightseeing', 'landmark'].includes(p.category));
-    const allAttractions = [...landmarks, ...activities];
+    const allAttractions = [...sightseeing, ...realPOIs.filter(p => !['food', 'sightseeing', 'landmark'].includes(p.category))];
 
-    let landmarkIdx = 0;
-    let foodIdx = 0;
-    let attractionIdx = 0;
+    const sIdx = { v: 0 }, fIdx = { v: 0 }, aIdx = { v: 0 };
+    const getNext = (pool: typeof realPOIs, idx: { v: number }) => {
+      if (pool.length === 0) return null;
+      const p = pool[idx.v % pool.length];
+      idx.v++;
+      return p;
+    };
 
-    const getNextLandmark = () => {
-      if (allAttractions.length === 0) return null;
-      const p = allAttractions[landmarkIdx % allAttractions.length];
-      landmarkIdx++;
-      return p;
-    };
-    const getNextFood = () => {
-      if (foods.length === 0) return null;
-      const p = foods[foodIdx % foods.length];
-      foodIdx++;
-      return p;
-    };
-    const getNextAttraction = () => {
-      if (allAttractions.length === 0) return null;
-      const p = allAttractions[attractionIdx % allAttractions.length];
-      attractionIdx++;
-      return p;
-    };
+    // Day themes for variation across the trip
+    const dayThemes = ['explorer', 'foodie', 'culture', 'adventure', 'relaxed', 'shopper', 'discovery'];
 
     const days = [];
     for (let i = 0; i < numDays; i++) {
       const dayDate = new Date(start);
       dayDate.setDate(dayDate.getDate() + i);
+      const isFirstDay = i === 0;
+      const theme = dayThemes[i % dayThemes.length];
 
-      const morningFood = getNextFood();
-      const morningLandmark = getNextLandmark();
-      const lunchFood = getNextFood();
-      const afternoonAttraction = getNextAttraction();
-      const eveningLandmark = getNextLandmark();
-      const dinnerFood = getNextFood();
+      const events: ItineraryEvent[] = [];
 
-      const events: ItineraryEvent[] = isBusiness ? [
-        { time: '08:00', duration_minutes: 60, type: 'food', title: morningFood ? `Breakfast at ${morningFood.name}` : 'Hotel Breakfast', description: morningFood ? morningFood.description : 'Start the day with a full breakfast at the hotel restaurant.', location: morningFood ? morningFood.location : 'Hotel Restaurant', isGapSuggestion: false, isBreathingRoom: false },
-        { time: '09:30', duration_minutes: 180, type: 'meeting', title: 'Client Meeting', description: 'Scheduled meeting with the local team.', location: 'Business Center', isGapSuggestion: false, isBreathingRoom: false },
-        { time: '12:30', duration_minutes: 60, type: 'food', title: lunchFood ? `Working Lunch at ${lunchFood.name}` : 'Working Lunch', description: lunchFood ? lunchFood.description : 'Quick lunch nearby before the afternoon session.', location: lunchFood ? lunchFood.location : 'Local Restaurant', isGapSuggestion: false, isBreathingRoom: false },
-        { time: '14:00', duration_minutes: 120, type: 'meeting', title: 'Afternoon Session', description: 'Follow-up meeting and planning session.', location: 'Business Center', isGapSuggestion: false, isBreathingRoom: false },
-        { time: '16:30', duration_minutes: 30, type: 'break', title: 'Breathing Room', description: 'Take a moment to decompress. Find a quiet café or take a short walk.', location: 'Nearby Café', isGapSuggestion: false, isBreathingRoom: true },
-        { time: '17:30', duration_minutes: 90, type: 'activity', title: eveningLandmark ? `Explore ${eveningLandmark.name}` : `Explore ${ctx.destination}`, description: eveningLandmark ? eveningLandmark.description : `Free time to explore the local area around your hotel in ${ctx.destination}.`, location: eveningLandmark ? eveningLandmark.location : ctx.destination, isGapSuggestion: true, isBreathingRoom: false },
-        { time: '19:30', duration_minutes: 90, type: 'food', title: dinnerFood ? `Dinner at ${dinnerFood.name}` : 'Dinner', description: dinnerFood ? dinnerFood.description : 'Enjoy local cuisine at a recommended restaurant.', location: dinnerFood ? dinnerFood.location : 'Local Restaurant', isGapSuggestion: false, isBreathingRoom: false },
-      ] : [
-        { time: '08:30', duration_minutes: 60, type: 'food', title: morningFood ? `Breakfast at ${morningFood.name}` : 'Breakfast', description: morningFood ? morningFood.description : 'Start with a local breakfast experience.', location: morningFood ? morningFood.location : 'Local Café', isGapSuggestion: false, isBreathingRoom: false },
-        { time: '10:00', duration_minutes: 150, type: 'sightseeing', title: morningLandmark ? morningLandmark.name : `Morning Exploration`, description: morningLandmark ? morningLandmark.description : `Visit the top sights of ${ctx.destination}. Take your time and enjoy the atmosphere.`, location: morningLandmark ? morningLandmark.location : ctx.destination, isGapSuggestion: false, isBreathingRoom: false },
-        { time: '12:30', duration_minutes: 90, type: 'food', title: lunchFood ? `Lunch at ${lunchFood.name}` : 'Local Lunch', description: lunchFood ? lunchFood.description : 'Try the local cuisine at a popular spot.', location: lunchFood ? lunchFood.location : 'Local Eatery', isGapSuggestion: false, isBreathingRoom: false },
-        { time: '14:30', duration_minutes: 120, type: 'activity', title: afternoonAttraction ? afternoonAttraction.name : 'Afternoon Activity', description: afternoonAttraction ? afternoonAttraction.description : 'Museums, markets, or local attractions.', location: afternoonAttraction ? afternoonAttraction.location : ctx.destination, isGapSuggestion: false, isBreathingRoom: false },
-        { time: '17:00', duration_minutes: 30, type: 'break', title: 'Breathing Room', description: 'Rest and recharge. Find a scenic spot or a quiet park bench.', location: 'Nearby Park', isGapSuggestion: false, isBreathingRoom: true },
-        { time: '18:00', duration_minutes: 90, type: 'sightseeing', title: eveningLandmark ? eveningLandmark.name : 'Golden Hour Walk', description: eveningLandmark ? eveningLandmark.description : `Watch the sunset and explore the evening vibe of ${ctx.destination}.`, location: eveningLandmark ? eveningLandmark.location : ctx.destination, isGapSuggestion: false, isBreathingRoom: false },
-        { time: '20:00', duration_minutes: 90, type: 'food', title: dinnerFood ? `Dinner at ${dinnerFood.name}` : 'Dinner', description: dinnerFood ? dinnerFood.description : 'End the day with a memorable dining experience.', location: dinnerFood ? dinnerFood.location : 'Restaurant', isGapSuggestion: false, isBreathingRoom: false },
-      ];
+      if (isBusiness) {
+        const bf = getNext(foods, fIdx);
+        const lunch = getNext(foods, fIdx);
+        const dinner = getNext(foods, fIdx);
+        const explore = getNext(allAttractions, aIdx);
+
+        events.push(
+          { time: isFirstDay ? '09:00' : '08:00', duration_minutes: 60, type: 'food', title: bf ? `Breakfast at ${bf.name}` : 'Hotel Breakfast', description: bf?.description || 'Start with a full breakfast.', location: bf?.location || 'Hotel Restaurant', isGapSuggestion: false, isBreathingRoom: false },
+          { time: '09:30', duration_minutes: 180, type: 'meeting', title: 'Client Meeting', description: 'Scheduled meeting with the local team.', location: 'Business Center', isGapSuggestion: false, isBreathingRoom: false },
+          { time: '12:30', duration_minutes: 60, type: 'food', title: lunch ? `Working Lunch at ${lunch.name}` : 'Working Lunch', description: lunch?.description || 'Quick lunch between sessions.', location: lunch?.location || 'Local Restaurant', isGapSuggestion: false, isBreathingRoom: false },
+          { time: '14:00', duration_minutes: 120, type: 'meeting', title: 'Afternoon Session', description: 'Follow-up meeting and planning.', location: 'Business Center', isGapSuggestion: false, isBreathingRoom: false },
+          { time: '16:30', duration_minutes: 30, type: 'break', title: 'Breathing Room ☕', description: 'Decompress and recharge.', location: 'Nearby Café', isGapSuggestion: false, isBreathingRoom: true },
+          { time: '17:30', duration_minutes: 90, type: 'activity', title: explore ? `Explore ${explore.name}` : `Explore ${ctx.destination}`, description: explore?.description || `Free time in ${ctx.destination}.`, location: explore?.location || ctx.destination, isGapSuggestion: true, isBreathingRoom: false },
+          { time: '19:30', duration_minutes: 90, type: 'food', title: dinner ? `Dinner at ${dinner.name}` : 'Dinner', description: dinner?.description || 'Enjoy local cuisine.', location: dinner?.location || 'Local Restaurant', isGapSuggestion: false, isBreathingRoom: false },
+        );
+      } else {
+        // Leisure: energy-aware + day-theme variation
+        const bf = getNext(foods, fIdx);
+        const lunch = getNext(foods, fIdx);
+        const dinner = getNext(foods, fIdx);
+        const morning1 = getNext(sightseeing.length > 0 ? sightseeing : allAttractions, sIdx);
+        const afternoon1 = getNext(allAttractions, aIdx);
+        const evening1 = getNext(sightseeing.length > 0 ? sightseeing : allAttractions, sIdx);
+        const extra1 = getNext(allAttractions, aIdx);
+        const snack = getNext(foods, fIdx);
+
+        // Breakfast — later start on relaxed/low-energy days
+        const bfTime = isFirstDay ? '09:00' : (energy === 'low' || theme === 'relaxed') ? '09:30' : '08:30';
+        events.push({
+          time: bfTime, duration_minutes: 60, type: 'food',
+          title: bf ? `Breakfast at ${bf.name}` : 'Morning Breakfast',
+          description: bf?.description || `Start with a local breakfast in ${ctx.destination}.`,
+          location: bf?.location || 'Local Café',
+          isGapSuggestion: false, isBreathingRoom: false,
+        });
+
+        // Morning activity — outdoor sightseeing in best light
+        const morningStart = isFirstDay ? '10:30' : (energy === 'low' ? '11:00' : '10:00');
+        const morningDuration = energy === 'high' ? 150 : energy === 'low' ? 90 : 120;
+        events.push({
+          time: morningStart, duration_minutes: morningDuration,
+          type: theme === 'foodie' ? 'activity' : 'sightseeing',
+          title: morning1?.name || `Morning ${theme === 'foodie' ? 'Food Tour' : 'Exploration'}`,
+          description: morning1?.description || `Explore the highlights of ${ctx.destination}.`,
+          location: morning1?.location || ctx.destination,
+          isGapSuggestion: false, isBreathingRoom: false,
+        });
+
+        // Lunch
+        events.push({
+          time: '12:30', duration_minutes: energy === 'low' ? 90 : 75, type: 'food',
+          title: lunch ? `Lunch at ${lunch.name}` : 'Local Lunch',
+          description: lunch?.description || 'Refuel with local flavors.',
+          location: lunch?.location || 'Local Eatery',
+          isGapSuggestion: false, isBreathingRoom: false,
+        });
+
+        // Afternoon activity — indoor (museums, galleries, shopping)
+        const pmType = theme === 'shopper' ? 'shopping' : theme === 'culture' ? 'sightseeing' : 'activity';
+        events.push({
+          time: '14:30', duration_minutes: energy === 'high' ? 150 : energy === 'low' ? 90 : 120,
+          type: pmType,
+          title: afternoon1?.name || `Afternoon ${theme === 'culture' ? 'Culture' : 'Adventure'}`,
+          description: afternoon1?.description || `Discover hidden gems in ${ctx.destination}.`,
+          location: afternoon1?.location || ctx.destination,
+          isGapSuggestion: false, isBreathingRoom: false,
+        });
+
+        // Breathing room
+        events.push({
+          time: energy === 'high' ? '17:00' : '16:30', duration_minutes: 30, type: 'break',
+          title: 'Breathing Room ☕',
+          description: theme === 'relaxed'
+            ? 'Take it easy — people-watch or grab a drink.'
+            : 'Recharge before the evening.',
+          location: 'Nearby Café',
+          isGapSuggestion: false, isBreathingRoom: true,
+        });
+
+        // Bonus activity for high-energy days
+        if (energy === 'high') {
+          events.push({
+            time: '17:30', duration_minutes: 60, type: 'activity',
+            title: extra1?.name || `Bonus: Local Discovery`,
+            description: extra1?.description || `Extra exploration — you've got the energy!`,
+            location: extra1?.location || ctx.destination,
+            isGapSuggestion: true, isBreathingRoom: false,
+          });
+        }
+
+        // Evening sightseeing — golden hour
+        events.push({
+          time: energy === 'high' ? '19:00' : '18:00',
+          duration_minutes: energy === 'low' ? 60 : 90,
+          type: 'sightseeing',
+          title: evening1?.name || 'Golden Hour Stroll',
+          description: evening1?.description || `Sunset vibes in ${ctx.destination}.`,
+          location: evening1?.location || ctx.destination,
+          isGapSuggestion: false, isBreathingRoom: false,
+        });
+
+        // Extra snack on foodie days
+        if (theme === 'foodie' && snack) {
+          events.splice(4, 0, {
+            time: '16:00', duration_minutes: 45, type: 'food',
+            title: `Snack at ${snack.name}`,
+            description: snack.description || 'Treat yourself to a local delicacy.',
+            location: snack.location || ctx.destination,
+            isGapSuggestion: true, isBreathingRoom: false,
+          });
+        }
+
+        // Dinner
+        events.push({
+          time: energy === 'high' ? '21:00' : '20:00', duration_minutes: 90, type: 'food',
+          title: dinner ? `Dinner at ${dinner.name}` : 'Dinner',
+          description: dinner?.description || `End the day with a memorable meal.`,
+          location: dinner?.location || 'Restaurant',
+          isGapSuggestion: false, isBreathingRoom: false,
+        });
+      }
 
       days.push({
         date: dayDate.toISOString().split('T')[0],
@@ -326,8 +411,20 @@ Return ONLY valid JSON, no markdown, no explanation.`);
 
     return {
       days,
-      documentChecklist: ['Valid passport (6+ months validity)', 'Visa if required', 'Travel insurance documents', 'Hotel booking confirmations', 'Return flight tickets', 'Local currency or travel card'],
-      culturalNudges: ['Research local tipping customs', 'Learn basic greetings in the local language', 'Check dress code requirements for religious sites'],
+      documentChecklist: [
+        'Valid passport (6+ months validity)',
+        'Visa if required',
+        'Travel insurance documents',
+        'Hotel booking confirmations',
+        'Return flight tickets',
+        'Local currency or travel card',
+      ],
+      culturalNudges: [
+        'Research local tipping customs',
+        'Learn basic greetings in the local language',
+        'Check dress code requirements for religious sites',
+        `Download an offline map of ${ctx.destination}`,
+      ],
     };
   }
 }

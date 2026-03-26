@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import jwt from 'jsonwebtoken';
+import { config } from '../config';
 
 export interface AuthRequest extends Request {
   userId?: string;
@@ -9,21 +8,31 @@ export interface AuthRequest extends Request {
 }
 
 export async function authMiddleware(req: AuthRequest, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({ error: 'No token provided', code: 'UNAUTHORIZED' });
+    return;
+  }
+  const token = authHeader.split(' ')[1];
   try {
-    const user = await prisma.user.findFirst({ where: { email: 'demo@roamie.app' } });
-    if (user) req.userId = user.id;
+    const payload = jwt.verify(token, config.JWT_SECRET) as { userId: string };
+    req.userId = payload.userId;
     next();
   } catch {
-    next();
+    res.status(401).json({ error: 'Invalid or expired token', code: 'UNAUTHORIZED' });
   }
 }
 
 export async function optionalAuth(req: AuthRequest, res: Response, next: NextFunction) {
-  try {
-    const user = await prisma.user.findFirst({ where: { email: 'demo@roamie.app' } });
-    if (user) req.userId = user.id;
-    next();
-  } catch {
-    next();
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    try {
+      const token = authHeader.split(' ')[1];
+      const payload = jwt.verify(token, config.JWT_SECRET) as { userId: string };
+      req.userId = payload.userId;
+    } catch {
+      // ignore, optional
+    }
   }
+  next();
 }

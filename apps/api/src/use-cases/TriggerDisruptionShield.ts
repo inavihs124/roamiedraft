@@ -15,6 +15,7 @@ export class TriggerDisruptionShield {
     tripId: string;
     flightId: string;
     disruptionType: 'cancelled' | 'delayed' | 'missed';
+    simulateZeroFlights?: boolean;
     lang?: string;
     onProgress?: (step: DisruptionStep) => void;
   }): Promise<DisruptionResolution> {
@@ -38,8 +39,22 @@ export class TriggerDisruptionShield {
     const trip = await this.tripRepo.findTripById(params.tripId);
     if (!trip) throw new Error('Trip not found');
 
-    const flight = await this.tripRepo.findFlightById(params.flightId);
-    if (!flight) throw new Error('Flight not found');
+    const flight = await this.tripRepo.findFlightById(params.flightId) ?? {
+      id: params.flightId,
+      tripId: params.tripId,
+      flightNumber: 'XX-MOCK',
+      origin: 'Home City',
+      destination: trip.destination,
+      departureTime: trip.startDate,
+      arrivalTime: new Date(trip.startDate.getTime() + 3 * 3600000),
+      airline: 'Demo Airlines',
+      status: 'confirmed',
+      price: 5000,
+      seatClass: 'economy',
+      confirmationCode: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
     const user = await this.tripRepo.findUserById(trip.userId);
     if (!user) throw new Error('User not found');
@@ -57,18 +72,24 @@ export class TriggerDisruptionShield {
     steps[1].status = 'in-progress';
     emit(steps[1]);
 
-    let alternativeFlights;
-    try {
-      alternativeFlights = await this.flightService.findAlternatives(
-        flight.origin,
-        flight.destination,
-        flight.departureTime,
-        { seatPreference: user.seatPreference || undefined, originalPrice: flight.price }
-      );
-    } catch {
-      throw new Error('Failed to find alternative flights');
+    let alternativeFlights: import('../domain/entities').AlternativeFlight[] = [];
+    if (params.simulateZeroFlights) {
+      alternativeFlights = [];
+    } else {
+      try {
+        alternativeFlights = await this.flightService.findAlternatives(
+          flight.origin,
+          flight.destination,
+          flight.departureTime,
+          { seatPreference: user.seatPreference || undefined, originalPrice: flight.price }
+        );
+      } catch {
+        throw new Error('Failed to find alternative flights');
+      }
     }
-    if (alternativeFlights.length === 0) throw new Error('No alternative flights available');
+    if (!params.simulateZeroFlights && alternativeFlights.length === 0) {
+      throw new Error('No alternative flights available');
+    }
 
     steps[1].status = 'completed';
     steps[1].detail = `${alternativeFlights.length} alternatives found`;

@@ -4,16 +4,18 @@
  * Also includes booked flights/hotels from cart and an inline disruption simulator.
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Home, Plane, Building2, MapPin, Clock, Calendar,
-  ChevronDown, ChevronUp, AlertTriangle, Zap, Check,
+  ChevronDown, AlertTriangle, Zap, Check,
   Utensils, Eye, ShoppingBag, Bus, Coffee, Briefcase,
-  Sparkles, Shield, ArrowRight, ExternalLink,
+  Sparkles, Shield, ArrowRight, ExternalLink, Plus,
+  RotateCcw, RefreshCw,
 } from 'lucide-react';
 import { useStore } from '../stores/useStore';
+import api from '../lib/api';
 
 // Timeline node types
 type NodeType = 'home' | 'flight' | 'hotel' | 'day' | 'activity' | 'disruption' | 'return';
@@ -59,14 +61,87 @@ const NODE_THEME: Record<NodeType, { bg: string; border: string; icon: string; g
   return:     { bg: 'bg-blue-50', border: 'border-blue-200', icon: 'text-blue-600', glow: 'shadow-sm' },
 };
 
+// Animated step indicator for building UI
+function StepItem({ step, index }: { step: { icon: string; label: string; detail: string }; index: number }) {
+  const [active, setActive] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setActive(true), index * 2500);
+    return () => clearTimeout(timer);
+  }, [index]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0.3, x: -10 }}
+      animate={active ? { opacity: 1, x: 0 } : { opacity: 0.3, x: -10 }}
+      transition={{ duration: 0.5 }}
+      className={`flex items-center gap-4 p-3 rounded-xl border transition-all ${
+        active ? 'bg-white border-blue-100 shadow-sm' : 'bg-slate-50/50 border-transparent'
+      }`}
+    >
+      <span className="text-xl w-8 text-center">{step.icon}</span>
+      <div className="flex-1">
+        <p className={`text-sm font-semibold ${active ? 'text-slate-900' : 'text-slate-400'}`}>{step.label}</p>
+        {active && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-xs text-slate-500 mt-0.5"
+          >
+            {step.detail}
+          </motion.p>
+        )}
+      </div>
+      {active && (
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center"
+        >
+          <Check size={12} className="text-white" />
+        </motion.div>
+      )}
+    </motion.div>
+  );
+}
+
 export default function MyItinerary() {
   const navigate = useNavigate();
-  const { currentTrip, cart, triggerDisruption } = useStore();
+  const { currentTrip, cart, triggerDisruption, buildItinerary, itineraryBuilding, addCustomEvent, regenerateDay, undoDay } = useStore();
 
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['day-0']));
   const [disrupting, setDisrupting] = useState(false);
   const [disruptionResult, setDisruptionResult] = useState<any>(null);
   const [disruptionStep, setDisruptionStep] = useState(-1);
+  const [building, setBuilding] = useState(false);
+  const [energyLevel, setEnergyLevel] = useState<'high' | 'medium' | 'low'>('medium');
+  const hasBuiltRef = useRef(false);
+
+  // Add Plan form state
+  const [addingToDayId, setAddingToDayId] = useState<string | null>(null);
+  const [newPlanTitle, setNewPlanTitle] = useState('');
+  const [newPlanTime, setNewPlanTime] = useState('14:00');
+  const [newPlanDuration, setNewPlanDuration] = useState(60);
+  const [newPlanType, setNewPlanType] = useState('activity');
+  const [newPlanLocation, setNewPlanLocation] = useState('');
+  const [regeneratingDayId, setRegeneratingDayId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!currentTrip) return;
+    if (hasBuiltRef.current) return;
+    if (currentTrip.itinerary && currentTrip.itinerary.length > 0) {
+      hasBuiltRef.current = true;
+      return;
+    }
+    // If the store is already building (from createTrip), just wait for it
+    if (itineraryBuilding) return;
+    if (building) return;
+
+    hasBuiltRef.current = true;
+    setBuilding(true);
+    buildItinerary(currentTrip.id)
+      .catch(console.error)
+      .finally(() => setBuilding(false));
+  }, [currentTrip?.id, currentTrip?.itinerary?.length, itineraryBuilding]);
 
   const toggleNode = (id: string) => {
     setExpandedNodes(prev => {
@@ -136,10 +211,11 @@ export default function MyItinerary() {
         id: `day-${dayIdx}`, type: 'day',
         title: `Day ${dayIdx + 1} — ${dayDate}`,
         subtitle: `${events.length} activities planned`,
+        details: { dayId: day.id },
         children: events.map((evt: any, evtIdx: number) => ({
           id: `day-${dayIdx}-evt-${evtIdx}`, type: 'activity',
           title: evt.title, subtitle: evt.location || evt.description,
-          time: evt.time, details: evt, status: 'upcoming',
+          time: evt.time, details: { ...evt, userAdded: evt.userAdded }, status: 'upcoming',
         })),
         status: dayIdx === 0 ? 'active' : 'upcoming',
       });
@@ -198,6 +274,57 @@ export default function MyItinerary() {
     );
   }
 
+  if (building || itineraryBuilding) {
+    const steps = [
+      { icon: '🌍', label: 'Discovering places', detail: `Finding top attractions in ${currentTrip?.destination || 'your destination'}...` },
+      { icon: '📅', label: 'Optimizing schedule', detail: 'Arranging activities for the best experience...' },
+      { icon: '🚕', label: 'Adding travel segments', detail: 'Inserting transit between locations...' },
+      { icon: '☕', label: 'Planning breaks', detail: 'Adding breathing room so you do not burn out...' },
+      { icon: '✨', label: 'Finalizing itinerary', detail: 'Polishing your personalized travel plan...' },
+    ];
+
+    return (
+      <div className="flex flex-col items-center justify-center p-8 mt-12 max-w-xl mx-auto text-center">
+        {/* Pulsing destination globe */}
+        <motion.div
+          animate={{ scale: [1, 1.1, 1], opacity: [0.7, 1, 0.7] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-3xl shadow-lg shadow-blue-500/30 mb-8"
+        >
+          🗺️
+        </motion.div>
+
+        <h2 className="font-display font-bold text-2xl text-slate-900 mb-2">
+          Crafting Your {currentTrip?.destination || ''} Adventure
+        </h2>
+        <p className="text-slate-500 mb-8 text-sm">
+          AI is building a personalized itinerary just for you
+        </p>
+
+        {/* Animated progress bar */}
+        <div className="w-full bg-slate-100 rounded-full h-2 mb-8 overflow-hidden">
+          <motion.div
+            className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500 rounded-full"
+            initial={{ width: '5%' }}
+            animate={{ width: '90%' }}
+            transition={{ duration: 15, ease: 'easeOut' }}
+          />
+        </div>
+
+        {/* Step list */}
+        <div className="w-full space-y-3 text-left">
+          {steps.map((step, idx) => (
+            <StepItem key={idx} step={step} index={idx} />
+          ))}
+        </div>
+
+        <p className="text-xs text-slate-400 mt-8 italic">
+          💡 Tip: You can adjust the energy level after the itinerary is built to make it busier or more relaxed.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-4 lg:p-8 pb-32">
       {/* Header */}
@@ -218,6 +345,55 @@ export default function MyItinerary() {
               {cart.filter(c => c.tripId === currentTrip.id).length} bookings in cart
             </span>
           )}
+          <button
+            onClick={async () => {
+              try {
+                const response = await api.get(`/itinerary/${currentTrip.id}/export`, { responseType: 'blob' });
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `itinerary-${currentTrip.destination}.txt`);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+              } catch (e) {
+                console.error('Export failed', e);
+              }
+            }}
+            className="px-4 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 shadow-sm text-sm font-semibold tracking-wide backdrop-blur-md hover:bg-blue-100 transition-colors flex items-center gap-1.5"
+          >
+            <ExternalLink size={13} /> Export
+          </button>
+          <button
+            onClick={() => {
+              if (!currentTrip || building) return;
+              hasBuiltRef.current = false;
+              setBuilding(true);
+              buildItinerary(currentTrip.id, [], [], energyLevel)
+                .catch(console.error)
+                .finally(() => setBuilding(false));
+            }}
+            disabled={building}
+            className="px-4 py-1.5 rounded-full bg-violet-50 border border-violet-200 text-violet-700 shadow-sm text-sm font-semibold tracking-wide backdrop-blur-md hover:bg-violet-100 transition-colors flex items-center gap-1.5 disabled:opacity-50"
+          >
+            <Sparkles size={13} /> {building ? 'Rebuilding...' : 'Rebuild'}
+          </button>
+        </div>
+        <div className="flex items-center gap-3 mt-3">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Energy:</span>
+          {(['low', 'medium', 'high'] as const).map(level => (
+            <button
+              key={level}
+              onClick={() => setEnergyLevel(level)}
+              className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors capitalize ${
+                energyLevel === level
+                  ? 'bg-blue-600 border-blue-600 text-white'
+                  : 'bg-white border-slate-200 text-slate-500 hover:border-blue-300'
+              }`}
+            >
+              {level}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -291,6 +467,36 @@ export default function MyItinerary() {
                           <ExternalLink size={12} /> View Booking
                         </a>
                       )}
+                      {/* Per-day Rebuild & Undo buttons */}
+                      {node.type === 'day' && node.details?.dayId && (
+                        <div className="flex gap-1.5" onClick={e => e.stopPropagation()}>
+                          <button
+                            title="Rebuild this day"
+                            disabled={regeneratingDayId === node.details.dayId}
+                            onClick={async () => {
+                              if (!currentTrip) return;
+                              setRegeneratingDayId(node.details.dayId);
+                              try {
+                                await regenerateDay(currentTrip.id, node.details.dayId, energyLevel);
+                              } catch {} finally {
+                                setRegeneratingDayId(null);
+                              }
+                            }}
+                            className="w-7 h-7 rounded-md bg-white hover:bg-slate-50 border border-slate-200 shadow-sm flex items-center justify-center text-slate-500 hover:text-slate-900 transition-all focus:outline-none focus:ring-2 focus:ring-slate-200 disabled:opacity-50"
+                          >
+                            <RefreshCw size={13} className={regeneratingDayId === node.details.dayId ? 'animate-spin' : ''} />
+                          </button>
+                          <button
+                            title="Undo last change"
+                            onClick={async () => {
+                              await undoDay(node.details.dayId);
+                            }}
+                            className="w-7 h-7 rounded-md bg-white hover:bg-slate-50 border border-slate-200 shadow-sm flex items-center justify-center text-slate-500 hover:text-slate-900 transition-all focus:outline-none focus:ring-2 focus:ring-slate-200"
+                          >
+                            <RotateCcw size={13} />
+                          </button>
+                        </div>
+                      )}
                       {(hasChildren || isDisruptionNode) && (
                         <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-slate-200 transition-colors border border-slate-200">
                           <motion.div animate={{ rotate: isExpanded ? 180 : 0 }}>
@@ -309,7 +515,7 @@ export default function MyItinerary() {
                           {/* Inner Timeline line */}
                           <div className="absolute left-[39px] top-6 bottom-6 w-px bg-slate-200 z-0"></div>
                           
-                          {node.children!.map((child, cIdx) => {
+                          {node.children!.map((child, _cIdx) => {
                             const evtType = child.details?.type || 'activity';
                             const EvtIcon = EVENT_ICONS[evtType] || MapPin;
                             const evtColorTheme = EVENT_COLORS[evtType] || 'text-slate-500 bg-slate-100 border-slate-200';
@@ -318,14 +524,19 @@ export default function MyItinerary() {
                             const isGap = child.details?.isBreathingRoom;
 
                             return (
-                              <div key={child.id} className={`relative z-10 flex gap-4 p-4 rounded-xl transition-colors ${isGap ? 'bg-slate-50 border border-dashed border-slate-200' : 'bg-slate-50 border border-slate-100 hover:bg-white hover:border-slate-200 hover:shadow-sm'}`}>
-                                <div className={`w-10 h-10 rounded-xl flex shrink-0 items-center justify-center border ${evtColorTheme}`}>
+                              <div key={child.id} className={`relative z-10 flex gap-4 p-4 rounded-xl transition-colors ${child.details?.userAdded ? 'bg-slate-50 border border-slate-200 hover:bg-slate-100/50 shadow-sm overflow-hidden before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-slate-800' : isGap ? 'bg-slate-50 border border-dashed border-slate-200' : 'bg-slate-50 border border-slate-100 hover:bg-white hover:border-slate-200 hover:shadow-sm'}`}>
+                                <div className={`w-10 h-10 rounded-xl flex shrink-0 items-center justify-center border ${evtColorTheme} ${child.details?.userAdded ? 'ml-1' : ''}`}>
                                   <EvtIcon size={18} />
                                 </div>
                                 <div className="flex-1 min-w-0 py-0.5">
                                   <div className="flex items-start justify-between gap-4">
                                     <div>
-                                      <h4 className="text-sm font-bold text-slate-900">{child.title}</h4>
+                                      <h4 className="text-sm font-bold text-slate-900 flex items-center flex-wrap gap-2">
+                                        {child.title}
+                                        {child.details?.userAdded && (
+                                          <span className="px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider bg-slate-200 text-slate-700 border border-slate-300 shadow-sm">Your Plan</span>
+                                        )}
+                                      </h4>
                                       {child.subtitle && <p className="text-xs text-slate-500 mt-1 line-clamp-2">{child.subtitle}</p>}
                                     </div>
                                     {child.time && (
@@ -344,6 +555,75 @@ export default function MyItinerary() {
                               </div>
                             );
                           })}
+
+                          {/* Add Plan Button / Form */}
+                          {node.details?.dayId && (
+                            addingToDayId === node.details.dayId ? (
+                              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                                className="relative z-10 p-5 rounded-2xl bg-slate-50 border border-dashed border-slate-300 shadow-sm space-y-4"
+                              >
+                                <p className="text-xs font-bold text-slate-700 uppercase tracking-widest flex items-center gap-1.5">
+                                  <Sparkles size={12} className="text-slate-400" />
+                                  Add Your Plan
+                                </p>
+                                <div className="grid grid-cols-2 gap-3">
+                                  <input value={newPlanTitle} onChange={e => setNewPlanTitle(e.target.value)} placeholder="What are you planning?" className="col-span-2 px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 shadow-sm placeholder:text-slate-400 outline-none focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-shadow" />
+                                  <input type="time" value={newPlanTime} onChange={e => setNewPlanTime(e.target.value)} className="px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 shadow-sm outline-none focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-shadow" />
+                                  <select value={newPlanDuration} onChange={e => setNewPlanDuration(Number(e.target.value))} className="px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 shadow-sm outline-none focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-shadow">
+                                    <option value={30}>30 min</option>
+                                    <option value={60}>1 hour</option>
+                                    <option value={90}>1.5 hours</option>
+                                    <option value={120}>2 hours</option>
+                                    <option value={180}>3 hours</option>
+                                  </select>
+                                  <select value={newPlanType} onChange={e => setNewPlanType(e.target.value)} className="px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 shadow-sm outline-none focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-shadow">
+                                    <option value="activity">Activity</option>
+                                    <option value="food">Food / Dining</option>
+                                    <option value="sightseeing">Sightseeing</option>
+                                    <option value="shopping">Shopping</option>
+                                    <option value="meeting">Meeting</option>
+                                    <option value="transport">Transport</option>
+                                  </select>
+                                  <input value={newPlanLocation} onChange={e => setNewPlanLocation(e.target.value)} placeholder="Location (optional)" className="px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 shadow-sm placeholder:text-slate-400 outline-none focus:border-slate-800 focus:ring-1 focus:ring-slate-800 transition-shadow" />
+                                </div>
+                                <div className="flex gap-2 pt-2">
+                                  <button
+                                    onClick={async () => {
+                                      if (!newPlanTitle.trim()) return;
+                                      await addCustomEvent(node.details.dayId, {
+                                        time: newPlanTime,
+                                        duration_minutes: newPlanDuration,
+                                        type: newPlanType,
+                                        title: newPlanTitle.trim(),
+                                        description: `Custom plan added by you`,
+                                        location: newPlanLocation || currentTrip?.destination || '',
+                                        isGapSuggestion: false,
+                                        isBreathingRoom: false,
+                                      });
+                                      setNewPlanTitle(''); setNewPlanLocation('');
+                                      setAddingToDayId(null);
+                                    }}
+                                    className="flex-1 py-2.5 rounded-lg bg-slate-900 border border-slate-900 hover:bg-slate-800 text-white text-sm font-bold shadow-md transition-all flex items-center justify-center gap-2"
+                                  >
+                                    <Plus size={16} /> Add to Itinerary
+                                  </button>
+                                  <button
+                                    onClick={() => setAddingToDayId(null)}
+                                    className="px-5 py-2.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200 text-sm font-semibold shadow-sm transition-all"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </motion.div>
+                            ) : (
+                              <button
+                                onClick={() => setAddingToDayId(node.details.dayId)}
+                                className="relative z-10 w-full flex items-center justify-center gap-2 p-3.5 rounded-xl border border-dashed border-slate-300 bg-slate-50/50 text-slate-500 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-400 text-sm font-semibold transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
+                              >
+                                <Plus size={16} /> Add Your Plan
+                              </button>
+                            )
+                          )}
                         </div>
                       </motion.div>
                     )}

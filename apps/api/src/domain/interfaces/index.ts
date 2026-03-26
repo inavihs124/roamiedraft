@@ -11,6 +11,7 @@ export interface ITripRepository {
   findTripsByUserId(userId: string): Promise<TripEntity[]>;
   createTrip(data: Omit<TripEntity, 'id' | 'createdAt' | 'updatedAt'>): Promise<TripEntity>;
   updateTrip(id: string, data: Partial<TripEntity>): Promise<TripEntity>;
+  deleteTrip(id: string): Promise<void>;
   findItineraryDays(tripId: string): Promise<ItineraryDayEntity[]>;
   upsertItineraryDay(data: { tripId: string; date: Date; events: string; freeGaps: string; previousVersion?: string }): Promise<ItineraryDayEntity>;
   findFlightsByTripId(tripId: string): Promise<FlightBookingEntity[]>;

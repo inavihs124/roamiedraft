@@ -28,7 +28,7 @@ function CountdownTimer({ targetDate }: { targetDate: string }) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { trips, currentTrip, fetchTrips, fetchTrip, createTrip, searchDestinations } = useStore();
+  const { trips, currentTrip, fetchTrips, fetchTrip, createTrip, searchDestinations, deleteTrip } = useStore();
   
   const [dest, setDest] = useState('');
   const [origin, setOrigin] = useState('');
@@ -114,9 +114,10 @@ export default function Dashboard() {
     if (!dest || !startDate || !endDate) return;
     setCreating(true);
     try {
-      const id = await createTrip({ destination: dest, startDate, endDate });
-      await fetchTrip(id);
-      setDest(''); setStartDate(''); setEndDate('');
+      await createTrip({ destination: dest, startDate, endDate });
+      setDest(''); setStartDate(''); setEndDate(''); setOrigin('');
+      // Auto-navigate to itinerary page — it will show building progress
+      navigate('/my-itinerary');
     } catch (err) {
       console.error(err);
     }
@@ -149,6 +150,16 @@ export default function Dashboard() {
                 <option key={tr.id} value={tr.id}>{tr.destination}</option>
               ))}
             </select>
+            {currentTrip && (
+              <button
+                onClick={async () => {
+                  if (confirm('Delete this trip?')) await deleteTrip(currentTrip.id);
+                }}
+                className="text-xs text-red-500 hover:text-red-700 font-semibold transition-colors"
+              >
+                Delete
+              </button>
+            )}
           </div>
         )}
       </div>

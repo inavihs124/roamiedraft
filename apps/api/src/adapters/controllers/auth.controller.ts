@@ -17,6 +17,7 @@ const registerSchema = z.object({
   tripPurpose: z.enum(['business', 'leisure']).default('leisure'),
   dietaryPref: z.string().optional(),
   seatPreference: z.string().optional(),
+  passportCountry: z.string().optional(),
 });
 
 const loginSchema = z.object({
@@ -48,6 +49,7 @@ router.post('/register', authLimiter, async (req: AuthRequest, res: Response) =>
         tripPurpose: parsed.data.tripPurpose,
         dietaryPref: parsed.data.dietaryPref || null,
         seatPreference: parsed.data.seatPreference || null,
+        passportCountry: parsed.data.passportCountry || null,
       },
     });
 

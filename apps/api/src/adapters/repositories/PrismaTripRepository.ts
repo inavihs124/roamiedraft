@@ -41,6 +41,10 @@ export class PrismaTripRepository implements ITripRepository {
     return prisma.trip.update({ where: { id }, data: updateData });
   }
 
+  async deleteTrip(id: string): Promise<void> {
+    await prisma.trip.delete({ where: { id } });
+  }
+
   async findItineraryDays(tripId: string): Promise<ItineraryDayEntity[]> {
     const rows = await prisma.itineraryDay.findMany({
       where: { tripId },
@@ -52,9 +56,21 @@ export class PrismaTripRepository implements ITripRepository {
   async upsertItineraryDay(data: {
     tripId: string; date: Date; events: string; freeGaps: string; previousVersion?: string;
   }): Promise<ItineraryDayEntity> {
+    // Normalize to midnight UTC to avoid time-drift duplicates
+    const normalizedDate = new Date(data.date);
+    normalizedDate.setUTCHours(0, 0, 0, 0);
+
+    const dayStart = new Date(normalizedDate);
+    const dayEnd = new Date(normalizedDate);
+    dayEnd.setUTCHours(23, 59, 59, 999);
+
     const existing = await prisma.itineraryDay.findFirst({
-      where: { tripId: data.tripId, date: data.date },
+      where: {
+        tripId: data.tripId,
+        date: { gte: dayStart, lte: dayEnd },
+      },
     });
+
     let row;
     if (existing) {
       row = await prisma.itineraryDay.update({
@@ -66,7 +82,9 @@ export class PrismaTripRepository implements ITripRepository {
         },
       });
     } else {
-      row = await prisma.itineraryDay.create({ data });
+      row = await prisma.itineraryDay.create({
+        data: { ...data, date: normalizedDate },
+      });
     }
     return mapItineraryDay(row);
   }

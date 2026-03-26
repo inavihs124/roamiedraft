@@ -31,7 +31,7 @@ export class WeatherService implements IWeatherService {
   async getForecast(lat: number, lng: number, days: number = 7): Promise<WeatherForecast> {
     try {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=${days}`;
-      const res = await fetch(url);
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
       if (!res.ok) throw new Error(`Weather API returned ${res.status}`);
       const data = await res.json() as any;
 
