@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plane, LayoutDashboard, AlertTriangle, Receipt, Package, Menu, X, Map } from 'lucide-react';
+import { Plane, LayoutDashboard, AlertTriangle, Receipt, Package, Menu, X, Map, PlusCircle } from 'lucide-react';
 import { useStore } from './stores/useStore';
 import Dashboard from './pages/Dashboard';
 import Disruption from './pages/Disruption';
@@ -11,6 +11,7 @@ import PackingChecklist from './pages/PackingChecklist';
 import VoiceTranslateWidget from './components/VoiceTranslateWidget';
 import OpenClawCart from './components/OpenClawCart';
 import MyItinerary from './pages/MyItinerary';
+import NewTrip from './pages/NewTrip';
 
 const LANGUAGES = [
   { code: 'en', flag: '🇬🇧' }, { code: 'hi', flag: '🇮🇳' },
@@ -20,6 +21,7 @@ const LANGUAGES = [
 
 const NAV = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { path: '/new-trip', icon: PlusCircle, label: 'New Trip' },
   { path: '/my-itinerary', icon: Map, label: 'My Itinerary' },
   { path: '/disruption', icon: AlertTriangle, label: 'Disruption' },
   { path: '/expenses', icon: Receipt, label: 'Expenses' },
@@ -146,6 +148,7 @@ export default function App() {
             <Routes>
               {[
                 { path: '/dashboard', El: Dashboard },
+                { path: '/new-trip', El: NewTrip },
                 { path: '/my-itinerary', El: MyItinerary },
                 { path: '/disruption', El: Disruption },
                 { path: '/expenses', El: Expenses },

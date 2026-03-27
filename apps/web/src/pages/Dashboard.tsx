@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Calendar, Plane, Map, Plus, Sun, Cloud, CloudRain, AlertTriangle, Receipt, Bot, Send, Wallet, Utensils, Hotel, Activity, Bus, DollarSign, Trash2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Calendar, Plane, Map, Plus, Sun, Cloud, CloudRain, AlertTriangle, Receipt, Bot, Send, Wallet, Utensils, Hotel, Activity, Bus, DollarSign, Trash2 } from 'lucide-react';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useStore } from '../stores/useStore';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -15,8 +15,8 @@ interface BudgetData {
   preferences: string;
 }
 
-const CURRENCY_SYMBOLS: Record<string,string> = {
-  INR:'₹', USD:'$', EUR:'€', GBP:'£', SGD:'S$', JPY:'¥', AED:'د.إ', AUD:'A$', CAD:'C$', CHF:'Fr'
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  INR: '₹', USD: '$', EUR: '€', GBP: '£', SGD: 'S$', JPY: '¥', AED: 'د.إ', AUD: 'A$', CAD: 'C$', CHF: 'Fr'
 };
 
 function getBudget(tripId: string): BudgetData | null {
@@ -30,7 +30,7 @@ function clearBudget(tripId: string) {
 }
 
 // ── Chat bot widget ───────────────────────────────────────────
-interface Msg { role: 'ai'|'user'; text: string }
+interface Msg { role: 'ai' | 'user'; text: string }
 
 function BudgetChat({ tripId, onSet }: { tripId: string; onSet: (b: BudgetData) => void }) {
   const [msgs, setMsgs] = useState<Msg[]>([{
@@ -38,7 +38,7 @@ function BudgetChat({ tripId, onSet }: { tripId: string; onSet: (b: BudgetData) 
     text: "Hi! Let's lock in your trip budget 🎯\n\nWhat's your total budget and currency?\n(e.g. \"₹80000 INR\", \"$2000 USD\")"
   }]);
   const [input, setInput] = useState('');
-  const [stage, setStage] = useState<'amount'|'prefs'|'done'>('amount');
+  const [stage, setStage] = useState<'amount' | 'prefs' | 'done'>('amount');
   const [pending, setPending] = useState<Partial<BudgetData>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -47,7 +47,7 @@ function BudgetChat({ tripId, onSet }: { tripId: string; onSet: (b: BudgetData) 
   const addAI = (text: string) => setMsgs(p => [...p, { role: 'ai', text }]);
 
   const parseAmt = (txt: string): { amount: number; currency: string; symbol: string } | null => {
-    const syms: Record<string,string> = { '₹':'INR','$':'USD','€':'EUR','£':'GBP' };
+    const syms: Record<string, string> = { '₹': 'INR', '$': 'USD', '€': 'EUR', '£': 'GBP' };
     const m = txt.match(/([₹$€£]?)\s*([\d,]+\.?\d*)\s*([a-zA-Z]*)/);
     if (!m) return null;
     const amount = parseFloat(m[2].replace(/,/g, ''));
@@ -68,10 +68,10 @@ function BudgetChat({ tripId, onSet }: { tripId: string; onSet: (b: BudgetData) 
         const t = parsed.amount;
         const breakdown = {
           accommodation: Math.round(t * 0.35),
-          food:          Math.round(t * 0.20),
-          activities:    Math.round(t * 0.20),
-          transport:     Math.round(t * 0.15),
-          misc:          Math.round(t * 0.10),
+          food: Math.round(t * 0.20),
+          activities: Math.round(t * 0.20),
+          transport: Math.round(t * 0.15),
+          misc: Math.round(t * 0.10),
         };
         setPending({ total: t, currency: parsed.currency, symbol: parsed.symbol, breakdown });
         setStage('prefs');
@@ -119,11 +119,11 @@ function BudgetChat({ tripId, onSet }: { tripId: string; onSet: (b: BudgetData) 
 // ── Budget Summary ────────────────────────────────────────────
 function BudgetSummary({ budget, onReset }: { budget: BudgetData; onReset: () => void }) {
   const cats = [
-    { label: 'Accommodation', Icon: Hotel,      val: budget.breakdown.accommodation, color: '#6366f1' },
-    { label: 'Food',          Icon: Utensils,   val: budget.breakdown.food,          color: '#22c55e' },
-    { label: 'Activities',    Icon: Activity,   val: budget.breakdown.activities,    color: '#e55803' },
-    { label: 'Transport',     Icon: Bus,        val: budget.breakdown.transport,     color: '#f59e0b' },
-    { label: 'Misc',          Icon: DollarSign, val: budget.breakdown.misc,          color: '#a855f7' },
+    { label: 'Accommodation', Icon: Hotel, val: budget.breakdown.accommodation, color: '#6366f1' },
+    { label: 'Food', Icon: Utensils, val: budget.breakdown.food, color: '#22c55e' },
+    { label: 'Activities', Icon: Activity, val: budget.breakdown.activities, color: '#e55803' },
+    { label: 'Transport', Icon: Bus, val: budget.breakdown.transport, color: '#f59e0b' },
+    { label: 'Misc', Icon: DollarSign, val: budget.breakdown.misc, color: '#a855f7' },
   ];
   return (
     <div style={{ padding: 20 }}>
@@ -174,13 +174,13 @@ function Countdown({ date }: { date: string }) {
 }
 
 // ── Dropdown List ─────────────────────────────────────────────
-const DD = ({ items, onSelect, icon: Icon }: { items: any[]; onSelect: (s:any)=>void; icon: any }) => (
+const DD = ({ items, onSelect, icon: Icon }: { items: any[]; onSelect: (s: any) => void; icon: any }) => (
   <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: '#fff', border: '1px solid #f0dfc0', borderRadius: 12, boxShadow: '0 8px 24px rgba(14,33,37,0.12)', zIndex: 60, maxHeight: 220, overflowY: 'auto' }}
-       onMouseDown={(e) => e.preventDefault()} /* Prevents input blur from firing before onClick */
+    onMouseDown={(e) => e.preventDefault()} /* Prevents input blur from firing before onClick */
   >
     {items.map((s: any, i: number) => (
       <div key={i} onClick={() => onSelect(s)}
-        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', cursor: 'pointer', borderBottom: i < items.length-1 ? '1px solid #f5e8ca' : 'none' }}
+        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', cursor: 'pointer', borderBottom: i < items.length - 1 ? '1px solid #f5e8ca' : 'none' }}
         onMouseEnter={e => (e.currentTarget.style.background = '#fde8d8')}
         onMouseLeave={e => (e.currentTarget.style.background = '')}>
         <Icon size={14} style={{ color: '#e55803', flexShrink: 0 }} />
@@ -203,7 +203,7 @@ export default function Dashboard() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [creating, setCreating] = useState(false);
-  const [creatingStep, setCreatingStep] = useState<1|2>(1);
+  const [creatingStep, setCreatingStep] = useState<1 | 2>(1);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSug, setShowSug] = useState(false);
   const [oriSugs, setOriSugs] = useState<any[]>([]);
@@ -259,7 +259,7 @@ export default function Dashboard() {
       await createTrip({ destination: dest, startDate, endDate });
       setDest(''); setOrigin(''); setStartDate(''); setEndDate('');
       setCreatingStep(2); // Move to Budget Step
-    } catch {}
+    } catch { }
     setCreating(false);
   };
 
@@ -302,7 +302,7 @@ export default function Dashboard() {
       </div>
 
       {currentTrip && creatingStep === 1 ? (
-        <div style={{ display: 'grid', gap: 24, alignItems: 'start' }}
+        <div style={{ display: 'grid', gap: 24, alignItems: 'stretch' }}
           className="grid grid-cols-1 lg-grid-cols-layout" >
 
           {/* Left column */}
@@ -356,13 +356,13 @@ export default function Dashboard() {
               <h3 style={{ fontFamily: 'Syne,sans-serif', fontWeight: 700, fontSize: 15, color: '#0e2125', marginBottom: 12 }}>Quick Actions</h3>
               <div style={{ display: 'grid', gap: 12 }} className="grid grid-cols-2 lg-grid-cols-4">
                 {[
-                  { Icon: Map,           title: 'Itinerary',   desc: 'View plans',    path: '/my-itinerary' },
-                  { Icon: Receipt,       title: 'Expenses',    desc: 'Log costs',     path: '/expenses' },
-                  { Icon: AlertTriangle, title: 'Disruption',  desc: 'Manage delays', path: '/disruption' },
-                  { Icon: Plus,          title: 'New Trip',    desc: 'Plan another',  path: null },
+                  { Icon: Map, title: 'Itinerary', desc: 'View plans', path: '/my-itinerary' },
+                  { Icon: Receipt, title: 'Expenses', desc: 'Log costs', path: '/expenses' },
+                  { Icon: AlertTriangle, title: 'Disruption', desc: 'Manage delays', path: '/disruption' },
+                  { Icon: Plus, title: 'New Trip', desc: 'Plan another', path: '/new-trip' },
                 ].map(({ Icon, title, desc, path }) => (
                   <motion.button key={title} whileHover={{ y: -2, boxShadow: '0 8px 20px rgba(229,88,3,0.1)' }} whileTap={{ scale: 0.97 }}
-                    onClick={() => { if (path) navigate(path); else { fetchTrip(''); setCreatingStep(1); } }}
+                    onClick={() => { if (path) navigate(path); }}
                     style={{ background: '#fff', border: '1px solid #f0dfc0', borderRadius: 14, padding: '16px 14px', textAlign: 'left', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <div style={{ width: 34, height: 34, borderRadius: 9, background: '#fde8d8', color: '#e55803', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Icon size={16} />
@@ -381,7 +381,7 @@ export default function Dashboard() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
             {/* Map */}
-            <div className="r-card" style={{ overflow: 'hidden', height: '100%', minHeight: 400 }}>
+            <div className="r-card" style={{ overflow: 'hidden', flex: 1, minHeight: 400, position: 'relative' }}>
               <DashMap loc={currentTrip.destination} />
             </div>
           </div>
@@ -394,7 +394,7 @@ export default function Dashboard() {
             className="r-card" style={{ padding: 36, display: 'flex', flexDirection: 'column' }}>
             <h2 style={{ fontFamily: 'Syne,sans-serif', fontWeight: 800, fontSize: 24, color: '#0e2125', marginBottom: 6 }}>Set Your Budget</h2>
             <p style={{ color: '#6b5c45', fontSize: 14, marginBottom: 20 }}>Let's lock in your numbers for {currentTrip.destination}.</p>
-            
+
             <div style={{ flex: 1, background: '#fffbf4', borderRadius: 16, border: '1px solid #f0dfc0', overflow: 'hidden' }}>
               <BudgetChat tripId={currentTrip.id} onSet={b => setBudgetState(b)} />
             </div>
@@ -416,102 +416,27 @@ export default function Dashboard() {
         </div>
 
       ) : (
-        /* Create trip form */
-        <div style={{ display: 'grid', gap: 24, minHeight: 560 }} className="grid grid-cols-1 lg-grid-cols-2">
-          <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
-            className="r-card" style={{ padding: 36, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <h2 style={{ fontFamily: 'Syne,sans-serif', fontWeight: 800, fontSize: 24, color: '#0e2125', marginBottom: 6 }}>Create New Trip</h2>
-            <p style={{ color: '#6b5c45', fontSize: 14, marginBottom: 28 }}>Where are you headed next?</p>
-
-            <form onSubmit={create}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginBottom: 18 }}>
-
-                {/* Origin */}
-                <div style={{ position: 'relative' }} ref={oriRef}>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#6b5c45', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>From</label>
-                  <div style={{ position: 'relative' }}>
-                    <Plane size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#6b5c45', pointerEvents: 'none' }} />
-                    <input value={origin} onChange={e => onOri(e.target.value)} onFocus={() => oriSugs.length && setShowOriSug(true)}
-                      style={S} placeholder="City or airport" />
-                  </div>
-                  <AnimatePresence>
-                    {showOriSug && oriSugs.length > 0 && (
-                      <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                        <DD items={oriSugs} icon={Plane} onSelect={s => { setOrigin(s.name); setShowOriSug(false); }} />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* Destination */}
-                <div style={{ position: 'relative' }} ref={sugRef}>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#6b5c45', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>To</label>
-                  <div style={{ position: 'relative' }}>
-                    <MapPin size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#6b5c45', pointerEvents: 'none' }} />
-                    <input value={dest} onChange={e => onDest(e.target.value)} onFocus={() => suggestions.length && setShowSug(true)} required
-                      style={S} placeholder="Destination" />
-                  </div>
-                  <AnimatePresence>
-                    {showSug && suggestions.length > 0 && (
-                      <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                        <DD items={suggestions} icon={MapPin} onSelect={s => { setDest(s.name); setShowSug(false); setSuggestions([]); }} />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#6b5c45', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Start Date</label>
-                  <div style={{ position: 'relative' }}>
-                    <Calendar size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#6b5c45', pointerEvents: 'none' }} />
-                    <input type="date" value={startDate} required onChange={e => setStartDate(e.target.value)} style={S} />
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#6b5c45', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>End Date</label>
-                  <div style={{ position: 'relative' }}>
-                    <Calendar size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#6b5c45', pointerEvents: 'none' }} />
-                    <input type="date" value={endDate} required onChange={e => setEndDate(e.target.value)} style={S} />
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, paddingTop: 8 }}>
-                {trips.length > 0 && (
-                  <button type="button" className="btn btn-ghost" onClick={() => fetchTrip(trips[0].id)}>Cancel</button>
-                )}
-                <button type="submit" className="btn btn-primary" disabled={creating} style={{ minWidth: 140 }}>
-                  {creating ? 'Creating…' : 'Create Trip →'}
-                </button>
-              </div>
-            </form>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-            className="r-card hidden lg:block" style={{ overflow: 'hidden', minHeight: 400 }}>
-            <DashMap loc={dest} />
-          </motion.div>
-        </div>
+        /* Redirect to dedicated new-trip page */
+        <Navigate to="/new-trip" replace />
       )}
     </div>
   );
 }
 
-function MapUpdater({ c }: { c: [number,number] }) {
+function MapUpdater({ c }: { c: [number, number] }) {
   const map = useMap();
   useEffect(() => { map.flyTo(c, 10, { duration: 1.4 }); }, [c]);
   return null;
 }
 function DashMap({ loc }: { loc: string }) {
-  const [center, setCenter] = useState<[number,number]>([20, 0]);
+  const [center, setCenter] = useState<[number, number]>([20, 0]);
   const { getCoords } = useStore();
   useEffect(() => {
     if (loc && loc.length > 2) getCoords(loc).then(r => r && setCenter([r.lat, r.lng]));
   }, [loc]);
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: 180 }}>
-      <MapContainer center={center} zoom={2} zoomControl={false} style={{ width: '100%', height: '100%', minHeight: 180, background: '#fff6e0' }}>
+    <div style={{ position: 'absolute', inset: 0 }}>
+      <MapContainer center={center} zoom={2} zoomControl={false} style={{ width: '100%', height: '100%', background: '#fff6e0' }}>
         <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" attribution="© CARTO" />
         <MapUpdater c={center} />
       </MapContainer>
@@ -521,3 +446,4 @@ function DashMap({ loc }: { loc: string }) {
     </div>
   );
 }
+
