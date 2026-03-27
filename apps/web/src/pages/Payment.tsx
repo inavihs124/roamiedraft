@@ -9,30 +9,30 @@ export default function Payment() {
   const navigate = useNavigate();
   const location = useLocation();
   const { confirmDisruption, removeFromCart, clearCart } = useStore();
-  
+
   const [processing, setProcessing] = useState(false);
   const [success, setSuccess] = useState(false);
-  
+
   // Support multiple payment sources
   const cartItem = location.state?.cartItem;
   const cartItems = location.state?.cartItems;
   const itemType = location.state?.itemType || 'flight';
   const amount = location.state?.amount || 15400;
   const flightNumber = location.state?.flightNumber || 'FL-NEW';
-  
+
   const isCartPayment = !!cartItem || !!cartItems;
   const isBundlePayment = !!cartItems && cartItems.length > 0;
-  
+
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token) return;
-    
+
     setProcessing(true);
-    
+
     try {
       // Simulate network wait for payment gateway
       await new Promise(r => setTimeout(r, 2000));
-      
+
       if (isCartPayment) {
         // For cart items â€” remove from cart after successful payment
         if (isBundlePayment) {
@@ -44,14 +44,14 @@ export default function Payment() {
         // Original disruption confirm flow
         await confirmDisruption(token!);
       }
-      
+
       setSuccess(true);
-      
+
       // Auto redirect to dashboard after success
       setTimeout(() => {
         navigate('/dashboard');
       }, 3000);
-      
+
     } catch (err) {
       console.error(err);
       setProcessing(false);
@@ -63,19 +63,19 @@ export default function Payment() {
       <div className="min-h-screen bg-[#020617] flex items-center justify-center p-6 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.1)_0%,transparent_50%)] pointer-events-none" />
         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center z-10">
-          <motion.div 
+          <motion.div
             initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', damping: 15 }}
             className="w-24 h-24 rounded-full bg-gradient-to-tr from-emerald-500 to-emerald-400 mx-auto flex items-center justify-center shadow-[0_0_40px_rgba(16,185,129,0.4)] mb-8"
           >
             <Check size={48} className="text-white" strokeWidth={3} />
           </motion.div>
-          
+
           <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
             <h1 className="font-display font-bold text-4xl text-white mb-3">Payment Secured</h1>
             <p className="text-[#22c55e]/80 font-medium text-lg mb-8">
               {isCartPayment ? 'Your OpenClaw payload is confirmed.' : 'Flight rebooking is confirmed.'}
             </p>
-            
+
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#0e2125] border border-[#f0dfc0] text-[#6b5c45]/70 text-sm font-bold shadow-inner">
               <Zap size={14} className="text-[#e55803] animate-pulse" /> Routing to Dashboard...
             </div>
@@ -88,11 +88,11 @@ export default function Payment() {
   return (
     <div className="min-h-screen bg-[#020617] flex relative">
       <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-[#e55803]/5 rounded-full blur-[100px] pointer-events-none translate-x-1/2 -translate-y-1/2" />
-      
+
       {/* Left: Form */}
       <div className="flex-1 flex flex-col p-8 lg:px-20 lg:py-12 z-10 overflow-y-auto">
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-[#6b5c45]/70 hover:text-white transition-colors w-fit mb-12 group">
-          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> 
+          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
           <span className="font-bold text-sm tracking-wide">Back to Checkout</span>
         </button>
 
@@ -108,17 +108,17 @@ export default function Payment() {
           </p>
 
           <form onSubmit={handlePayment} className="space-y-8">
-            
+
             {/* Express Pay */}
             <div className="grid grid-cols-2 gap-4">
               <button type="button" className="h-12 rounded-xl flex items-center justify-center gap-2 bg-slate-800 text-white font-bold border border-[#f0dfc0] hover:bg-slate-700 transition-colors shadow-sm relative overflow-hidden group">
                 <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <svg viewBox="0 0 384 512" width="16" height="16" fill="currentColor"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.3 48.6-.9 87.2-86.8 100.8-112.5-39.7-18.7-59.5-51.5-59.9-98.1zM196.4 69.4c14.2-18.8 24.3-43 21.6-69.4-21.8 1.1-47.7 14.8-63.1 33.3-13.6 15.6-25 39.6-21.7 64.9 24.2 1.9 48.2-11.4 63.2-28.8z"/></svg>
+                <svg viewBox="0 0 384 512" width="16" height="16" fill="currentColor"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.3 48.6-.9 87.2-86.8 100.8-112.5-39.7-18.7-59.5-51.5-59.9-98.1zM196.4 69.4c14.2-18.8 24.3-43 21.6-69.4-21.8 1.1-47.7 14.8-63.1 33.3-13.6 15.6-25 39.6-21.7 64.9 24.2 1.9 48.2-11.4 63.2-28.8z" /></svg>
                 Pay
               </button>
               <button type="button" className="h-12 rounded-xl flex items-center justify-center gap-2 bg-slate-800 text-white font-bold border border-[#f0dfc0] hover:bg-slate-700 transition-colors shadow-sm relative overflow-hidden group">
                 <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <svg viewBox="0 0 488 512" width="16" height="16" fill="currentColor"><path d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"/></svg>
+                <svg viewBox="0 0 488 512" width="16" height="16" fill="currentColor"><path d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z" /></svg>
                 Pay
               </button>
             </div>
@@ -132,7 +132,7 @@ export default function Payment() {
             {/* Card Form */}
             <div className="space-y-4 relative">
               <div className="absolute -inset-4 bg-slate-800/20 rounded-3xl -z-10 blur-xl pointer-events-none" />
-              
+
               <div>
                 <label className="text-xs font-bold uppercase tracking-widest text-[#6b5c45] mb-2 block">Card Details</label>
                 <div className="bg-[#0e2125] border border-[#f0dfc0] rounded-2xl overflow-hidden focus-within:border-[#e55803]/50 focus-within:ring-1 focus-within:ring-[#e55803]/50 transition-all shadow-inner">
@@ -180,7 +180,7 @@ export default function Payment() {
                 )}
               </AnimatePresence>
             </motion.button>
-            
+
           </form>
         </div>
       </div>
@@ -194,7 +194,7 @@ export default function Payment() {
             </div>
             <h3 className="font-display font-bold text-xl text-white">Order Summary</h3>
           </div>
-          
+
           <div className="space-y-4 mb-10">
             {isBundlePayment ? (
               cartItems.map((item: any) => (
@@ -228,7 +228,7 @@ export default function Payment() {
               <span className="text-slate-200 font-bold">â‚¹{amount.toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-center pb-6 border-b border-[#f0dfc0]/50 mb-6">
-              <span className="text-[#6b5c45]/70 font-medium text-sm flex items-center gap-1.5"><GlobeIcon size={14}/> Node Processing</span>
+              <span className="text-[#6b5c45]/70 font-medium text-sm flex items-center gap-1.5"><GlobeIcon size={14} /> Node Processing</span>
               <span className="text-[#22c55e] font-bold text-sm">Included</span>
             </div>
             <div className="flex justify-between items-end">
@@ -237,7 +237,7 @@ export default function Payment() {
             </div>
           </div>
         </div>
-        
+
         {/* Floating QR UI Element */}
         <div className="border-t border-slate-800 p-10 flex items-center gap-6 bg-[#0e2125]/50 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_right,rgba(245,158,11,0.05)_0%,transparent_100%)] pointer-events-none" />
@@ -260,7 +260,7 @@ export default function Payment() {
 function GlobeIcon({ size }: { size: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/>
+      <circle cx="12" cy="12" r="10" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /><path d="M2 12h20" />
     </svg>
   );
 }

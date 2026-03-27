@@ -1,27 +1,26 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   CheckCircle2, Circle, AlertTriangle, Shield, FileText, Heart, DollarSign,
-  Shirt, Plug, Package, ChevronDown, ChevronRight, Info, Search, Plus
+  Shirt, Plug, Package, ChevronDown, Search, Plus
 } from 'lucide-react';
 import { useStore } from '../stores/useStore';
 
-const CATEGORY_CONFIG: Record<string, { icon: typeof Shirt; colorClass: string; bgClass: string; label: string }> = {
-  clothing:    { icon: Shirt,     colorClass: 'text-[#e55803]',    bgClass: 'bg-[#e55803]/10 border-[#e55803]/20',     label: 'Clothing' },
-  toiletries:  { icon: Heart,     colorClass: 'text-[#e55803]',    bgClass: 'bg-[#fce4ec]0/10 border-[#e55803]/20',     label: 'Toiletries' },
-  tech:        { icon: Plug,      colorClass: 'text-[#e55803]',  bgClass: 'bg-[#fde8d8]0/10 border-[#e55803]/20',     label: 'Tech' },
-  documents:   { icon: FileText,  colorClass: 'text-[#e55803]',   bgClass: 'bg-[#e55803]/10 border-[#e55803]/20',   label: 'Documents' },
-  misc:        { icon: Package,   colorClass: 'text-[#0e2125]',    bgClass: 'bg-[#e0f2f1]0/10 border-[#0e2125]/15',     label: 'Miscellaneous' },
-  health:      { icon: Heart,     colorClass: 'text-[#22c55e]', bgClass: 'bg-[#22c55e]/100/10 border-[#22c55e]/20',   label: 'Health' },
-  money:       { icon: DollarSign,colorClass: 'text-[#e55803]',   bgClass: 'bg-[#e55803]/10 border-[#e55803]/20',   label: 'Money & Payments' },
-  safety:      { icon: Shield,    colorClass: 'text-rose-400',    bgClass: 'bg-rose-500/10 border-rose-500/20',     label: 'Safety' },
+const CAT_CFG: Record<string,{ Icon:any; color:string; bg:string }> = {
+  clothing:   { Icon:Shirt,      color:'#3b82f6', bg:'#eff6ff' },
+  toiletries: { Icon:Heart,      color:'#ec4899', bg:'#fdf2f8' },
+  tech:       { Icon:Plug,       color:'#6366f1', bg:'#eef2ff' },
+  documents:  { Icon:FileText,   color:'#f59e0b', bg:'#fffbeb' },
+  misc:       { Icon:Package,    color:'#06b6d4', bg:'#ecfeff' },
+  health:     { Icon:Heart,      color:'#22c55e', bg:'#f0fdf4' },
+  money:      { Icon:DollarSign, color:'#f59e0b', bg:'#fffbeb' },
+  safety:     { Icon:Shield,     color:'#ef4444', bg:'#fef2f2' },
 };
-
-const SEVERITY_STYLES: Record<string, { border: string; bg: string; color: string }> = {
-  critical: { border: 'border-rose-500/50', bg: 'bg-rose-500/10', color: 'text-rose-400' },
-  warning:  { border: 'border-amber-500/50', bg: 'bg-[#e55803]/10', color: 'text-[#e55803]' },
-  info:     { border: 'border-[#e55803]/50', bg: 'bg-[#e55803]/10', color: 'text-[#e55803]' },
+const SEV_STYLE: Record<string,{ bg:string; border:string; color:string }> = {
+  critical: { bg:'#fef2f2', border:'#fca5a5', color:'#dc2626' },
+  warning:  { bg:'#fffbeb', border:'#fcd34d', color:'#d97706' },
+  info:     { bg:'#eff6ff', border:'#93c5fd', color:'#1d4ed8' },
 };
 
 export default function PackingChecklist() {
@@ -31,330 +30,240 @@ export default function PackingChecklist() {
   const [docChecklist, setDocChecklist] = useState<any[]>([]);
   const [lawNudges, setLawNudges] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
-  const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
-  const [tab, setTab] = useState<'packing' | 'docs' | 'laws'>('packing');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [checked, setChecked] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [tab, setTab] = useState<'packing'|'docs'|'laws'>('packing');
+  const [search, setSearch] = useState('');
+  const [customItem, setCustomItem] = useState('');
+  const [customCat, setCustomCat] = useState('misc');
 
-  const [customItemName, setCustomItemName] = useState('');
-  const [customItemCat, setCustomItemCat] = useState('misc');
-  const [customDocName, setCustomDocName] = useState('');
-  const [customDocDetail, setCustomDocDetail] = useState('');
+  useEffect(() => { if (currentTrip) load(); }, [currentTrip]);
 
-  useEffect(() => { if (currentTrip) loadChecklist(); }, [currentTrip]);
-
-  const loadChecklist = async () => {
+  const load = async () => {
     if (!currentTrip) return;
     setLoading(true);
     try {
-      const data = await fetchChecklist(currentTrip.id);
-      setPackingList(data.packingList || []);
-      setDocChecklist(data.docChecklist || []);
-      setLawNudges(data.lawNudges || []);
-      setExpandedCats(new Set((data.packingList || []).map((p: any) => p.category)));
+      const d = await fetchChecklist(currentTrip.id);
+      setPackingList(d.packingList || []);
+      setDocChecklist(d.docChecklist || []);
+      setLawNudges(d.lawNudges || []);
+      setExpanded(new Set((d.packingList||[]).map((p:any)=>p.category)));
     } catch {}
     setLoading(false);
   };
 
-  const toggleCheck = (key: string) => {
-    const next = new Set(checkedItems);
-    if (next.has(key)) next.delete(key); else next.add(key);
-    setCheckedItems(next);
+  const toggle = (k: string) => {
+    const n = new Set(checked);
+    n.has(k) ? n.delete(k) : n.add(k);
+    setChecked(n);
+  };
+  const toggleCat = (c: string) => {
+    const n = new Set(expanded);
+    n.has(c) ? n.delete(c) : n.add(c);
+    setExpanded(n);
   };
 
-  const toggleCategory = (cat: string) => {
-    const next = new Set(expandedCats);
-    if (next.has(cat)) next.delete(cat); else next.add(cat);
-    setExpandedCats(next);
-  };
+  const allItems = packingList.flatMap(g => (g.items||[]).map((it:any)=>({...it,cat:g.category})));
+  const totalItems = allItems.length;
+  const packedItems = allItems.filter(it => checked.has(`${it.cat}-${it.name}`)).length;
+  const pct = totalItems > 0 ? Math.round((packedItems/totalItems)*100) : 0;
 
-  const filteredPacking = packingList.filter(
-    p => !searchTerm || p.item.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filtered = packingList.map(g => ({
+    ...g,
+    items: (g.items||[]).filter((it:any) => !search || it.name?.toLowerCase().includes(search.toLowerCase())),
+  })).filter(g => !search || g.items.length > 0);
 
-  const packingGroups = filteredPacking.reduce((acc: Record<string, any[]>, item) => {
-    (acc[item.category] = acc[item.category] || []).push(item);
-    return acc;
-  }, {});
-
-  const totalItems = packingList.length;
-  const checkedCount = packingList.filter(p => checkedItems.has(`pack-${p.item}`)).length;
-  const progress = totalItems > 0 ? Math.round((checkedCount / totalItems) * 100) : 0;
-
-  const tabs = [
-    { key: 'packing' as const, label: t('checklist.packing'), count: packingList.length },
-    { key: 'docs' as const, label: t('checklist.docs'), count: docChecklist.length },
-    { key: 'laws' as const, label: t('checklist.laws'), count: lawNudges.length },
+  const card: React.CSSProperties = { background:'#fff', border:'1px solid #f0dfc0', borderRadius:14, boxShadow:'0 2px 12px rgba(14,33,37,0.06)' };
+  const TABS: { key:'packing'|'docs'|'laws'; label:string }[] = [
+    { key:'packing', label:'Packing List' },
+    { key:'docs',    label:'Documents' },
+    { key:'laws',    label:'Laws & Nudges' },
   ];
 
   return (
-    <div className="max-w-4xl mx-auto p-4 lg:p-8 pb-32">
-      <div className="mb-10">
-        <h1 className="font-display font-bold text-4xl text-[#0e2125] mb-2 flex items-center gap-3">
-          <Package size={36} className="text-[#e55803]" /> {t('checklist.title')}
-        </h1>
-        <p className="text-[#6b5c45] font-medium text-lg">
-          {currentTrip ? `${currentTrip.destination} Â· ${new Date(currentTrip.startDate).toLocaleDateString()} â€” ${new Date(currentTrip.endDate).toLocaleDateString()}` : t('checklist.noTrip')}
+    <div style={{ maxWidth:820, margin:'0 auto', padding:'28px 28px 80px', fontFamily:'DM Sans,sans-serif' }}>
+
+      {/* Header */}
+      <div style={{ marginBottom:24 }}>
+        <h1 style={{ fontFamily:'Syne,sans-serif', fontWeight:800, fontSize:26, color:'#0e2125', marginBottom:4 }}>Packing Checklist</h1>
+        <p style={{ fontSize:13, color:'#6b5c45' }}>
+          {currentTrip ? <><strong style={{ color:'#e55803' }}>{currentTrip.destination}</strong> · {new Date(currentTrip.startDate).toLocaleDateString()}</> : 'Select a trip to load checklist'}
         </p>
       </div>
 
-      {/* Glass Tabs */}
-      <div className="flex flex-wrap gap-2 mb-8 p-1.5 bg-white rounded-2xl border border-[#f0dfc0] shadow-sm relative z-10">
-        {tabs.map(tb => (
-          <button key={tb.key} onClick={() => setTab(tb.key)}
-            className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
-              tab === tb.key 
-                ? 'bg-[#fde8d8] text-[#e55803] shadow-sm border border-[#e55803]/20' 
-                : 'text-[#6b5c45] hover:text-[#0e2125] hover:bg-[#fff6e0]'
-            }`}
-          >
-            {tb.label}
-            {tb.count > 0 && (
-              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                tab === tb.key ? 'bg-[#fde8d8] text-[#e55803] border border-[#e55803]/20' : 'bg-[#f5e8ca] text-[#6b5c45] border border-[#f0dfc0]'
-              }`}>
-                {tb.count}
-              </span>
-            )}
+      {/* Progress bar */}
+      {tab === 'packing' && totalItems > 0 && (
+        <div style={{ ...card, padding:'16px 20px', marginBottom:20 }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+            <span style={{ fontFamily:'Syne,sans-serif', fontWeight:700, fontSize:14, color:'#0e2125' }}>Overall Progress</span>
+            <span style={{ fontSize:13, fontWeight:600, color:'#e55803' }}>{packedItems}/{totalItems} packed</span>
+          </div>
+          <div className="progress-track" style={{ height:10 }}>
+            <motion.div className="progress-fill" style={{ height:10, width:`${pct}%` }}
+              initial={{ width:0 }} animate={{ width:`${pct}%` }} transition={{ duration:0.8 }} />
+          </div>
+          <p style={{ fontSize:12, color:'#6b5c45', marginTop:6 }}>{pct}% complete</p>
+        </div>
+      )}
+
+      {/* Tab switcher */}
+      <div style={{ display:'flex', borderBottom:'2px solid #f0dfc0', marginBottom:20, gap:0 }}>
+        {TABS.map(({ key, label }) => (
+          <button key={key} onClick={() => setTab(key)}
+            style={{ padding:'10px 20px', fontSize:14, fontWeight:600, cursor:'pointer', background:'none', border:'none',
+              color: tab===key ? '#e55803' : '#6b5c45',
+              borderBottom: tab===key ? '2px solid #e55803' : '2px solid transparent',
+              marginBottom:-2, transition:'all 0.15s' }}>
+            {label}
           </button>
         ))}
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-20 text-[#6b5c45] font-medium h-64 border border-dashed border-[#f0dfc0] rounded-3xl mt-4 bg-white">
-          <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="mr-3">
-            <Package size={24} className="text-[#e55803]" />
-          </motion.div>
-          Analyzing itinerary to build packing list...
+      {/* Search */}
+      {tab === 'packing' && (
+        <div style={{ position:'relative', marginBottom:20 }}>
+          <Search size={15} style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', color:'#6b5c45', pointerEvents:'none' }} />
+          <input className="r-input" style={{ paddingLeft:42, background:'#f5e8ca' }}
+            placeholder="Search items…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-      ) : (
-        <div className="relative z-10">
-          {/* PACKING TAB */}
-          <AnimatePresence mode="wait">
-            {tab === 'packing' && (
-              <motion.div key="packing" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                
-                {/* Search + Progress */}
-                <div className="flex flex-col md:flex-row gap-4 mb-8">
-                  <div className="flex-1 relative group">
-                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6b5c45]/70 group-focus-within:text-[#e55803] transition-colors" />
-                    <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                      placeholder="Search luggage..."
-                      className="w-full h-14 pl-12 pr-4 bg-white border border-[#f0dfc0] text-[#0e2125] rounded-2xl focus:ring-2 focus:ring-[#e55803]/20 focus:border-[#e55803] outline-none transition-all shadow-sm"
-                    />
+      )}
+
+      {loading && (
+        <div style={{ textAlign:'center', padding:'48px 0', color:'#6b5c45', fontSize:14 }}>
+          <motion.div animate={{ rotate:360 }} transition={{ repeat:Infinity,duration:1,ease:'linear' }} style={{ display:'inline-block', marginBottom:10 }}>
+            <Package size={24} style={{ color:'#e55803' }} />
+          </motion.div>
+          <p>Loading checklist…</p>
+        </div>
+      )}
+
+      {/* ── Packing tab ── */}
+      {tab === 'packing' && !loading && (
+        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          {filtered.map(group => {
+            const cfg = CAT_CFG[group.category] || { Icon:Package, color:'#6b5c45', bg:'#f5e8ca' };
+            const isOpen = expanded.has(group.category);
+            const groupItems: any[] = group.items || [];
+            const groupPacked = groupItems.filter(it => checked.has(`${group.category}-${it.name}`)).length;
+            return (
+              <div key={group.category} style={{ ...card, overflow:'hidden' }}>
+                <button onClick={() => toggleCat(group.category)}
+                  style={{ width:'100%', padding:'14px 18px', display:'flex', alignItems:'center', gap:12, cursor:'pointer', background:'none', border:'none', textAlign:'left' }}>
+                  <div style={{ width:34, height:34, borderRadius:9, background:cfg.bg, color:cfg.color, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    <cfg.Icon size={16} />
                   </div>
-                  <div className="md:w-64 h-14 bg-white border border-[#f0dfc0] rounded-2xl flex items-center px-4 gap-4 shadow-sm">
-                    <div className="flex-1 h-2.5 bg-[#f5e8ca] rounded-full overflow-hidden">
-                      <motion.div animate={{ width: `${progress}%` }} className="h-full bg-gradient-to-r from-[#e55803] to-[#c44a00] rounded-full" />
-                    </div>
-                    <span className={`font-display font-bold text-lg w-12 text-right ${progress === 100 ? 'text-[#22c55e]' : 'text-[#0e2125]'}`}>
-                      {progress}%
-                    </span>
-                  </div>
-                </div>
-
-                {/* Add Custom Item */}
-                <div className="flex flex-col sm:flex-row gap-3 p-3 bg-[#fff6e0] border border-[#f0dfc0] border-dashed rounded-2xl mb-8">
-                  <input
-                    value={customItemName} onChange={e => setCustomItemName(e.target.value)}
-                    placeholder="Add custom item..."
-                    className="flex-1 bg-white border border-[#f0dfc0] text-[#0e2125] text-sm rounded-xl px-4 py-3 outline-none focus:border-[#e55803] transition-colors shadow-sm"
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && customItemName.trim()) {
-                        setPackingList(prev => [{ item: customItemName.trim(), category: customItemCat, reason: 'Added by you', essential: false }, ...prev]);
-                        setCustomItemName('');
-                      }
-                    }}
-                  />
-                  <div className="flex gap-3">
-                    <select
-                      value={customItemCat} onChange={e => setCustomItemCat(e.target.value)}
-                      className="bg-white border border-[#f0dfc0] text-[#0e2125] text-sm rounded-xl px-4 py-3 outline-none cursor-pointer focus:border-[#e55803] shadow-sm"
-                    >
-                      {Object.entries(CATEGORY_CONFIG).map(([key, cfg]) => (
-                        <option key={key} value={key}>{cfg.label}</option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={() => {
-                        if (customItemName.trim()) {
-                          setPackingList(prev => [{ item: customItemName.trim(), category: customItemCat, reason: 'Added by you', essential: false }, ...prev]);
-                          setCustomItemName('');
-                        }
-                      }}
-                      className="w-12 h-12 bg-[#e55803] hover:bg-[#e55803] text-white rounded-xl flex items-center justify-center transition-colors shrink-0 font-bold shadow-sm"
-                    >
-                      <Plus size={20} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Grouped List */}
-                <div className="space-y-4">
-                  {Object.entries(packingGroups).map(([cat, items]) => {
-                    const config = CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.misc;
-                    const CatIcon = config.icon;
-                    const isExpanded = expandedCats.has(cat);
-                    const catChecked = items.filter(i => checkedItems.has(`pack-${i.item}`)).length;
-                    const allCheckedInCat = catChecked === items.length && items.length > 0;
-
-                    return (
-                      <div key={cat} className={`glass-panel rounded-2xl overflow-hidden transition-all ${isExpanded ? 'border-[#f0dfc0] shadow-md bg-white' : 'border-[#f0dfc0] hover:bg-[#fff6e0]'}`}>
-                        <button onClick={() => toggleCategory(cat)} className="w-full flex items-center gap-4 p-4 md:p-5 cursor-pointer outline-none">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${config.bgClass}`}>
-                            <CatIcon size={20} className={config.colorClass} />
-                          </div>
-                          <span className={`font-display font-bold text-lg flex-1 text-left ${allCheckedInCat ? 'text-[#6b5c45]/70 line-through' : 'text-[#0e2125]'}`}>
-                            {config.label}
-                          </span>
-                          <span className={`text-sm font-bold ${allCheckedInCat ? 'text-[#22c55e]' : 'text-[#6b5c45]'}`}>
-                            {catChecked} / {items.length}
-                          </span>
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isExpanded ? 'bg-[#f5e8ca] text-[#6b5c45]' : 'text-[#6b5c45]/70'}`}>
-                            {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                          </div>
-                        </button>
-
-                        <AnimatePresence>
-                          {isExpanded && (
-                            <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
-                              <div className="px-5 pb-5 pt-1 space-y-2">
-                                {items.map((item: any) => {
-                                  const key = `pack-${item.item}`;
-                                  const checked = checkedItems.has(key);
-                                  return (
-                                    <div key={key} onClick={() => toggleCheck(key)} 
-                                      className={`flex items-start gap-4 p-3 rounded-xl cursor-pointer transition-all border ${
-                                        checked ? 'bg-[#fff6e0] border-[#f0dfc0] hover:bg-[#f5e8ca]' : 'bg-white border-[#f0dfc0] hover:border-[#e55803]/20 hover:bg-[#fde8d8]/30'
-                                      }`}
-                                    >
-                                      <motion.div whileTap={{ scale: 0.8 }} className="mt-0.5 shrink-0">
-                                        {checked 
-                                          ? <CheckCircle2 size={22} className="text-[#e55803]" /> 
-                                          : <Circle size={22} className="text-slate-300" />}
-                                      </motion.div>
-                                      <div className="flex-1 min-w-0">
-                                        <p className={`font-semibold text-base transition-colors ${checked ? 'text-[#6b5c45]/70 line-through' : 'text-[#0e2125]'}`}>
-                                          {item.item}
-                                          {item.essential && !checked && <span className="ml-3 px-2 py-0.5 rounded text-[10px] font-bold tracking-widest bg-rose-500/10 text-rose-400 border border-rose-500/20 uppercase">Must Pack</span>}
-                                        </p>
-                                        <p className={`text-sm mt-1 transition-colors ${checked ? 'text-[#6b5c45]/70' : 'text-[#6b5c45]'}`}>{item.reason}</p>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
-
-            {/* DOCS TAB */}
-            {tab === 'docs' && (
-              <motion.div key="docs" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
-                
-                <div className="flex flex-col sm:flex-row gap-3 p-3 bg-[#fff6e0] border border-[#f0dfc0] border-dashed rounded-2xl mb-6">
-                  <input value={customDocName} onChange={e => setCustomDocName(e.target.value)}
-                    placeholder="Document name..."
-                    className="flex-1 bg-white border border-[#f0dfc0] text-[#0e2125] text-sm rounded-xl px-4 py-3 outline-none focus:border-[#e55803] transition-colors shadow-sm"
-                  />
-                  <input value={customDocDetail} onChange={e => setCustomDocDetail(e.target.value)}
-                    placeholder="Details..."
-                    className="flex-1 bg-white border border-[#f0dfc0] text-[#0e2125] text-sm rounded-xl px-4 py-3 outline-none focus:border-[#e55803] transition-colors shadow-sm"
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && customDocName.trim()) {
-                        setDocChecklist(prev => [{ item: customDocName.trim(), details: customDocDetail || 'Custom document', category: 'documents', urgent: false }, ...prev]);
-                        setCustomDocName(''); setCustomDocDetail('');
-                      }
-                    }}
-                  />
-                  <button onClick={() => {
-                      if (customDocName.trim()) {
-                        setDocChecklist(prev => [{ item: customDocName.trim(), details: customDocDetail || 'Custom document', category: 'documents', urgent: false }, ...prev]);
-                        setCustomDocName(''); setCustomDocDetail('');
-                      }
-                    }}
-                    className="w-12 h-12 bg-[#e55803] hover:bg-[#c44a00] text-[#fff6e0] rounded-xl flex items-center justify-center transition-colors shrink-0 font-bold shadow-sm shadow-[#0e2125]/10"
-                  >
-                    <Plus size={20} />
-                  </button>
-                </div>
-
-                {docChecklist.map((doc, i) => {
-                  const config = CATEGORY_CONFIG[doc.category] || CATEGORY_CONFIG.documents;
-                  const DocIcon = config.icon;
-                  const key = `doc-${doc.item}`;
-                  const checked = checkedItems.has(key);
-
-                  return (
-                    <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                      onClick={() => toggleCheck(key)}
-                      className={`glass-panel p-5 rounded-2xl border cursor-pointer transition-all flex items-start gap-4 hover:shadow-md ${
-                        checked ? 'bg-[#fff6e0] border-[#f0dfc0]' : doc.urgent ? 'bg-[#fde8d8] border-[#e55803]/20 hover:bg-[#fde8d8]' : 'bg-white border-[#f0dfc0] hover:bg-[#fff6e0] hover:border-[#f0dfc0]'
-                      }`}
-                    >
-                      <motion.div whileTap={{ scale: 0.8 }} className="mt-0.5 shrink-0">
-                        {checked 
-                          ? <CheckCircle2 size={24} className="text-[#e55803]" /> 
-                          : <Circle size={24} className={doc.urgent ? 'text-[#e55803]' : 'text-[#6b5c45]/70'} />}
-                      </motion.div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`font-display font-bold text-lg mb-1 transition-colors ${checked ? 'text-[#6b5c45]/70 line-through' : 'text-[#0e2125]'}`}>
-                          {doc.item}
-                          {doc.urgent && !checked && <span className="ml-3 px-2 py-0.5 rounded text-[10px] uppercase font-extrabold tracking-widest bg-[#e55803] text-white shadow-sm">Required</span>}
-                        </p>
-                        <p className={`text-sm transition-colors ${checked ? 'text-[#6b5c45]/70' : 'text-[#6b5c45]'}`}>{doc.details}</p>
-                      </div>
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${checked ? 'opacity-30' : ''} ${config.bgClass}`}>
-                        <DocIcon size={20} className={config.colorClass} />
+                  <span style={{ fontFamily:'Syne,sans-serif', fontWeight:700, fontSize:14, color:'#0e2125', flex:1, textTransform:'capitalize' }}>{group.category}</span>
+                  <span style={{ fontSize:12, color:'#6b5c45', fontWeight:600 }}>{groupPacked}/{groupItems.length}</span>
+                  <motion.div animate={{ rotate: isOpen?180:0 }} style={{ color:'#6b5c45' }}>
+                    <ChevronDown size={16}/>
+                  </motion.div>
+                </button>
+                <AnimatePresence>
+                  {isOpen && (
+                    <motion.div initial={{ height:0,opacity:0 }} animate={{ height:'auto',opacity:1 }} exit={{ height:0,opacity:0 }} style={{ overflow:'hidden' }}>
+                      <div style={{ padding:'0 18px 14px', borderTop:'1px solid #f5e8ca' }}>
+                        {groupItems.map((item: any) => {
+                          const key = `${group.category}-${item.name}`;
+                          const isDone = checked.has(key);
+                          return (
+                            <div key={key} onClick={() => toggle(key)}
+                              style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 0', cursor:'pointer', borderBottom:'1px solid #fafaf8', transition:'background 0.1s' }}>
+                              {isDone
+                                ? <CheckCircle2 size={18} style={{ color:'#e55803', flexShrink:0 }}/>
+                                : <Circle size={18} style={{ color:'#d1c4b0', flexShrink:0 }}/>}
+                              <span style={{ fontSize:13, color: isDone?'#b5a48a':'#0e2125', textDecoration: isDone?'line-through':'none', fontWeight: isDone?400:500, transition:'all 0.15s' }}>
+                                {item.name}
+                              </span>
+                              {item.essential && !isDone && (
+                                <span style={{ marginLeft:'auto', padding:'1px 8px', borderRadius:99, background:'#fde8d8', color:'#e55803', fontSize:10, fontWeight:700, flexShrink:0 }}>Essential</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {/* Custom add */}
+                        <div style={{ display:'flex', gap:8, marginTop:10 }}>
+                          <input className="r-input" style={{ flex:1, minHeight:36, padding:'7px 12px', fontSize:13 }}
+                            placeholder={`Add to ${group.category}…`} value={customCat===group.category?customItem:''} 
+                            onChange={e => { setCustomItem(e.target.value); setCustomCat(group.category); }} />
+                          <button className="btn btn-ghost btn-sm"
+                            onClick={() => {
+                              if (!customItem.trim()) return;
+                              setPackingList(prev => prev.map(g => g.category===group.category
+                                ? { ...g, items:[...(g.items||[]), { name:customItem.trim() }] }
+                                : g));
+                              setCustomItem(''); setCustomCat('misc');
+                            }}>
+                            <Plus size={14}/>
+                          </button>
+                        </div>
                       </div>
                     </motion.div>
-                  );
-                })}
-              </motion.div>
-            )}
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
+          {filtered.length === 0 && !loading && (
+            <div style={{ textAlign:'center', padding:'40px 0', border:'2px dashed #f0dfc0', borderRadius:14, color:'#6b5c45', fontSize:14 }}>
+              {search ? 'No items match your search.' : 'No packing list yet. Select a trip to generate one.'}
+            </div>
+          )}
+        </div>
+      )}
 
-            {/* LAWS TAB */}
-            {tab === 'laws' && (
-              <motion.div key="laws" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
-                {lawNudges.length === 0 ? (
-                  <div className="text-center py-20 bg-white rounded-3xl border border-[#f0dfc0] border-dashed">
-                    <Shield size={48} className="mx-auto mb-4 text-slate-300" />
-                    <p className="text-[#6b5c45] font-medium">No specific safety nudges available for this destination.</p>
+      {/* ── Docs tab ── */}
+      {tab === 'docs' && !loading && (
+        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          {docChecklist.map((doc: any, i: number) => {
+            const sev = SEV_STYLE[doc.severity] || SEV_STYLE.info;
+            return (
+              <motion.div key={i} initial={{ opacity:0,y:8 }} animate={{ opacity:1,y:0 }} transition={{ delay:i*0.04 }}
+                style={{ ...card, padding:18, borderColor:sev.border, background:sev.bg }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8, flexWrap:'wrap', gap:8 }}>
+                  <span style={{ fontFamily:'Syne,sans-serif', fontWeight:700, fontSize:14, color:'#0e2125' }}>{doc.document || doc.name}</span>
+                  <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                    {doc.severity && (
+                      <span style={{ padding:'3px 10px', borderRadius:99, fontSize:10, fontWeight:700, textTransform:'uppercase', background:sev.bg, color:sev.color, border:`1px solid ${sev.border}` }}>
+                        {doc.severity}
+                      </span>
+                    )}
+                    {doc.status && (
+                      <span style={{ padding:'3px 10px', borderRadius:99, fontSize:10, fontWeight:700, background:'#f5e8ca', color:'#6b5c45' }}>
+                        {doc.status}
+                      </span>
+                    )}
                   </div>
-                ) : (
-                  lawNudges.map((nudge, i) => {
-                    const sev = SEVERITY_STYLES[nudge.severity] || SEVERITY_STYLES.info;
-                    return (
-                      <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                        className={`glass-panel p-6 rounded-2xl border flex items-start gap-5 ${sev.bg} ${sev.border}`}
-                      >
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border border-current bg-white ${sev.color}`}>
-                          <AlertTriangle size={24} />
-                        </div>
-                        <div className="flex-1 mt-1">
-                          <p className="text-[#0e2125] font-medium leading-relaxed mb-4">{nudge.rule}</p>
-                          <div className="flex flex-wrap gap-2">
-                            <span className={`px-3 py-1 rounded-md text-xs font-bold uppercase tracking-widest border bg-white ${sev.color} ${sev.border}`}>
-                              {nudge.severity} Priority
-                            </span>
-                            <span className="px-3 py-1 rounded-md text-xs font-bold uppercase tracking-widest border border-[#f0dfc0] bg-[#fff6e0] text-[#0e2125]">
-                              {nudge.venueType}
-                            </span>
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })
-                )}
+                </div>
+                {doc.description && <p style={{ fontSize:13, color:'#6b5c45', lineHeight:1.5 }}>{doc.description}</p>}
               </motion.div>
-            )}
-          </AnimatePresence>
+            );
+          })}
+          {docChecklist.length === 0 && (
+            <div style={{ textAlign:'center', padding:'40px 0', border:'2px dashed #f0dfc0', borderRadius:14, color:'#6b5c45', fontSize:14 }}>
+              No document requirements loaded yet.
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Laws tab ── */}
+      {tab === 'laws' && !loading && (
+        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          {lawNudges.map((law: any, i: number) => (
+            <motion.div key={i} initial={{ opacity:0,y:8 }} animate={{ opacity:1,y:0 }} transition={{ delay:i*0.04 }}
+              style={{ ...card, padding:18 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:6 }}>
+                {law.flag && <span style={{ fontSize:20 }}>{law.flag}</span>}
+                <p style={{ fontFamily:'Syne,sans-serif', fontWeight:700, fontSize:14, color:'#0e2125' }}>{law.rule || law.title}</p>
+              </div>
+              {law.description && <p style={{ fontSize:13, color:'#6b5c45', lineHeight:1.5 }}>{law.description}</p>}
+            </motion.div>
+          ))}
+          {lawNudges.length === 0 && (
+            <div style={{ textAlign:'center', padding:'40px 0', border:'2px dashed #f0dfc0', borderRadius:14, color:'#6b5c45', fontSize:14 }}>
+              No laws or nudges available for this destination.
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -3,237 +3,163 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, MicOff, X, Volume2, Languages, Sparkles } from 'lucide-react';
 import api from '../lib/api';
 
-const LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'hi', label: 'Hindi' },
-  { code: 'es', label: 'Spanish' },
-  { code: 'fr', label: 'French' },
-  { code: 'ja', label: 'Japanese' },
-  { code: 'de', label: 'German' },
-  { code: 'zh', label: 'Chinese' },
-  { code: 'ar', label: 'Arabic' },
-  { code: 'ko', label: 'Korean' },
-  { code: 'ta', label: 'Tamil' },
+const LANGS = [
+  { code:'en',label:'English' },{ code:'hi',label:'Hindi' },{ code:'es',label:'Spanish' },
+  { code:'fr',label:'French' },{ code:'ja',label:'Japanese' },{ code:'de',label:'German' },
+  { code:'zh',label:'Chinese' },{ code:'ar',label:'Arabic' },{ code:'ko',label:'Korean' },{ code:'ta',label:'Tamil' },
 ];
 
 export default function VoiceTranslateWidget() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const [translated, setTranslated] = useState('');
-  const [targetLang, setTargetLang] = useState('hi');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const recognitionRef = useRef<any>(null);
-
-  const [audioLevels, setAudioLevels] = useState<number[]>(Array(6).fill(10));
+  const [open, setOpen]         = useState(false);
+  const [listening, setListen]  = useState(false);
+  const [transcript, setTxt]    = useState('');
+  const [translated, setTrans]  = useState('');
+  const [lang, setLang]         = useState('hi');
+  const [loading, setLoad]      = useState(false);
+  const [error, setErr]         = useState('');
+  const [levels, setLevels]     = useState<number[]>(Array(7).fill(10));
+  const recRef = useRef<any>(null);
 
   useEffect(() => {
-    let interval: any;
-    if (isListening) {
-      interval = setInterval(() => {
-        setAudioLevels(Array.from({ length: 6 }, () => 10 + Math.random() * 20));
-      }, 100);
-    } else {
-      setAudioLevels(Array(6).fill(10));
-    }
-    return () => clearInterval(interval);
-  }, [isListening]);
+    let id: any;
+    if (listening) id = setInterval(() => setLevels(Array.from({length:7},()=>8+Math.random()*22)), 90);
+    else setLevels(Array(7).fill(10));
+    return () => clearInterval(id);
+  }, [listening]);
 
-  const startListening = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setError('Speech recognition not supported in this browser.');
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onresult = (event: any) => {
-      const current = event.results[event.results.length - 1];
-      setTranscript(current[0].transcript);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    recognition.onerror = (event: any) => {
-      setIsListening(false);
-      if (event.error === 'not-allowed') {
-        setError('Microphone access denied.');
-      }
-    };
-
-    recognitionRef.current = recognition;
-    recognition.start();
-    setIsListening(true);
-    setError('');
-    setTranslated('');
+  const startListen = () => {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) { setErr('Speech recognition not supported.'); return; }
+    const r = new SR();
+    r.continuous = false; r.interimResults = true; r.lang = 'en-US';
+    r.onresult = (e: any) => setTxt(e.results[e.results.length-1][0].transcript);
+    r.onend    = () => setListen(false);
+    r.onerror  = (e: any) => { setListen(false); if (e.error==='not-allowed') setErr('Microphone access denied.'); };
+    recRef.current = r; r.start(); setListen(true); setErr(''); setTrans('');
   };
+  const stopListen = () => { recRef.current?.stop(); setListen(false); };
 
-  const stopListening = () => {
-    if (recognitionRef.current) recognitionRef.current.stop();
-    setIsListening(false);
-  };
-
-  const translateText = async () => {
+  const translate = async () => {
     if (!transcript.trim()) return;
-    setLoading(true);
-    setError('');
+    setLoad(true); setErr('');
     try {
       const { data } = await api.post('/translate', {
-        text: transcript,
-        sourceLang: 'English',
-        targetLang: LANGUAGES.find(l => l.code === targetLang)?.label || targetLang,
+        text: transcript, sourceLang: 'English',
+        targetLang: LANGS.find(l=>l.code===lang)?.label || lang,
       });
-      setTranslated(data.translated);
-    } catch {
-      setError('Translation API failed.');
-    }
-    setLoading(false);
+      setTrans(data.translated);
+    } catch { setErr('Translation failed.'); }
+    setLoad(false);
   };
 
-  const speakTranslation = () => {
+  const speak = () => {
     if (!translated || !window.speechSynthesis) return;
-    const utterance = new SpeechSynthesisUtterance(translated);
-    utterance.lang = targetLang;
-    utterance.rate = 0.9;
-    window.speechSynthesis.speak(utterance);
+    const u = new SpeechSynthesisUtterance(translated);
+    u.lang = lang; u.rate = 0.9;
+    window.speechSynthesis.speak(u);
   };
 
   return (
     <>
-      {/* Floating Circular Button */}
-      <motion.button
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.92 }}
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-[1000] w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all"
-        style={{ background: isOpen ? '#0e2125' : '#e55803' }}
-      >
-        {isOpen ? (
-          <X size={22} className="text-[#fff6e0]" />
-        ) : (
-          <>
-            <Languages size={22} className="text-[#fff6e0]" />
-            {/* Pulse ring */}
-            <span className="absolute inset-0 rounded-full animate-ping bg-[#e55803] opacity-20" />
-          </>
-        )}
-      </motion.button>
-
-      {/* Expanded Panel */}
-      <AnimatePresence>
-        {isOpen && (
+      {/* Floating button with pulse ring */}
+      <div style={{ position:'fixed', bottom:28, right:28, zIndex:1000 }}>
+        {!open && (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95, transition: { duration: 0.2 } }}
-            className="fixed bottom-24 right-6 z-[1001] w-80 bg-white rounded-[20px] border border-[#f0dfc0] shadow-[0_12px_40px_rgba(14,33,37,0.15)] overflow-hidden"
-          >
+            animate={{ scale:[1,1.15,1] }} transition={{ repeat:Infinity, duration:2.5, ease:'easeInOut' }}
+            style={{ position:'absolute', inset:-6, borderRadius:'50%', background:'rgba(229,88,3,0.2)', zIndex:-1 }} />
+        )}
+        <motion.button whileHover={{ scale:1.08 }} whileTap={{ scale:0.93 }} onClick={() => setOpen(!open)}
+          style={{ width:54, height:54, borderRadius:'50%', background: open?'#0e2125':'#e55803', color:'#fff6e0', display:'flex', alignItems:'center', justifyContent:'center', border:'none', cursor:'pointer', boxShadow:'0 4px 20px rgba(229,88,3,0.35)' }}>
+          <Languages size={22}/>
+        </motion.button>
+      </div>
+
+      {/* Panel */}
+      <AnimatePresence>
+        {open && (
+          <motion.div initial={{ opacity:0, y:20, scale:0.95 }} animate={{ opacity:1, y:0, scale:1 }} exit={{ opacity:0, y:20, scale:0.95 }}
+            style={{ position:'fixed', bottom:96, right:28, zIndex:1001, width:320, background:'#fff', border:'1px solid #f0dfc0', borderRadius:20, boxShadow:'0 20px 60px rgba(14,33,37,0.18)', overflow:'hidden' }}>
+
             {/* Header */}
-            <div className="bg-[#0e2125] px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles size={16} className="text-[#e55803]" />
-                <span className="font-display font-bold text-[#fff6e0]">Live Translator</span>
+            <div style={{ background:'#0e2125', padding:'14px 18px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <Sparkles size={15} style={{ color:'#e55803' }}/>
+                <span style={{ fontFamily:'Syne,sans-serif', fontWeight:700, fontSize:14, color:'#fff6e0' }}>Live Translator</span>
               </div>
-              <button onClick={() => setIsOpen(false)} className="text-[#fff6e0]/50 hover:text-[#fff6e0] transition-colors">
-                <X size={18} />
+              <button onClick={() => setOpen(false)} style={{ color:'rgba(255,246,224,0.5)', background:'none', border:'none', cursor:'pointer', padding:4 }}>
+                <X size={18}/>
               </button>
             </div>
 
-            <div className="p-5">
-              {/* Language Selector */}
-              <div className="mb-5 bg-[#f5e8ca] p-2 rounded-xl flex items-center">
-                <span className="px-3 text-xs font-bold uppercase tracking-widest text-[#6b5c45]">To</span>
-                <select
-                  value={targetLang}
-                  onChange={e => setTargetLang(e.target.value)}
-                  className="flex-1 bg-transparent text-[#0e2125] font-bold h-9 outline-none cursor-pointer text-sm"
-                >
-                  {LANGUAGES.map(l => (
-                    <option key={l.code} value={l.code}>{l.label}</option>
-                  ))}
+            <div style={{ padding:18 }}>
+              {/* Language selector */}
+              <div style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 12px', borderRadius:10, background:'#f5e8ca', border:'1px solid #f0dfc0', marginBottom:18 }}>
+                <span style={{ fontSize:11, fontWeight:700, color:'#6b5c45', textTransform:'uppercase', letterSpacing:'0.08em', whiteSpace:'nowrap' }}>Translate to</span>
+                <select value={lang} onChange={e=>setLang(e.target.value)}
+                  style={{ flex:1, background:'transparent', border:'none', outline:'none', fontFamily:'DM Sans,sans-serif', fontWeight:700, fontSize:14, color:'#0e2125', cursor:'pointer' }}>
+                  {LANGS.map(l=><option key={l.code} value={l.code}>{l.label}</option>)}
                 </select>
               </div>
 
-              {/* Central Mic Area */}
-              <div className="flex flex-col items-center justify-center mb-5 h-28 relative">
-                <div className="absolute inset-0 flex items-center justify-center gap-1 opacity-40">
-                  {audioLevels.map((h, i) => (
-                    <motion.div key={i} animate={{ height: h }} className={`w-1.5 rounded-full ${isListening ? 'bg-[#e55803]' : 'bg-[#f0dfc0]'}`} />
-                  ))}
-                  <div className="w-14" />
-                  {audioLevels.map((h, i) => (
-                    <motion.div key={`r${i}`} animate={{ height: h }} className={`w-1.5 rounded-full ${isListening ? 'bg-[#e55803]' : 'bg-[#f0dfc0]'}`} />
+              {/* Visualizer + mic */}
+              <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:14, marginBottom:16 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:4, height:40 }}>
+                  {levels.map((h,i)=>(
+                    <motion.div key={i} animate={{ height:h }}
+                      style={{ width:4, borderRadius:99, background: listening?'#e55803':'#f0dfc0', transition:'background 0.2s' }}/>
                   ))}
                 </div>
-
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={isListening ? stopListening : startListening}
-                  className={`relative z-10 w-16 h-16 rounded-full flex items-center justify-center border-[3px] transition-colors ${
-                    isListening 
-                      ? 'bg-[#ef4444]/10 border-[#ef4444] text-[#ef4444]' 
-                      : 'bg-white border-[#e55803] text-[#e55803] hover:bg-[#fde8d8]'
-                  }`}
-                >
-                  {isListening ? <MicOff size={28} /> : <Mic size={28} />}
+                <motion.button whileHover={{ scale:1.08 }} whileTap={{ scale:0.93 }}
+                  onClick={listening ? stopListen : startListen}
+                  style={{ width:64, height:64, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.2s',
+                    background: listening?'rgba(229,88,3,0.12)':'#fde8d8',
+                    border: listening?'2.5px solid #e55803':'2.5px solid #fdba74',
+                    color: listening?'#e55803':'#c44a00',
+                    boxShadow: listening?'0 0 0 6px rgba(229,88,3,0.12)':'none' }}>
+                  {listening ? <MicOff size={26}/> : <Mic size={26}/>}
                 </motion.button>
+                <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color: listening?'#e55803':'#6b5c45' }}>
+                  {listening ? '● Recording…' : 'Tap to speak'}
+                </p>
               </div>
-
-              <p className="text-center text-xs font-bold tracking-widest uppercase text-[#6b5c45] mb-5">
-                {isListening ? (
-                  <span className="text-[#ef4444] animate-pulse">● Recording...</span>
-                ) : (
-                  'Tap To Speak'
-                )}
-              </p>
 
               {/* Transcript */}
               {transcript && (
-                <div className="mb-4 bg-[#f5e8ca] p-4 rounded-xl">
-                  <p className="text-[10px] font-bold tracking-widest uppercase text-[#6b5c45] mb-1">Source (EN)</p>
-                  <p className="text-[#0e2125] font-medium">{transcript}</p>
+                <div style={{ marginBottom:12, padding:'10px 14px', borderRadius:10, background:'#f5e8ca', border:'1px solid #f0dfc0' }}>
+                  <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'#6b5c45', marginBottom:4 }}>Source (EN)</p>
+                  <p style={{ fontSize:14, color:'#0e2125', fontWeight:500 }}>{transcript}</p>
                 </div>
               )}
 
-              {/* Translate Button */}
-              {transcript && !isListening && !translated && (
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={translateText}
-                  disabled={loading}
-                  className="w-full h-11 rounded-[10px] font-bold text-[#fff6e0] bg-[#e55803] hover:bg-[#c44a00] transition-colors flex items-center gap-2 justify-center mb-4 text-[15px]"
-                >
-                  {loading ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-4 h-4 border-2 border-[#fff6e0] border-t-transparent rounded-full" /> : 'Translate Now'}
-                </motion.button>
+              {/* Translate button */}
+              {transcript && !listening && !translated && (
+                <button className="btn btn-primary" style={{ width:'100%', marginBottom:12 }} disabled={loading} onClick={translate}>
+                  {loading
+                    ? <><motion.span animate={{ rotate:360 }} transition={{ repeat:Infinity,duration:1 }}><Sparkles size={15}/></motion.span> Translating…</>
+                    : 'Translate Now'}
+                </button>
               )}
 
               {/* Result */}
               <AnimatePresence>
                 {translated && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-[#22c55e]/10 p-4 rounded-xl border border-[#22c55e]/30">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-[10px] font-bold tracking-widest uppercase text-[#22c55e]">Translation ({targetLang.toUpperCase()})</p>
-                      <button onClick={speakTranslation} className="w-7 h-7 rounded-full bg-[#22c55e]/20 text-[#22c55e] flex items-center justify-center hover:bg-[#22c55e]/30 transition-colors">
-                        <Volume2 size={14} />
+                  <motion.div initial={{ opacity:0,y:8 }} animate={{ opacity:1,y:0 }}
+                    style={{ padding:'12px 14px', borderRadius:12, background:'#fde8d8', border:'1px solid #fdba74' }}>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
+                      <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'#e55803' }}>
+                        Translation ({lang.toUpperCase()})
+                      </p>
+                      <button onClick={speak} style={{ width:30, height:30, borderRadius:'50%', background:'rgba(229,88,3,0.12)', color:'#e55803', display:'flex', alignItems:'center', justifyContent:'center', border:'none', cursor:'pointer' }}>
+                        <Volume2 size={14}/>
                       </button>
                     </div>
-                    <p className="text-[#0e2125] font-display font-bold text-lg leading-snug">{translated}</p>
+                    <p style={{ fontFamily:'Syne,sans-serif', fontWeight:600, fontSize:16, color:'#0e2125', lineHeight:1.4 }}>{translated}</p>
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {/* Error */}
               {error && (
-                <p className="text-xs font-bold text-[#ef4444] text-center mt-4 bg-[#ef4444]/10 p-2 rounded-lg border border-[#ef4444]/20">{error}</p>
+                <p style={{ fontSize:12, fontWeight:600, color:'#dc2626', textAlign:'center', marginTop:10, padding:'8px', borderRadius:8, background:'#fef2f2', border:'1px solid #fca5a5' }}>{error}</p>
               )}
             </div>
           </motion.div>

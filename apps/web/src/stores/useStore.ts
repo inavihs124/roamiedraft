@@ -200,13 +200,6 @@ export const useStore = create<AppStore>((set: any, get: any) => ({
     await get().fetchTrips();
     await get().fetchTrip(tripId);
 
-    // Fire itinerary build in the background — don't block the return
-    set({ itineraryBuilding: true });
-    get().buildItinerary(tripId)
-      .then(() => get().fetchTrip(tripId))
-      .catch((e) => console.warn('Auto-build itinerary failed:', e))
-      .finally(() => set({ itineraryBuilding: false }));
-
     return { tripId, built: false };
   },
 
